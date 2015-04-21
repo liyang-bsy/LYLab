@@ -71,7 +71,7 @@ public class MongoDBDrive extends NonCloneableBaseObject implements ApplicationL
 	}
 
 	public void setUrl(String url) {
-		MongoDBDrive.getInstance().url = url;
+		this.url = url;
 	}
 
 	public String getDatabase() {
@@ -79,7 +79,7 @@ public class MongoDBDrive extends NonCloneableBaseObject implements ApplicationL
 	}
 
 	public void setDatabase(String database) {
-		MongoDBDrive.getInstance().database = database;
+		this.database = database;
 	}
 
 	public String getUsername() {
@@ -87,7 +87,7 @@ public class MongoDBDrive extends NonCloneableBaseObject implements ApplicationL
 	}
 
 	public void setUsername(String username) {
-		MongoDBDrive.getInstance().username = username;
+		this.username = username;
 	}
 
 	public String getPassword() {
@@ -95,7 +95,7 @@ public class MongoDBDrive extends NonCloneableBaseObject implements ApplicationL
 	}
 
 	public void setPassword(String password) {
-		MongoDBDrive.getInstance().password = password;
+		this.password = password;
 	}
 
 	public Boolean getShowQuery() {
@@ -103,7 +103,7 @@ public class MongoDBDrive extends NonCloneableBaseObject implements ApplicationL
 	}
 
 	public void setShowQuery(Boolean showQuery) {
-		MongoDBDrive.getInstance().showQuery = showQuery;
+		this.showQuery = showQuery;
 	}
 
 	public static MongoClient getMongoClient() {
