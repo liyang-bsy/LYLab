@@ -12,7 +12,7 @@ public class AddTransaction<T,K> extends Transaction<T,K> {
 	}
 	
 	@Override
-	public void run() {
+	public void exec() {
 		getBasicDao().save(bb);
 	}
 

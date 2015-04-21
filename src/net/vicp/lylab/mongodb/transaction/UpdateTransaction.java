@@ -27,7 +27,7 @@ public class UpdateTransaction<T,K> extends Transaction<T,K> {
 	}
 	
 	@Override
-	public void run(){
+	public void exec(){
 		ObjectId idKey = null;
 		UpdateOperations<T> mods = getBasicDao().createUpdateOperations().disableValidation();
 		Field[] fs =  bb.getClass().getDeclaredFields();

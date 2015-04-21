@@ -2,6 +2,8 @@ package net.vicp.lylab.utils.timer;
 
 import java.util.Timer;
 
+import net.vicp.lylab.core.NonCloneableBaseObject;
+
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 
@@ -15,23 +17,22 @@ import org.springframework.context.ApplicationListener;
  * @version 1.0.0
  * 
  */
-public class LYPlan implements ApplicationListener {
+public class LYPlan extends NonCloneableBaseObject implements ApplicationListener {
 
 	private TimerJob[] jobs = null;
 	
 	private boolean Scheduled = false;
-	private static Boolean inited = false;
-	private static LYPlan self = null;
+	
+	private static LYPlan instance = null;
 
 	@Override
 	public void onApplicationEvent(ApplicationEvent arg) {
-		if(!inited)
+		if(instance == null)
 		{
-			inited = true;
 			System.out.println("LYPlan - Initialization started");
 			
-			self = this;
-			this.BeginSchedule();
+			instance = this;
+			instance.BeginSchedule();
 		}
 	}
 	
@@ -82,12 +83,12 @@ public class LYPlan implements ApplicationListener {
 		this.jobs = jobs;
 	}
 
-	public static LYPlan getSelf() {
-		return self;
+	public static LYPlan getInstance() {
+		return instance;
 	}
 
-	public static void setSelf(LYPlan self) {
-		LYPlan.self = self;
+	public static void setInstance(LYPlan instance) {
+		LYPlan.instance = instance;
 	}
 	
 }

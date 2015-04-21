@@ -34,7 +34,7 @@ public class MongoDBService<T> {
 	public MongoDBDao<T> getDao()
 	{
 		if(this.basicDao == null)
-			this.basicDao = new MongoDBDao<T>(clazz);
+			basicDao = new MongoDBDao<T>(clazz);
 		return basicDao;
 	}
 	/**

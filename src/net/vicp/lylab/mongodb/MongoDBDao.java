@@ -10,6 +10,6 @@ import org.mongodb.morphia.dao.BasicDAO;
  */
 public class MongoDBDao<T> extends BasicDAO<T, String> {
 	public MongoDBDao(Class<T> entityClass) {
-		super(entityClass, ((MongoDBDrive) MongoDBDrive.getSelf()).getMongo(), new Morphia(), ((MongoDBDrive) MongoDBDrive.getSelf()).getDatabase());
+		super(entityClass, MongoDBDrive.getInstance().getMongo(), new Morphia(), MongoDBDrive.getInstance().getDatabase());
 	}
 }

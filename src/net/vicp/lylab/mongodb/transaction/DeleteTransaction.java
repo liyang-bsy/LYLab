@@ -19,7 +19,7 @@ public class DeleteTransaction<T,K> extends Transaction<T,K> {
 	}
 	
 	@Override
-	public void run() {
+	public void exec() {
 //		try {
 //			bbPast = (T) ((BaseBean) bb).clone();
 //		} catch (CloneNotSupportedException e) {

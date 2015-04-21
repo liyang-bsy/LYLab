@@ -15,7 +15,7 @@ public class AddBatchTransaction<T,K> extends Transaction<T,K> {
 	}
 	
 	@Override
-	public void run() {
+	public void exec() {
 		for(iterator=0 ; iterator<bbList.size() && NotReverted() ; iterator++)
 			getBasicDao().save(bbList.get(iterator));
 	}

@@ -1,11 +1,12 @@
 package net.vicp.lylab.mongodb.transaction;
 
+import net.vicp.lylab.utils.tq.Task;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.mongodb.morphia.dao.BasicDAO;
 
-public abstract class Transaction<T,K> implements Runnable {
+public abstract class Transaction<T,K> extends Task {
 
 	protected Log log = LogFactory.getLog(getClass());
 	
