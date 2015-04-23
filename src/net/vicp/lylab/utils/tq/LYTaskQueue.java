@@ -35,7 +35,14 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	 * Reserved entrance for multi-threaded. DO NOT call this method.
 	 */
 	@Override
-	public final void run() { execute(); }
+	public final void run() {
+		try {
+			execute();
+		} catch (Throwable e) {
+		} finally {
+			isRunning = false;
+		}
+	}
 
 	/**
 	 * At your service!
@@ -65,7 +72,7 @@ public final class LYTaskQueue extends Thread implements Runnable{
 				if (size >= maxQueue) {
 					try {
 						tqs.wait(waitingThreshold);
-						continue;// 继续执行等待中的检入任务。
+						continue;
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -146,7 +153,6 @@ public final class LYTaskQueue extends Thread implements Runnable{
 				break;
 			}
 		}
-		isRunning = false;
 	}
 	
 	public static void _inc() { synchronized(_tc) { _tc++; } }
@@ -154,7 +160,7 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	public static void _dec() { synchronized(_tc) { 
 		try {
 			_tc.notifyAll();
-		} catch (Exception e) { e.printStackTrace(); }
+		} catch (Exception e) { }
 		_tc--;
 		}
 	}
