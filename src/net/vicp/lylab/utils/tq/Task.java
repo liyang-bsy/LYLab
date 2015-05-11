@@ -1,5 +1,7 @@
 package net.vicp.lylab.utils.tq;
 
+import java.util.Date;
+
 import net.vicp.lylab.core.Executor;
 
 /**
@@ -15,15 +17,33 @@ import net.vicp.lylab.core.Executor;
  */
 public abstract class Task implements Runnable, Executor, Cloneable {
 
-	private Long taskId;
-	private Integer state = BEGAN;
-
+	/**
+	 * This value doesn't make any sense if you didn't use WatchDog
+	 */
+	protected Long timeLimit;
+	protected Thread thread;
+	
+	protected Long taskId;
+	protected volatile Integer state;
+	protected Date startTime;
+	
+	static public final Long DEFAULTTIMEOUT = 60*60*1000L;			// 1 hour
+	static public final Integer STOPPED = -2;
 	static public final Integer FAILED = -1;
 	static public final Integer BEGAN = 0;
 	static public final Integer STARTED = 1;
 	static public final Integer COMPLETED = 2;
 	static public final Integer CANCELLED = 3;
 
+	public Task()
+	{
+		thread = null;
+		startTime = null;
+		timeLimit = DEFAULTTIMEOUT;
+		taskId = null;
+		state = BEGAN;
+	}
+	
 	public Object clone() throws CloneNotSupportedException {
 		return super.clone();
 	}
@@ -33,12 +53,12 @@ public abstract class Task implements Runnable, Executor, Cloneable {
 	 */
 	public final void run()
 	{
-		synchronized (getState()) {
-			if(getState() != BEGAN)
+		synchronized (state) {
+			if(state != BEGAN)
 				return;
-			setState(STARTED);
+			state = STARTED;
+			setStartTime(new Date());
 		}
-		LYTaskQueue._inc();
 		try {
 			exec();
 			setState(COMPLETED);
@@ -52,10 +72,10 @@ public abstract class Task implements Runnable, Executor, Cloneable {
 		}
 		try {
 			aftermath();
+			LYTaskQueue.taskEnded(getTaskId());
 		} catch (Throwable e) {
 			e.printStackTrace();
 		}
-		LYTaskQueue._dec();
 	}
 	
 	/**
@@ -75,7 +95,7 @@ public abstract class Task implements Runnable, Executor, Cloneable {
 	public final void waitingForFinish() {
 		synchronized (this)
 		{
-			while(getState() == BEGAN || getState() == STARTED)
+			while(getState() == STOPPED || getState() == BEGAN || getState() == STARTED)
 			{
 				try {
 					this.wait(LYTaskQueue.getWaitingThreshold());
@@ -102,6 +122,68 @@ public abstract class Task implements Runnable, Executor, Cloneable {
 	public synchronized Task setState(Integer state) {
 		this.state = state;
 		return this;
+	}
+
+	public synchronized Thread getThread() {
+		return thread;
+	}
+
+	public synchronized Task setThread(Thread thread) {
+		this.thread = thread;
+		return this;
+	}
+
+	public Date getStartTime() {
+		return startTime;
+	}
+
+	public synchronized Task setStartTime(Date startTime) {
+		this.startTime = startTime;
+		return this;
+	}
+
+	public Long getTimeLimit() {
+		return timeLimit;
+	}
+
+	public synchronized Task setTimeLimit(Long timeLimit) {
+		this.timeLimit = timeLimit;
+		return this;
+	}
+
+	public final synchronized void callStop() {
+		this.setState(STOPPED);
+		if(thread != null) thread.interrupt();
+	}
+
+	public Boolean isStopped() {
+		return getState() == STOPPED;
+	}
+	
+	@Override
+	public String toString()
+	{
+		String sState = "FAILED";
+		switch (state) {
+		case -1:
+			sState = "FAILED";
+			break;
+		case 0:
+			sState = "BEGAN";
+			break;
+		case 1:
+			sState = "STARTED";
+			break;
+		case 2:
+			sState = "COMPLETED";
+			break;
+		case 3:
+			sState = "CANCELLED";
+			break;
+		default:
+			break;
+		}
+		return "taskId=" + taskId + ",className=" + getClass().getName() + ",state=" + sState + ",startTime=" + startTime + ",timeLimit=" + timeLimit;
 	}
 
 }
