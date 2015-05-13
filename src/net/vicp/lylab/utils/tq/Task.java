@@ -24,6 +24,10 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 	 * This value doesn't make any sense if you didn't use WatchDog
 	 */
 	protected Long timeout;
+	/**
+	 * Once the value is true, when this task is failed, it will be forewarned to LYTaskQueue
+	 */
+	protected Boolean criticalTask = false;
 	protected Thread thread;
 	
 	protected Long taskId;
@@ -32,12 +36,12 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 	
 	static public Long DEFAULTTIMEOUT = 60*60*1000L;			// 1 hour
 	
-	static public final Integer STOPPED = -2;
+	static public final Integer STOPPED = -3;
+	static public final Integer CANCELLED = -2;
 	static public final Integer FAILED = -1;
 	static public final Integer BEGAN = 0;
 	static public final Integer STARTED = 1;
 	static public final Integer COMPLETED = 2;
-	static public final Integer CANCELLED = 3;
 
 	public Task()
 	{

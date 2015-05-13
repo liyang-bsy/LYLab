@@ -18,7 +18,7 @@ public final class WatchDog extends Task implements Runnable {
 	private static WatchDog instance = null;
 
 	public static Integer DEFAULTINTERVAL = 2000;			// 2 second
-	public static Long DEFAULTTOLERANCE = 5*1000L;			// 5 min
+	public static Long DEFAULTTOLERANCE = 5*60*1000L;			// 5 min
 	private Integer interval = DEFAULTINTERVAL;
 	private Long tolerance = DEFAULTTOLERANCE;
 	@Override
@@ -64,6 +64,7 @@ public final class WatchDog extends Task implements Runnable {
 		for(Task task : forceStopList)
 		{
 			task.forceStop();
+			LYTaskQueue.forewarn(task);
 			log.error("Timeout task was killed:\n" + task.toString());
 		}
 		for(Task task : callStopList)

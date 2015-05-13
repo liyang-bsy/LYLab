@@ -258,13 +258,23 @@ public final class LYTaskQueue extends Thread implements Runnable{
 		
 		LYTaskQueue.useWatchDog = useWatchDog;
 	}
+	
+	public static void forewarn(Task task) {
+		if(task.getState() != Task.COMPLETED)
+			task.setState(Task.BEGAN);
+		
+	}
 
 	static {
 		try {
 			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(permanentFileName));
 			Integer total = (Integer) ois.readObject();
 			while(total-->0)
-				LYTaskQueue.addTask((Task) ois.readObject());
+			{
+				Task tk = (Task) ois.readObject();
+				tk.setState(Task.BEGAN);
+				LYTaskQueue.addTask(tk);
+			}
 			ois.close();
 			Utils.deleteFile(permanentFileName);
 		} catch (FileNotFoundException e) {
@@ -276,16 +286,10 @@ public final class LYTaskQueue extends Thread implements Runnable{
 		}
 	}
 	
-	@Override
-	protected void finalize() throws Throwable {
-		terminate();
-		super.finalize();
-	}
-
 	public static void terminate()
 	{
-		// default timeout is 30 second
-		terminate(30*1000L);
+		// default timeout is 5 minutes
+		terminate(5*60*1000L);
 	}
 	
 	public static void terminate(Long timeout) {
@@ -312,7 +316,7 @@ public final class LYTaskQueue extends Thread implements Runnable{
 			}
 			oos.close();
 		} catch (IOException e) {
-			log.error("LYTaskQueue - safely shutdown: Permanent process error");
+			log.error("LYTaskQueue - safely shutdown: Permanent process error (This will cause data loss!)");
 			e.printStackTrace();
 		}
 		while(threadPool.size() > 0)
