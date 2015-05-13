@@ -1,9 +1,12 @@
 package net.vicp.lylab.mongodb.transaction;
 
+import java.io.Serializable;
+
 import org.mongodb.morphia.dao.BasicDAO;
 
-public class AddTransaction<T,K> extends Transaction<T,K> {
-
+public class AddTransaction<T,K> extends Transaction<T,K> implements Serializable {
+	private static final long serialVersionUID = -7535913751420832948L;
+	
 	private T bb;
 	
 	public AddTransaction(BasicDAO<T,K> basicDao, T T) {

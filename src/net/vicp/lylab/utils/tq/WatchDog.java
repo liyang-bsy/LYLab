@@ -1,12 +1,15 @@
 package net.vicp.lylab.utils.tq;
 
 import java.util.Date;
-import java.util.concurrent.TimeoutException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class WatchDog extends Task implements Runnable {
+public final class WatchDog extends Task implements Runnable {
+
+	private static final long serialVersionUID = -4494667245957319328L;
 
 	protected Log log = LogFactory.getLog(getClass());
 
@@ -14,8 +17,8 @@ public class WatchDog extends Task implements Runnable {
 	private static Boolean isRunning = false;
 	private static WatchDog instance = null;
 
-	static public final Integer DEFAULTINTERVAL = 2000;			// 2 second
-	static public final Long DEFAULTTOLERANCE = 5*1000L;			// 5 min
+	public static Integer DEFAULTINTERVAL = 2000;			// 2 second
+	public static Long DEFAULTTOLERANCE = 5*1000L;			// 5 min
 	private Integer interval = DEFAULTINTERVAL;
 	private Long tolerance = DEFAULTTOLERANCE;
 	@Override
@@ -33,7 +36,9 @@ public class WatchDog extends Task implements Runnable {
 			try {
 				Thread.sleep(interval);
 				getInstance().timeoutControl();
-			} catch (Throwable e) {
+			}
+			catch (InterruptedException e) { }
+			catch (Throwable e) {
 				e.printStackTrace();
 			}
 		}
@@ -41,24 +46,30 @@ public class WatchDog extends Task implements Runnable {
 
 	@SuppressWarnings("deprecation")
 	private void timeoutControl() {
-		synchronized (LYTaskQueue.getThreadPool()) {
-			for(Task task : LYTaskQueue.getThreadPool())
-			{
-				if(isStopped()) break;
-				// 0 means infinite
-				if(task.getTimeLimit() == 0L || task.getState() == Task.COMPLETED || task.getState() == Task.FAILED)
-					continue;
-				if(task.getTimeLimit() < new Date().getTime() - task.getStartTime().getTime())
-				{
-					task.callStop();
-					log.info("Timeout detected:" + task.getTaskId());
-				}
-				if(task.getTimeLimit() + tolerance < new Date().getTime() - task.getStartTime().getTime())
-				{
-					task.getThread().stop(new TimeoutException());
-					log.error("Timeout detected and a task was killed:\n" + task.toString());
-				}
-			}
+		List<Task> callStopList = new LinkedList<Task>();
+		List<Task> forceStopList = new LinkedList<Task>();
+		for(Task task : LYTaskQueue.getThreadPool())
+		{
+			// skip WatchDog itself
+//			if(task instanceof WatchDog) continue;
+			if(isStopped()) continue;
+			// -1L means infinite
+			if(task.getTimeout() == -1L || task.getState() == Task.COMPLETED || task.getState() == Task.FAILED)
+				continue;
+			if(task.getTimeout() + tolerance < new Date().getTime() - task.getStartTime().getTime())
+				forceStopList.add(task);
+			else if(task.getTimeout() < new Date().getTime() - task.getStartTime().getTime())
+				callStopList.add(task);
+		}
+		for(Task task : forceStopList)
+		{
+			task.forceStop();
+			log.error("Timeout task was killed:\n" + task.toString());
+		}
+		for(Task task : callStopList)
+		{
+			task.callStop();
+			log.info("Try to stop timeout task:" + task.getTaskId());
 		}
 	}
 

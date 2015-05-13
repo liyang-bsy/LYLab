@@ -1,6 +1,8 @@
 package net.vicp.lylab.utils.tq;
 
+import java.io.Serializable;
 import java.util.Date;
+import java.util.concurrent.TimeoutException;
 
 import net.vicp.lylab.core.Executor;
 
@@ -15,19 +17,21 @@ import net.vicp.lylab.core.Executor;
  * @version 1.0.1
  * 
  */
-public abstract class Task implements Runnable, Executor, Cloneable {
+public abstract class Task implements Runnable, Executor, Cloneable, Serializable {
 
+	private static final long serialVersionUID = -505125638835928043L;
 	/**
 	 * This value doesn't make any sense if you didn't use WatchDog
 	 */
-	protected Long timeLimit;
+	protected Long timeout;
 	protected Thread thread;
 	
 	protected Long taskId;
 	protected volatile Integer state;
 	protected Date startTime;
 	
-	static public final Long DEFAULTTIMEOUT = 60*60*1000L;			// 1 hour
+	static public Long DEFAULTTIMEOUT = 60*60*1000L;			// 1 hour
+	
 	static public final Integer STOPPED = -2;
 	static public final Integer FAILED = -1;
 	static public final Integer BEGAN = 0;
@@ -39,7 +43,7 @@ public abstract class Task implements Runnable, Executor, Cloneable {
 	{
 		thread = null;
 		startTime = null;
-		timeLimit = DEFAULTTIMEOUT;
+		timeout = DEFAULTTIMEOUT;
 		taskId = null;
 		state = BEGAN;
 	}
@@ -57,7 +61,6 @@ public abstract class Task implements Runnable, Executor, Cloneable {
 			if(state != BEGAN)
 				return;
 			state = STARTED;
-			setStartTime(new Date());
 		}
 		try {
 			exec();
@@ -95,7 +98,7 @@ public abstract class Task implements Runnable, Executor, Cloneable {
 	public final void waitingForFinish() {
 		synchronized (this)
 		{
-			while(getState() == STOPPED || getState() == BEGAN || getState() == STARTED)
+			while(state == STOPPED || state == BEGAN || state == STARTED)
 			{
 				try {
 					this.wait(LYTaskQueue.getWaitingThreshold());
@@ -115,20 +118,22 @@ public abstract class Task implements Runnable, Executor, Cloneable {
 		return this;
 	}
 
-	public synchronized Integer getState() {
+	public Integer getState() {
 		return state;
 	}
 
-	public synchronized Task setState(Integer state) {
-		this.state = state;
+	public Task setState(Integer state) {
+		synchronized (this.state) {
+			this.state = state;
+		}
 		return this;
 	}
 
-	public synchronized Thread getThread() {
+	public Thread getThread() {
 		return thread;
 	}
 
-	public synchronized Task setThread(Thread thread) {
+	public Task setThread(Thread thread) {
 		this.thread = thread;
 		return this;
 	}
@@ -137,23 +142,35 @@ public abstract class Task implements Runnable, Executor, Cloneable {
 		return startTime;
 	}
 
-	public synchronized Task setStartTime(Date startTime) {
+	public Task setStartTime(Date startTime) {
 		this.startTime = startTime;
 		return this;
 	}
 
-	public Long getTimeLimit() {
-		return timeLimit;
+	public Long getTimeout() {
+		return timeout;
 	}
 
-	public synchronized Task setTimeLimit(Long timeLimit) {
-		this.timeLimit = timeLimit;
+	public Task setTimeout(Long timeout) {
+		this.timeout = timeout;
 		return this;
 	}
 
 	public final synchronized void callStop() {
 		this.setState(STOPPED);
 		if(thread != null) thread.interrupt();
+	}
+
+	@Deprecated
+	public final synchronized void forceStop() {
+		synchronized (this) {
+			this.notifyAll();
+		}
+		if(thread != null)
+		{
+			getThread().stop(new TimeoutException());
+			LYTaskQueue.taskEnded(getTaskId());
+		}
 	}
 
 	public Boolean isStopped() {
@@ -163,8 +180,11 @@ public abstract class Task implements Runnable, Executor, Cloneable {
 	@Override
 	public String toString()
 	{
-		String sState = "FAILED";
+		String sState = "UNKNOWN";
 		switch (state) {
+		case -2:
+			sState = "STOPPED";
+			break;
 		case -1:
 			sState = "FAILED";
 			break;
@@ -183,7 +203,7 @@ public abstract class Task implements Runnable, Executor, Cloneable {
 		default:
 			break;
 		}
-		return "taskId=" + taskId + ",className=" + getClass().getName() + ",state=" + sState + ",startTime=" + startTime + ",timeLimit=" + timeLimit;
+		return "taskId=" + taskId + ",className=" + getClass().getName() + ",state=" + sState + ",startTime=" + startTime + ",timeout=" + timeout;
 	}
 
 }

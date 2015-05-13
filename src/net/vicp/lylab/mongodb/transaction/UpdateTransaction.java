@@ -1,5 +1,6 @@
 package net.vicp.lylab.mongodb.transaction;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -7,7 +8,6 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import org.bson.types.ObjectId;
-
 import org.mongodb.morphia.dao.BasicDAO;
 import org.mongodb.morphia.mapping.Mapper;
 import org.mongodb.morphia.query.UpdateOperations;
@@ -18,8 +18,9 @@ import org.mongodb.morphia.query.UpdateResults;
  * @author liyang
  */
 
-public class UpdateTransaction<T,K> extends Transaction<T,K> {
-
+public class UpdateTransaction<T,K> extends Transaction<T,K> implements Serializable {
+	private static final long serialVersionUID = 2467957519806274820L;
+	
 	private T bb;
 	public UpdateTransaction(BasicDAO<T,K> basicDao, T T) {
 		super(basicDao);

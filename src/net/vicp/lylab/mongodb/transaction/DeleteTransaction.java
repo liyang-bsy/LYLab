@@ -2,14 +2,17 @@ package net.vicp.lylab.mongodb.transaction;
 
 //import net.ebaolife.core.utils.BaseBean;
 
+import java.io.Serializable;
+
 import org.mongodb.morphia.dao.BasicDAO;
 
 /**
  * 注意，此操作不可回滚
  * @author liyang
  */
-public class DeleteTransaction<T,K> extends Transaction<T,K> {
-
+public class DeleteTransaction<T,K> extends Transaction<T,K> implements Serializable {
+	private static final long serialVersionUID = -3332243243212503991L;
+	
 	private T bb;
 //	private T bbPast;
 	

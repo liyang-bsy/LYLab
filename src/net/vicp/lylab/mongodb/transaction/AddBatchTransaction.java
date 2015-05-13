@@ -1,11 +1,13 @@
 package net.vicp.lylab.mongodb.transaction;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.mongodb.morphia.dao.BasicDAO;
 
-public class AddBatchTransaction<T,K> extends Transaction<T,K> {
-
+public class AddBatchTransaction<T,K> extends Transaction<T,K> implements Serializable {
+	private static final long serialVersionUID = -7120887231389017100L;
+	
 	private List<T> bbList;
 	private Integer iterator;
 	

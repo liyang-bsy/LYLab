@@ -1,11 +1,23 @@
 package net.vicp.lylab.utils.tq;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import net.vicp.lylab.core.Executor;
+import net.vicp.lylab.utils.Utils;
 
 /**
  * 	Manager class to execute all task.<br>
@@ -20,19 +32,22 @@ import net.vicp.lylab.core.Executor;
  */
 public final class LYTaskQueue extends Thread implements Runnable{
 
+	protected static Log log = LogFactory.getLog(LYTaskQueue.class);
+	
 	private volatile static Queue<Executor> taskQueue = new LinkedList<Executor>();
 	private volatile static List<Task> threadPool = new ArrayList<Task>();
 	private volatile static Boolean isRunning = false;
 	private volatile static Boolean useWatchDog = false;
+	private static String permanentFileName = "/Users/liyang/Desktop/lytaskqueue.bin";
 
-	private static Long lastTaskId = 0L;
-	private static Integer maxQueue = 1000;
-	private static Integer maxThread = 200;
+	private volatile static Boolean terminated = false;
 
-	/**
-	 * Default is 1 second.
-	 */
-	private static Long waitingThreshold = 500L;
+	private volatile static Long lastTaskId = 0L;
+	private volatile static Long testId = 0L;
+	private volatile static Integer maxQueue = 1000;
+	private volatile static Integer maxThread = 2;
+
+	private static Long waitingThreshold = 1000L;
 	
 	/**
 	 * Reserved entrance for multi-threaded. DO NOT call this method.
@@ -54,10 +69,12 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	 * <br>[!] Original parameter 'task' will never be used or changed by LYTaskQueue.addTask(Task task)
 	 * @return
 	 * A taskId used to recognise specific task.
-	 * 
+	 * <br>If returns '-1', means LYTaskQueue was try to terminate itself. No more task will be accepted.
 	 */
 	public static Long addTask(Task task)
 	{
+		if(terminated)
+			return -1L;
 		if(task == null)
 			return null;
 		Task task0 = null;
@@ -69,31 +86,33 @@ public final class LYTaskQueue extends Thread implements Runnable{
 		}
 		if(task0 == null)
 			return null;
-		synchronized (taskQueue) {
-			while (true) {
-				Integer size = taskQueue.size();
-				if (size >= maxQueue) {
-					try {
-						taskQueue.wait(waitingThreshold);
-						continue;
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-				if (size <= maxQueue && size >= 0) {
-					synchronized (lastTaskId) {
-//						if(size == 0) lastTaskId = 0L;
-						task0.setTaskId(lastTaskId++);
-							taskQueue.offer(task0);
-					}
-					break;
+		while (true) {
+			Integer size = taskQueue.size();
+			if (size >= maxQueue) {
+				try {
+					taskQueue.wait(waitingThreshold);
+					continue;
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
 			}
+			if (size <= maxQueue && size >= 0) {
+				synchronized (lastTaskId) {
+					if(lastTaskId == Long.MAX_VALUE) lastTaskId = 0L;
+					if(testId == lastTaskId) System.out.println("impossible!");
+					testId = lastTaskId;
+					task0.setTaskId(lastTaskId++);
+					while(!taskQueue.offer(task0));
+				}
+				break;
+			}
 		}
-		if(!isRunning)
-		{
-			isRunning = true;
-			new LYTaskQueue().start();
+		synchronized (isRunning) {
+			if(!terminated && !isRunning)
+			{
+				isRunning = true;
+				new LYTaskQueue().start();
+			}
 		}
 		return task0.getTaskId();
 	}
@@ -106,7 +125,7 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	 * true: cancelled<br>false: cancel failed
 	 */
 	public static Boolean cancel(Long taskId) {
-		if(taskId == null || taskId < 0)
+		if(terminated || taskId == null || taskId < 0)
 			return false;
 		synchronized (taskQueue) {
 			if(lastTaskId < taskId)
@@ -130,12 +149,46 @@ public final class LYTaskQueue extends Thread implements Runnable{
 		return false;
 	}
 	
+//	private static synchronized void execute()
+//	{
+//		Task task = null;
+//		synchronized (taskQueue) {
+//			while(!terminated && taskQueue.peek() != null)
+//				task = (Task) taskQueue.poll();
+//		}
+//		while(task.getState() == Task.BEGAN)
+//		{
+//			synchronized (threadPool) {
+//				if(threadPool.size() >= maxThread)
+//				{
+//					try {
+//						threadPool.wait(waitingThreshold);
+//						continue;
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
+//				}
+//				// keep original taskQueue
+//				if(terminated) break;
+//				Thread t = new Thread(task);
+//				task.setThread(t);
+//				t.start();
+//				threadPool.add(task);
+//
+//				synchronized (taskQueue) {
+//					taskQueue.notifyAll();
+//				}
+//			}
+//			break;
+//		}
+//	}
+	
 	private static void execute()
 	{
-		while(taskQueue.peek() != null)
+		while(!terminated && taskQueue.peek() != null)
 		{
-			Task task = (Task) taskQueue.poll();
-			while(task.getState() == Task.BEGAN)
+			Task task = (Task) taskQueue.peek();
+			while(task.getState().equals(Task.BEGAN))
 			{
 				synchronized (threadPool) {
 					if(threadPool.size() >= maxThread)
@@ -147,13 +200,21 @@ public final class LYTaskQueue extends Thread implements Runnable{
 							e.printStackTrace();
 						}
 					}
-				}
-				Thread t = new Thread(task);
-				task.setThread(t);
-				t.start();
-				threadPool.add(task);
-				synchronized (taskQueue) {
-					taskQueue.notifyAll();
+
+					synchronized (taskQueue)
+					{
+						// keep original taskQueue
+						if(terminated) break;
+						if(taskQueue.poll() != null)
+						{
+							task.setStartTime(new Date());
+							Thread t = new Thread(task);
+							task.setThread(t);
+							t.start();
+							threadPool.add(task);
+						}
+						taskQueue.notifyAll();
+					}
 				}
 				break;
 			}
@@ -167,12 +228,118 @@ public final class LYTaskQueue extends Thread implements Runnable{
 			} catch (Exception e) { }
 			for(int i=0;i<threadPool.size();i++)
 			{
-				threadPool.get(i).getTaskId().equals(taskId);
-				threadPool.remove(i);
+				if(threadPool.get(i).getTaskId().equals(taskId))
+				{
+					threadPool.remove(i);
+					break;
+				}
 			}
 		}
 	}
 	
+	public static Boolean isUsingWatchDog() {
+		return useWatchDog;
+	}
+
+	public static void useWatchDog(Boolean useWatchDog) {
+		if(LYTaskQueue.useWatchDog == useWatchDog) return;
+		
+		if(useWatchDog)
+		{
+			WatchDog wd = (WatchDog) new WatchDog()
+				.setStartTime(new Date())
+				.setTimeout(0L);
+			Thread t = new Thread(wd);
+			wd.setThread(t);
+			t.start();
+		}
+		else
+			WatchDog.stopWatchDog();
+		
+		LYTaskQueue.useWatchDog = useWatchDog;
+	}
+
+	static {
+		try {
+			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(permanentFileName));
+			Integer total = (Integer) ois.readObject();
+			while(total-->0)
+				LYTaskQueue.addTask((Task) ois.readObject());
+			ois.close();
+			Utils.deleteFile(permanentFileName);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		terminate();
+		super.finalize();
+	}
+
+	public static void terminate()
+	{
+		// default timeout is 30 second
+		terminate(30*1000L);
+	}
+	
+	public static void terminate(Long timeout) {
+		if(LYTaskQueue.terminated == true) return;
+		LYTaskQueue.terminated = true;
+		if(timeout == 0L) timeout = 1L;
+
+		synchronized (getThreadPool()) {
+			for(Task t:getThreadPool())
+				t.setTimeout(timeout);
+		}
+		
+		if(!useWatchDog)
+			LYTaskQueue.useWatchDog(useWatchDog);
+		LYTaskQueue.useWatchDog = true;
+		try {
+			File p = new File(permanentFileName);
+			if(!p.exists()) p.createNewFile();
+			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(p));
+			synchronized (taskQueue) {
+				oos.writeObject(new Integer(taskQueue.size()));
+				while(!taskQueue.isEmpty())
+					oos.writeObject(taskQueue.poll());
+			}
+			oos.close();
+		} catch (IOException e) {
+			log.error("LYTaskQueue - safely shutdown: Permanent process error");
+			e.printStackTrace();
+		}
+		while(threadPool.size() > 0)
+			threadPool.get(0).waitingForFinish();
+		WatchDog.stopWatchDog();
+	}
+
+	public static Boolean getTerminated() {
+		return terminated;
+	}
+
+	public static Queue<Executor> getTaskQueue() {
+		return taskQueue;
+	}
+
+	public static List<Task> getThreadPool() {
+		return threadPool;
+	}
+
+	public static Long getLastTaskId() {
+		return lastTaskId;
+	}
+
+	public static Integer getThreadCount() {
+		return threadPool.size();
+	}
+
 	public static Integer getMaxQueue() {
 		return maxQueue;
 	}
@@ -193,42 +360,8 @@ public final class LYTaskQueue extends Thread implements Runnable{
 		return waitingThreshold;
 	}
 
-	/**
-	 * Default is 1 second.
-	 */
 	public static void setWaitingThreshold(Long waitingThreshold) {
 		LYTaskQueue.waitingThreshold = waitingThreshold;
 	}
 
-	public static Queue<Executor> getTaskQueue() {
-		return taskQueue;
-	}
-
-	public static List<Task> getThreadPool() {
-		return threadPool;
-	}
-
-	public static Long getLastTaskId() {
-		return lastTaskId;
-	}
-
-	public static Integer getThreadCount() {
-		return threadPool.size();
-	}
-
-	public static Boolean isUsingWatchDog() {
-		return useWatchDog;
-	}
-
-	public static void useWatchDog(Boolean useWatchDog) {
-		if(LYTaskQueue.useWatchDog == useWatchDog) return;
-		
-		if(useWatchDog)
-			LYTaskQueue.addTask(new WatchDog().setTimeLimit(0L));
-		else
-			WatchDog.stopWatchDog();
-		
-		LYTaskQueue.useWatchDog = useWatchDog;
-	}
-	
 }
