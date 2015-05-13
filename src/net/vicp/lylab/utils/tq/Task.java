@@ -25,9 +25,9 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 	 */
 	protected Long timeout;
 	/**
-	 * Once the value is true, when this task is failed, it will be forewarned to LYTaskQueue
+	 * How many time you want retry if this task was killed by WatchDog
 	 */
-	protected Boolean criticalTask = false;
+	protected volatile Integer retryCount = 0;
 	protected Thread thread;
 	
 	protected Long taskId;
@@ -87,7 +87,7 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 	
 	/**
 	 * If you need do something when this task completed, override this.<br>
-	 * It will execute unless this task was successfully CANCELLED
+	 * It will execute unless this task was successfully CANCELLED<br><br>
 	 */
 	public void aftermath()
 	{
@@ -111,6 +111,27 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 				}
 			}
 		}
+	}
+
+	public final synchronized void callStop() {
+		this.setState(STOPPED);
+		if(thread != null) thread.interrupt();
+	}
+
+	@Deprecated
+	public final synchronized void forceStop() {
+		synchronized (this) {
+			this.notifyAll();
+		}
+		if(thread != null)
+		{
+			getThread().stop(new TimeoutException());
+			LYTaskQueue.taskEnded(getTaskId());
+		}
+	}
+
+	public Boolean isStopped() {
+		return getState() == STOPPED;
 	}
 	
 	public final Long getTaskId() {
@@ -159,28 +180,18 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 		this.timeout = timeout;
 		return this;
 	}
-
-	public final synchronized void callStop() {
-		this.setState(STOPPED);
-		if(thread != null) thread.interrupt();
-	}
-
-	@Deprecated
-	public final synchronized void forceStop() {
-		synchronized (this) {
-			this.notifyAll();
-		}
-		if(thread != null)
-		{
-			getThread().stop(new TimeoutException());
-			LYTaskQueue.taskEnded(getTaskId());
-		}
-	}
-
-	public Boolean isStopped() {
-		return getState() == STOPPED;
-	}
 	
+	public Integer getRetryCount() {
+		return retryCount;
+	}
+
+	public Task setRetryCount(Integer retryCount) {
+		synchronized (retryCount) {
+			this.retryCount = retryCount;
+		}
+		return this;
+	}
+
 	@Override
 	public String toString()
 	{

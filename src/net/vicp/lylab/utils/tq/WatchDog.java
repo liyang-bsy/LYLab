@@ -1,5 +1,6 @@
 package net.vicp.lylab.utils.tq;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,13 +19,16 @@ public final class WatchDog extends Task implements Runnable {
 	private static WatchDog instance = null;
 
 	public static Integer DEFAULTINTERVAL = 2000;			// 2 second
-	public static Long DEFAULTTOLERANCE = 5*60*1000L;			// 5 min
+	public static Long DEFAULTTOLERANCE = 5*1000L;			// 5 min
 	private Integer interval = DEFAULTINTERVAL;
 	private Long tolerance = DEFAULTTOLERANCE;
+	
+	private List<Task> forewarnList;
 	@Override
 	public void exec() {
 		if(!init)
 		{
+			forewarnList = new ArrayList<Task>();
 			instance = this;
 			init = true;
 		}
@@ -64,8 +68,15 @@ public final class WatchDog extends Task implements Runnable {
 		for(Task task : forceStopList)
 		{
 			task.forceStop();
-			LYTaskQueue.forewarn(task);
-			log.error("Timeout task was killed:\n" + task.toString());
+			if(task.getRetryCount() > 0)
+			{
+				log.error("Timeout task was killed, but this task requested retry:\n" + task.toString());
+				task.retryCount--;
+				task.setState(Task.BEGAN);
+				LYTaskQueue.addTask(task);
+				forewarnList.add(task);
+			}
+			else log.error("Timeout task was killed:\n" + task.toString());
 		}
 		for(Task task : callStopList)
 		{

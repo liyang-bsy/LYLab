@@ -43,7 +43,6 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	private volatile static Boolean terminated = false;
 
 	private volatile static Long lastTaskId = 0L;
-	private volatile static Long testId = 0L;
 	private volatile static Integer maxQueue = 1000;
 	private volatile static Integer maxThread = 2;
 
@@ -99,8 +98,6 @@ public final class LYTaskQueue extends Thread implements Runnable{
 			if (size <= maxQueue && size >= 0) {
 				synchronized (lastTaskId) {
 					if(lastTaskId == Long.MAX_VALUE) lastTaskId = 0L;
-					if(testId == lastTaskId) System.out.println("impossible!");
-					testId = lastTaskId;
 					task0.setTaskId(lastTaskId++);
 					while(!taskQueue.offer(task0));
 				}
@@ -149,46 +146,14 @@ public final class LYTaskQueue extends Thread implements Runnable{
 		return false;
 	}
 	
-//	private static synchronized void execute()
-//	{
-//		Task task = null;
-//		synchronized (taskQueue) {
-//			while(!terminated && taskQueue.peek() != null)
-//				task = (Task) taskQueue.poll();
-//		}
-//		while(task.getState() == Task.BEGAN)
-//		{
-//			synchronized (threadPool) {
-//				if(threadPool.size() >= maxThread)
-//				{
-//					try {
-//						threadPool.wait(waitingThreshold);
-//						continue;
-//					} catch (InterruptedException e) {
-//						e.printStackTrace();
-//					}
-//				}
-//				// keep original taskQueue
-//				if(terminated) break;
-//				Thread t = new Thread(task);
-//				task.setThread(t);
-//				t.start();
-//				threadPool.add(task);
-//
-//				synchronized (taskQueue) {
-//					taskQueue.notifyAll();
-//				}
-//			}
-//			break;
-//		}
-//	}
-	
-	private static void execute()
+	private synchronized static void execute()
 	{
 		while(!terminated && taskQueue.peek() != null)
 		{
 			Task task = (Task) taskQueue.peek();
-			while(task.getState().equals(Task.BEGAN))
+			if(!task.getState().equals(Task.BEGAN))
+				taskQueue.poll();
+			else
 			{
 				synchronized (threadPool) {
 					if(threadPool.size() >= maxThread)
@@ -259,12 +224,6 @@ public final class LYTaskQueue extends Thread implements Runnable{
 		LYTaskQueue.useWatchDog = useWatchDog;
 	}
 	
-	public static void forewarn(Task task) {
-		if(task.getState() != Task.COMPLETED)
-			task.setState(Task.BEGAN);
-		
-	}
-
 	static {
 		try {
 			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(permanentFileName));
@@ -278,7 +237,6 @@ public final class LYTaskQueue extends Thread implements Runnable{
 			ois.close();
 			Utils.deleteFile(permanentFileName);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {

@@ -1,6 +1,7 @@
 package net.vicp.lylab.utils;
 
 import java.io.File;
+import java.util.List;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
 
@@ -15,5 +16,13 @@ public class Utils extends NonCloneableBaseObject {
 			flag = true;
 		}
 		return flag;
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public static boolean inList(List list, Object item) {
+		for(Object o:list)
+			if(o == item)
+				return true;
+		return false;
 	}
 }
