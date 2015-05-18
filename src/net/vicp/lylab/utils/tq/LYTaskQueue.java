@@ -38,7 +38,7 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	private volatile static List<Task> threadPool = new ArrayList<Task>();
 	private volatile static Boolean isRunning = false;
 	private volatile static Boolean useWatchDog = false;
-	private static String permanentFileName = "/Users/liyang/Desktop/lytaskqueue.bin";
+	private static String permanentFileName = "D:/lytaskqueue.bin";
 
 	private volatile static Boolean terminated = false;
 
@@ -172,11 +172,10 @@ public final class LYTaskQueue extends Thread implements Runnable{
 						if(terminated) break;
 						if(taskQueue.poll() != null)
 						{
-							task.setStartTime(new Date());
-							Thread t = new Thread(task);
-							task.setThread(t);
-							t.start();
-							threadPool.add(task);
+							task.begin();
+							synchronized(threadPool) {
+								threadPool.add(task);
+							}
 						}
 						taskQueue.notifyAll();
 					}
@@ -187,7 +186,7 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	}
 	
 	public static void taskEnded(Long taskId) {
-		synchronized(threadPool) { 
+		synchronized(threadPool) {
 			try {
 				threadPool.notifyAll();
 			} catch (Exception e) { }
@@ -324,6 +323,14 @@ public final class LYTaskQueue extends Thread implements Runnable{
 
 	public static void setWaitingThreshold(Long waitingThreshold) {
 		LYTaskQueue.waitingThreshold = waitingThreshold;
+	}
+
+	public static String getPermanentFileName() {
+		return permanentFileName;
+	}
+
+	public static void setPermanentFileName(String permanentFileName) {
+		LYTaskQueue.permanentFileName = permanentFileName;
 	}
 
 }

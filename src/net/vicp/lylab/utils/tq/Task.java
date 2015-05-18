@@ -112,6 +112,13 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 			}
 		}
 	}
+	
+	public final synchronized void begin() {
+		this.setStartTime(new Date());
+		Thread t = new Thread(this);
+		this.setThread(t);
+		t.start();
+	}
 
 	public final synchronized void callStop() {
 		this.setState(STOPPED);
