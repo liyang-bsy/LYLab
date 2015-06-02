@@ -38,13 +38,13 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	private volatile static List<Task> threadPool = new ArrayList<Task>();
 	private volatile static Boolean isRunning = false;
 	private volatile static Boolean useWatchDog = false;
-	private static String permanentFileName = "D:/lytaskqueue.bin";
+	private static String permanentFileName = "lytaskqueue.bin";
 
 	private volatile static Boolean terminated = false;
 
 	private volatile static Long lastTaskId = 0L;
 	private volatile static Integer maxQueue = 1000;
-	private volatile static Integer maxThread = 2;
+	private volatile static Integer maxThread = 200;
 
 	private static Long waitingThreshold = 1000L;
 	
@@ -180,7 +180,7 @@ public final class LYTaskQueue extends Thread implements Runnable{
 						taskQueue.notifyAll();
 					}
 				}
-				break;
+				continue;
 			}
 		}
 	}

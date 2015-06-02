@@ -10,30 +10,30 @@ import net.vicp.lylab.core.CloneableBaseObject;
  *
  */
 public class Pair<T, K> extends CloneableBaseObject {
-	private T left;
-	private K right;
+	private T key;
+	private K value;
 	
 	public Pair()
 	{
-		this.left = null;
-		this.right = null;
+		this.key = null;
+		this.value = null;
 	}
-	public Pair(T left, K right)
+	public Pair(T key, K value)
 	{
-		this.left =left;
-		this.right = right;
+		this.key =key;
+		this.value = value;
 	}
 	public T getLeft() {
-		return left;
+		return key;
 	}
-	public void setLeft(T left) {
-		this.left = left;
+	public void setLeft(T key) {
+		this.key = key;
 	}
 	public K getRight() {
-		return right;
+		return value;
 	}
-	public void setRight(K right) {
-		this.right = right;
+	public void setRight(K value) {
+		this.value = value;
 	}
 
 }
