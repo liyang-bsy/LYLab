@@ -85,6 +85,13 @@ public final class LYCache {
 		if(cc == null) return null;
 		return cc.get(key);
 	}
+	
+	public static byte[] get(String key, boolean renew)
+	{
+		CacheContainer cc = getContainer(key);
+		if(cc == null) return null;
+		return cc.get(key, renew);
+	}
 
 	public static byte[] delete(String key)
 	{

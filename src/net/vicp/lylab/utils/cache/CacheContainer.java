@@ -39,9 +39,7 @@ public final class CacheContainer {
 				@Override
 				public void exec() {
 					double dec = 1.0;
-					do
-					{
-						System.out.println(dec);
+					do {
 						c.flush(dec);
 						dec/=2;
 					} while(c.getMemoryUsage() > CacheContainer.getMemoryLimitation()*CacheContainer.threshold);
@@ -54,8 +52,13 @@ public final class CacheContainer {
 		}
 		return 0;
 	}
-	
+
 	public byte[] get(String key)
+	{
+		return get(key, false);
+	}
+	
+	public byte[] get(String key, boolean renew)
 	{
 		CacheValue cv = getContainer().get(key);
 		if(cv == null) return null;
@@ -64,7 +67,7 @@ public final class CacheContainer {
 			remove(key, cv);
 			return null;
 		}
-		cv.renewStartTime();
+		if(renew) cv.renewStartTime();
 		return cv.getValue();
 	}
 
