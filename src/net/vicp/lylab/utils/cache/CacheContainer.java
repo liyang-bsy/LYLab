@@ -11,8 +11,8 @@ public final class CacheContainer {
 
 	private static final String version = "0.0.1";
 	private Map<String, CacheValue> container = new ConcurrentHashMap<String, CacheValue>();
-	public static long MemoryLimitation = 1024*1024*1024L;
-	public static double threshold = 0.8;
+	public long memoryLimitation;
+	public double threshold;
 	private volatile long memoryUsage = 0L;
 
 	public Map<String, CacheValue> getContainer() {
@@ -27,11 +27,11 @@ public final class CacheContainer {
 	// function start
 	public int set(String key, byte[] value, Long expireTime)
 	{
-		if(MemoryLimitation < memoryUsage + value.length)
+		if(memoryLimitation - memoryUsage < value.length)
 			return 2;
 		getContainer().put(key, new CacheValue(value, expireTime));
 		memoryUsage += value.length;
-		if(memoryUsage > MemoryLimitation*threshold)
+		if(memoryUsage > memoryLimitation*threshold)
 		{
 			new Task() {
 				CacheContainer c;
@@ -42,7 +42,7 @@ public final class CacheContainer {
 					do {
 						c.flush(dec);
 						dec/=2;
-					} while(c.getMemoryUsage() > CacheContainer.getMemoryLimitation()*CacheContainer.threshold);
+					} while(c.getMemoryUsage() > c.getMemoryLimitation()*c.threshold);
 				}
 				public Task setC(CacheContainer cc) {
 					this.c = cc;
@@ -62,7 +62,7 @@ public final class CacheContainer {
 	{
 		CacheValue cv = getContainer().get(key);
 		if(cv == null) return null;
-		if(cv.getStartTime() + cv.getValidateTime() < System.currentTimeMillis())
+		if(cv.getValidateTime() < System.currentTimeMillis() - cv.getStartTime())
 		{
 			remove(key, cv);
 			return null;
@@ -87,7 +87,7 @@ public final class CacheContainer {
 
 	public boolean flush()
 	{
-		return flush(1.0);
+		return flush(1.0D);
 	}
 	
 	public boolean flush(double dec)
@@ -101,7 +101,7 @@ public final class CacheContainer {
 			String key = it.next();
 			CacheValue cv = getContainer().get(key);
 			if(cv == null) continue;
-			if(cv.getStartTime() + dec*cv.getValidateTime() < System.currentTimeMillis())
+			if(dec*cv.getValidateTime() < System.currentTimeMillis() - cv.getStartTime())
 				getContainer().remove(key);
 			else newMemoryUsage += cv.size();
 		}
@@ -116,12 +116,24 @@ public final class CacheContainer {
 
 	// getter & setter
 
-	public static long getMemoryLimitation() {
-		return MemoryLimitation;
+	public long getMemoryLimitation() {
+		return memoryLimitation;
 	}
 
-	public static void setMemoryLimitation(long memoryLimitation) {
-		MemoryLimitation = memoryLimitation;
+	public void setMemoryLimitation(long memoryLimitation) {
+		this.memoryLimitation = memoryLimitation;
+	}
+
+	public double getThreshold() {
+		return threshold;
+	}
+
+	public void setThreshold(double threshold) {
+		this.threshold = threshold;
+	}
+
+	public static String getVersion() {
+		return version;
 	}
 
 }

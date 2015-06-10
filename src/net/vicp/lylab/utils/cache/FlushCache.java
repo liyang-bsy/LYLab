@@ -4,7 +4,7 @@ import java.util.Date;
 
 import net.vicp.lylab.utils.timer.TimerJob;
 
-public class CacheContainerWatchDog extends TimerJob {
+public class FlushCache extends TimerJob {
 	
 	@Override
 	public Integer getInterval() {
