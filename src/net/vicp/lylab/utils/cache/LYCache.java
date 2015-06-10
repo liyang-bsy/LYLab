@@ -17,13 +17,19 @@ public final class LYCache {
 	
 	public LYCache()
 	{
-		LYCache.setExpireTime(4*1024*1024*1024L);		// 4GB
-		LYCache.setMemoryLimitation(1000*60*30L);				// 30min = 60s*30min
+		if(instance == null)
+			instance = this;
+		else return;
+		LYCache.setExpireTime(1000*60*30L);							// 30min = 60s*30min
+		LYCache.setMemoryLimitation(1024*1024*1024L);				// 1GB
 		getBundles();
 	}
 	
 	public LYCache(long expire, long memLimit)
 	{
+		if(instance == null)
+			instance = this;
+		else return;
 		LYCache.setExpireTime(expire);
 		LYCache.setMemoryLimitation(memLimit);
 		getBundles();
@@ -52,8 +58,7 @@ public final class LYCache {
 	}
 
 	public static LYCache getInstance() {
-		if(instance == null)
-			instance = new LYCache();
+		if(instance == null) new LYCache();
 		return instance;
 	}
 
