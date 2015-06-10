@@ -21,17 +21,17 @@ public final class LYCache {
 			instance = this;
 		else return;
 		LYCache.setExpireTime(1000*60*30L);							// 30min = 60s*30min
-		LYCache.setMemoryLimitation(1024*1024*1024L);				// 1GB
+		LYCache.setMemoryControl(1024*1024*1024L, 0.8D);				// 1GB
 		getBundles();
 	}
 	
-	public LYCache(long expire, long memLimit)
+	public LYCache(long expire, long memLimit, double threshold)
 	{
 		if(instance == null)
 			instance = this;
 		else return;
 		LYCache.setExpireTime(expire);
-		LYCache.setMemoryLimitation(memLimit);
+		LYCache.setMemoryControl(memLimit, threshold);
 		getBundles();
 	}
 	
@@ -172,7 +172,13 @@ public final class LYCache {
 		return memoryLimitation;
 	}
 
-	public static void setMemoryLimitation(long memoryLimitation) {
+	public static double getThreshold() {
+		return threshold;
+	}
+
+	public static void setMemoryControl(long memoryLimitation, double threshold) {
+		if(threshold > 1.0D) threshold = 1.0D;
+		LYCache.threshold = threshold;
 		LYCache.memoryLimitation = memoryLimitation;
 		List<CacheContainer> list = getBundles();
 		for(CacheContainer item : list)
