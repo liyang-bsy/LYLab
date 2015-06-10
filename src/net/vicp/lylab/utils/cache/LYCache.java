@@ -8,17 +8,24 @@ import net.vicp.lylab.utils.tq.Task;
 
 public final class LYCache {
 	private List<CacheContainer> bundles = null;
-	private static Long expireTime;
-	private static Long memoryLimit;
-	public static Double threshold;
+	private static long expireTime;
+	private static long memoryLimitation;
+	public static double threshold;
 
 	private static volatile int flushCnt = 0;
 	private static LYCache instance;
 	
 	public LYCache()
 	{
-		LYCache.setMemoryLimit(expireTime != null ? expireTime : 4*1024*1024*1024L);		// 4GB
-		LYCache.setExpireTime(memoryLimit != null ? memoryLimit : 1000*60*30L);				// 30min = 60s*30min
+		LYCache.setExpireTime(4*1024*1024*1024L);		// 4GB
+		LYCache.setMemoryLimitation(1000*60*30L);				// 30min = 60s*30min
+		getBundles();
+	}
+	
+	public LYCache(long expire, long memLimit)
+	{
+		LYCache.setExpireTime(expire);
+		LYCache.setMemoryLimitation(memLimit);
 		getBundles();
 	}
 	
@@ -148,26 +155,27 @@ public final class LYCache {
 
 	// getter & setter
 
-	public static Long getExpireTime() {
+	public static long getExpireTime() {
 		return expireTime;
 	}
 
-	public static void setExpireTime(Long expireTime) {
+	public static void setExpireTime(long expireTime) {
 		LYCache.expireTime = expireTime;
 	}
 
-	public static Long getMemoryLimit() {
-		return memoryLimit;
+	public static long getMemoryLimitation() {
+		return memoryLimitation;
 	}
 
-	public static void setMemoryLimit(Long memoryLimit) {
-		LYCache.memoryLimit = memoryLimit;
+	public static void setMemoryLimitation(long memoryLimitation) {
+		LYCache.memoryLimitation = memoryLimitation;
 		List<CacheContainer> list = getBundles();
 		for(CacheContainer item : list)
 		{
-			item.setMemoryLimitation(memoryLimit/16);
+			item.setMemoryLimitation(memoryLimitation/16);
 			item.setThreshold(threshold);
 		}
+		LYCache.flush();
 	}
 
 }
