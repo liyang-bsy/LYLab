@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.vicp.lylab.utils.MD5;
-import net.vicp.lylab.utils.tq.Task;
 
 public final class LYCache {
 	private List<CacheContainer> bundles = null;
@@ -12,7 +11,6 @@ public final class LYCache {
 	private static long memoryLimitation;
 	public static double threshold;
 
-	private static volatile int flushCnt = 0;
 	private static LYCache instance;
 	
 	public LYCache()
@@ -66,7 +64,7 @@ public final class LYCache {
 		long size = 0;
 		for(CacheContainer cc : getBundles())
 		{
-			size += cc.getContainer().size();
+			size += cc.size();
 		}
 		return size;
 	}
@@ -124,33 +122,18 @@ public final class LYCache {
 	public static boolean flush()
 	{
 		try {
-			Task last = null;
 			for(CacheContainer cc : getBundles())
-			{
-				flushCnt++;
-				last = new Task() {
-					CacheContainer c;
-					private static final long serialVersionUID = 1L;
-					@Override
-					public void exec() {
-						c.flush();
-					}
-					public Task setC(CacheContainer cc) {
-						this.c = cc;
-						return this;
-					}
-					public void aftermath() {
-						flushCnt--;
-					};
-				}.setC(cc);
-				last.begin();
-			}
-			while(flushCnt > 0)
-				Thread.sleep(50);
+				cc.flush();
 		} catch (Exception e) {
 			return false;
 		}
 		return true;
+	}
+	
+	public static void clear()
+	{
+		for(CacheContainer cc : getBundles())
+			cc.clear();
 	}
 
 	public static String version()

@@ -9,19 +9,23 @@ import net.vicp.lylab.utils.tq.Task;
 
 public final class CacheContainer {
 
-	private static final String version = "0.0.1";
+	private static final String version = "1.0.1";
 	private Map<String, CacheValue> container = new ConcurrentHashMap<String, CacheValue>();
 	public long memoryLimitation;
 	public double threshold;
 	private volatile long memoryUsage = 0L;
 
-	public Map<String, CacheValue> getContainer() {
+	private Map<String, CacheValue> getContainer() {
 		if(container == null) container = new ConcurrentHashMap<String, CacheValue>();
 		return container;
 	}
 
 	public long getMemoryUsage() {
 		return memoryUsage;
+	}
+	
+	public int size() {
+		return getContainer().size();
 	}
 	
 	// function start
@@ -83,6 +87,12 @@ public final class CacheContainer {
 	{
 		getContainer().remove(key);
 		memoryUsage -= cv.getValue().length;
+	}
+
+	public void clear()
+	{
+		memoryUsage = 0L;
+		getContainer().clear();
 	}
 
 	public boolean flush()
