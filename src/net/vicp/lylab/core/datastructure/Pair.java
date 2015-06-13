@@ -6,34 +6,44 @@ import net.vicp.lylab.core.CloneableBaseObject;
  * 
  * @author liyang
  *
- * STL: “对”，可用于返回两个数据的时候用
+ *         SLL: “对”，可用于返回两个数据的时候用
  *
  */
-public class Pair<T, K> extends CloneableBaseObject {
-	private T key;
-	private K value;
-	
-	public Pair()
-	{
-		this.key = null;
-		this.value = null;
+public class Pair<L, R> extends CloneableBaseObject {
+	private L left;
+	private R right;
+
+	public Pair() {
+		this.left = null;
+		this.right = null;
 	}
-	public Pair(T key, K value)
-	{
-		this.key =key;
-		this.value = value;
+
+	public Pair(L left, R right) {
+		this.left = left;
+		this.right = right;
 	}
-	public T getLeft() {
-		return key;
+
+	public L getLeft() {
+		return left;
 	}
-	public void setLeft(T key) {
-		this.key = key;
+
+	public void setLeft(L left) {
+		this.left = left;
 	}
-	public K getRight() {
-		return value;
+
+	public R getRight() {
+		return right;
 	}
-	public void setRight(K value) {
-		this.value = value;
+
+	public void setRight(R right) {
+		this.right = right;
+	}
+
+	@Override
+	public String toString() {
+		String sLeft = left != null ? left.toString() : "null";
+		String sRight = right != null ? right.toString() : "null";
+		return "(" + sLeft.toString() + ", " + sRight.toString() + ")";
 	}
 
 }
