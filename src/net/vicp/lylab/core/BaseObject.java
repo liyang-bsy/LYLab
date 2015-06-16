@@ -1,14 +1,15 @@
 package net.vicp.lylab.core;
 
 public class BaseObject {
-	protected volatile Long objId;
+	protected volatile long objectId;
 
-	public Long getObjId() {
-		return objId;
+	public long getObjectId() {
+		return objectId;
 	}
 
-	public void setObjId(Long objId) {
-		this.objId = objId;
+	public BaseObject setObjectId(long objectId) {
+		this.objectId = objectId;
+		return this;
 	}
-	
+
 }

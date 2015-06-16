@@ -1,7 +1,11 @@
 package net.vicp.lylab.core.datastructure;
 
-public class Algorithm {
-	public static int binarySearch(int[] srcArray, int des) {
+import java.util.Comparator;
+import java.util.List;
+
+public class Algorithm<T> {
+
+	public int binarySearch(int[] srcArray, int des) {
 		int low = 0;
 		int high = srcArray.length - 1;
 		while (low <= high) {
@@ -16,22 +20,22 @@ public class Algorithm {
 		}
 		return -1;
 	}
-	
-//	private class PoolKeySort implements Comparator<Pair<Long, Boolean>> {
-//	public int compare(Pair<Long, Boolean> o1, Pair<Long, Boolean> o2) {
-//		boolean b1 = o1.getRight() != null ? o1.getRight() : true;
-//		boolean b2 = o2.getRight() != null ? o2.getRight() : true;
-//		long l1 = o1.getLeft() != null ? o1.getLeft() : Long.MAX_VALUE;
-//		long l2 = o2.getLeft() != null ? o2.getLeft() : Long.MAX_VALUE;
-//		int ret = (b1 == b2 ? 0 : (b1 ? 1 : -1));
-//		if (ret != 0)
-//			return ret;
-//		if (l1 > l2)
-//			return 1;
-//		if (l1 <= l2)
-//			return -1;
-//		return 0;
-//	}
-//}
-	
+
+	public int binarySearch(List<T> src, T des, Comparator<T> cmp) {
+		int low = 0;
+		int high = src.size() - 1;
+		while (low <= high) {
+			int middle = (low + high) / 2;
+			int result = cmp.compare(des, src.get(middle));
+			if (result == 0) {
+				return middle;
+			} else if (result < 0) {
+				high = middle - 1;
+			} else {
+				low = middle + 1;
+			}
+		}
+		return -1;
+	}
+
 }
