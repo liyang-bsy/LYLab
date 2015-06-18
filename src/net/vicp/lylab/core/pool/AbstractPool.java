@@ -96,11 +96,19 @@ public abstract class AbstractPool<T> implements Pool<T> {
 					if (idIndicator == Long.MAX_VALUE)
 						idIndicator = 0L;
 					savedId = idIndicator;
-					try {
-						((BaseObject) t).setObjectId(savedId.longValue());
-					} catch (Exception e) { }
-					availableContainer.put(savedId, t);
-					idIndicator++;
+					if(((BaseObject) t).getObjectId() == null)
+					{
+						try {
+							((BaseObject) t).setObjectId(idIndicator.longValue());
+						} catch (Exception e) { }
+						availableContainer.put(idIndicator, t);
+						idIndicator++;
+					}
+					else
+					{
+						availableContainer.put(((BaseObject) t).getObjectId(), t);
+						savedId = ((BaseObject) t).getObjectId();
+					}
 					break;
 				}
 			}
