@@ -7,6 +7,6 @@ package net.vicp.lylab.core.pool;
  * 超时回收池
  *
  */
-public abstract class TimeoutControlPool<T> extends RecyclePool<T> {
+public abstract class TimeoutControlPool<T> { //extends RecyclePool<T> {
 
 }

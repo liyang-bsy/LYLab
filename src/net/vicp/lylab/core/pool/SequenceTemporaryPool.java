@@ -13,7 +13,15 @@ import java.util.List;
  */
 public class SequenceTemporaryPool<T> extends SequencePool<T> {
 
-	public synchronized T viewOne(Long objId) {
+	public SequenceTemporaryPool() {
+		this(DEFAULT_MAX_SIZE);
+	}
+
+	public SequenceTemporaryPool(Integer maxSize) {
+		super(maxSize);
+	}
+	
+	public T viewOne(Long objId) {
 		safeCheck();
 		T tmp = null;
 		try {
@@ -25,12 +33,12 @@ public class SequenceTemporaryPool<T> extends SequencePool<T> {
 	@Override
 	public synchronized T accessOne() {
 		safeCheck();
-		if (keyList.isEmpty())
+		if (keyContainer.isEmpty())
 			return null;
 		T tmp = null;
-		Long key = keyList.get(0);
+		Long key = keyContainer.get(0);
 		tmp = removeFromContainer(key);
-		keyList.remove(0);
+		keyContainer.remove(0);
 		return tmp;
 	}
 
@@ -38,7 +46,7 @@ public class SequenceTemporaryPool<T> extends SequencePool<T> {
 	public synchronized List<T> accessMany(Integer amount) {
 		safeCheck();
 		List<T> retList = new ArrayList<T>();
-		Iterator<Long> iterator = keyList.iterator();
+		Iterator<Long> iterator = keyContainer.iterator();
 		for (int i = 0; !iterator.hasNext() && i < amount; i++) {
 			retList.add(removeFromContainer(iterator.next()));
 			iterator.remove();

@@ -3,10 +3,6 @@ package net.vicp.lylab.core.pool;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDefine;
@@ -20,22 +16,21 @@ import net.vicp.lylab.core.LYException;
  *
  */
 public abstract class AbstractPool<T> implements Pool<T> {
-
-	protected Lock lock = new ReentrantLock(true);
-	protected Condition full = lock.newCondition();
+//	protected Lock lock = new ReentrantLock(true);
+//	protected Condition full = lock.newCondition();
 
 	private Map<Long, T> availableContainer;
 	protected Long idIndicator = 0L;
-	public static final Integer DEFAULT_maxSize = 16;
+	public static final Integer DEFAULT_MAX_SIZE = 50;
 	public Integer maxSize;
 
 	public AbstractPool() {
-		this(DEFAULT_maxSize);
+		this(DEFAULT_MAX_SIZE);
 	}
 
 	public AbstractPool(Integer maxSize) {
-		this.maxSize = (maxSize != null && maxSize > 0)? maxSize : DEFAULT_maxSize;
-		availableContainer = new ConcurrentHashMap<Long, T>();
+		this.maxSize = (maxSize != null && maxSize > 0)? maxSize : DEFAULT_MAX_SIZE;
+		this.availableContainer = new ConcurrentHashMap<Long, T>();
 	}
 	
 	@Override
@@ -50,15 +45,10 @@ public abstract class AbstractPool<T> implements Pool<T> {
     }
 
 	@Override
-	public void close() {
-		try {
-			lock.lock();
-			if (availableContainer != null)
-				availableContainer.clear();
-			availableContainer = null;
-		} finally {
-			lock.unlock();
-		}
+	public synchronized void close() {
+		if (availableContainer != null)
+			availableContainer.clear();
+		availableContainer = null;
 	}
 
 	@Override
@@ -67,87 +57,52 @@ public abstract class AbstractPool<T> implements Pool<T> {
 	}
 
 	@Override
-	public void clear() {
-		try {
-			if (isClosed())
-				throw new LYException("This pool is already closed");
-			lock.lock();
-			availableContainer.clear();
-		} finally {
-			lock.unlock();
-		}
+	public synchronized void clear() {
+		if (isClosed())
+			throw new LYException("This pool is already closed");
+		availableContainer.clear();
+		this.notifyAll();
 	}
 
 	protected T getFromContainer(Long objId) {
 		if (isClosed() || objId == null)
 			return null;
-		try {
-			if (lock.tryLock(CoreDefine.waitingThreshold, TimeUnit.MILLISECONDS)) {
-				try {
-					T tmp = availableContainer.get(objId);
-					return tmp;
-				} finally {
-					lock.unlock();
-				}
-			}
-		} catch (InterruptedException e) {
-			throw new LYException("Lock interrupted", e);
-		}
-		return null;
+		return availableContainer.get(objId);
 	}
 
-	protected T removeFromContainer(Long objId) {
+	protected synchronized T removeFromContainer(Long objId) {
 		if (isClosed() || objId == null)
 			return null;
-		try {
-			if (lock.tryLock(CoreDefine.waitingThreshold, TimeUnit.MILLISECONDS)) {
-				try {
-					T tmp = availableContainer.remove(objId);
-					full.signalAll();
-					return tmp;
-				} finally {
-					lock.unlock();
-				}
-			}
-		} catch (InterruptedException e) {
-			throw new LYException("Lock interrupted", e);
-		}
-		return null;
+		T tmp = availableContainer.remove(objId);
+		this.notifyAll();
+		return tmp;
 	}
-
+	
 	protected Long addToContainer(T t) {
 		Long savedId = null;
 		if(t instanceof BaseObject)
 		{
-			try {
-				while (!isClosed() && lock.tryLock(CoreDefine.waitingThreshold, TimeUnit.MILLISECONDS)) {
+			while (!isClosed()) {
+				Integer size = size();
+				if (size >= maxSize) {
 					try {
-						Integer size = size();
-						if (size >= maxSize) {
-							try {
-								full.await(CoreDefine.waitingThreshold, TimeUnit.MILLISECONDS);
-								continue;
-							} catch (InterruptedException e) {
-								throw new LYException("Await interrupted", e);
-							}
-						}
-						if (size <= maxSize && size >= 0) {
-							if (idIndicator == Long.MAX_VALUE)
-								idIndicator = 0L;
-							savedId = idIndicator;
-							try {
-								((BaseObject) t).setObjectId(savedId.longValue());
-							} catch (Exception e) { }
-							availableContainer.put(savedId, t);
-							idIndicator++;
-							break;
-						}
-					} finally {
-						lock.unlock();
+						this.wait(CoreDefine.waitingThreshold);
+						continue;
+					} catch (InterruptedException e) {
+						throw new LYException("Wait interrupted", e);
 					}
 				}
-			} catch (InterruptedException e) {
-				throw new LYException("Lock interrupted", e);
+				if (size <= maxSize && size >= 0) {
+					if (idIndicator == Long.MAX_VALUE)
+						idIndicator = 0L;
+					savedId = idIndicator;
+					try {
+						((BaseObject) t).setObjectId(savedId.longValue());
+					} catch (Exception e) { }
+					availableContainer.put(savedId, t);
+					idIndicator++;
+					break;
+				}
 			}
 		}
 		return savedId;

@@ -1,9 +1,11 @@
 package net.vicp.lylab.core.pool;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
@@ -13,17 +15,26 @@ import java.util.WeakHashMap;
  * 回收池
  *
  */
-public abstract class RecyclePool<T> extends SeparatedPool<T> {
-	private List<Long> keyList = new LinkedList<Long>();
+public class RecyclePool<T> extends SeparatedPool<T> {
+	private Set<Long> keySet = new HashSet<Long>();
 
 	public RecyclePool()
 	{
-		super(new WeakHashMap<Long, T>());
+		this(new WeakHashMap<Long, T>(), DEFAULT_MAX_SIZE);
 	}
 	
 	public RecyclePool(Integer maxSize)
 	{
+		this(new WeakHashMap<Long, T>(), maxSize);
+	}
+	
+	public RecyclePool(Map<Long, T> container, Integer maxSize)
+	{
 		super(new WeakHashMap<Long, T>(), maxSize);
+	}
+
+	public synchronized boolean recycle(Long objId) {
+		return takeBack(objId);
 	}
 
 	@Override
@@ -32,10 +43,12 @@ public abstract class RecyclePool<T> extends SeparatedPool<T> {
 	}
 
 	public synchronized Long add(Integer index, T t) {
+		if (keySet.size() >= maxSize)
+			return null;
 		Long id = null;
 		id = addToContainer(t);
 		if(id != null && id >= 0)
-			keyList.add(index, id);
+			keySet.add(id);
 		return id;
 	}
 
@@ -46,14 +59,11 @@ public abstract class RecyclePool<T> extends SeparatedPool<T> {
 	}
 	
 	public synchronized T accessOne(boolean available) {
-		if (keyList.isEmpty())
+		if (keySet.isEmpty())
 			return null;
 		T tmp = null;
 		try {
-			Long key = keyList.get(0);
-			if(available) tmp = getFromAvailableContainer(key);
-			else tmp = getFromBusyContainer(key);
-			keyList.remove(0);
+			if(available) tmp = getFromAvailableContainer();
 		} catch (Exception e) { }
 		return tmp;
 	}
@@ -66,7 +76,7 @@ public abstract class RecyclePool<T> extends SeparatedPool<T> {
 
 	public synchronized List<T> accessMany(Integer amount, boolean available) {
 		List<T> retList = new ArrayList<T>();
-		Iterator<Long> iterator = keyList.iterator();
+		Iterator<Long> iterator = keySet.iterator();
 		for (int i = 0; !iterator.hasNext() && i < amount; i++) {
 			try {
 				Long key = iterator.next();
@@ -80,6 +90,42 @@ public abstract class RecyclePool<T> extends SeparatedPool<T> {
 			}
 		}
 		return retList;
+	}
+	
+	@Override
+	public Iterator<T> iterator() {
+		return new RecyclePoolIterator(keySet.iterator());
+	}
+
+	class RecyclePoolIterator implements Iterator<T> {
+		private Iterator<Long> iterator;
+		private Long lastId;
+
+		public RecyclePoolIterator(Iterator<Long> iterator) {
+			this.iterator = iterator;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return iterator.hasNext();
+		}
+
+		@Override
+		public T next() {
+			lastId = iterator.next();
+			T tmp = getFromContainer(lastId);
+			if(tmp == null)
+				tmp = getFromBusyContainer(lastId);
+			return tmp;
+		}
+
+		@Override
+		public void remove() {
+			if (lastId == null)
+				return;
+			iterator.remove();
+			RecyclePool.this.remove(lastId);
+		}
 	}
 
 }

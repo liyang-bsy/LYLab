@@ -2,9 +2,7 @@ package net.vicp.lylab.core.pool;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.LYException;
 
 /**
@@ -18,7 +16,7 @@ public abstract class SeparatedPool<T> extends AbstractPool<T> {
 	protected Map<Long, T> busyContainer;
 
 	public SeparatedPool(Map<Long, T> container) {
-		this(container, DEFAULT_maxSize);
+		this(container, DEFAULT_MAX_SIZE);
 	}
 
 	public SeparatedPool(Map<Long, T> container, Integer maxSize) {
@@ -48,118 +46,70 @@ public abstract class SeparatedPool<T> extends AbstractPool<T> {
 	}
 
 	@Override
-	public boolean isClosed() {
+	public synchronized boolean isClosed() {
 		return (busyContainer == null || super.isClosed());
 	}
 
 	@Override
-	public void clear() {
-		try {
-			if (isClosed())
-				throw new LYException("This pool is already closed");
-			lock.lock();
-			busyContainer.clear();
-			super.clear();
-			full.signalAll();
-		} finally {
-			lock.unlock();
-		}
+	public synchronized void clear() {
+		if (isClosed())
+			throw new LYException("This pool is already closed");
+		busyContainer.clear();
+		super.clear();
 	}
 
-	public boolean recycle(Long objId) {
-		if (lock.tryLock()) {
-			try {
-				T tmp = busyContainer.remove(objId);
-				if(tmp != null)
-				{
-					addToContainer(tmp);
-					return true;
-				}
-			} finally {
-				lock.unlock();
-			}
+	public synchronized boolean takeBack(Long objId) {
+		if (isClosed() || objId == null)
+			return false;
+		T tmp = busyContainer.remove(objId);
+		if(tmp != null)
+		{
+			addToContainer(tmp);
+			return true;
 		}
 		return false;
 	}
 
 	@Override
-	public T remove(Long objId) {
+	public synchronized T remove(Long objId) {
 		if (isClosed() || objId == null)
 			return null;
-		try {
-			if (lock.tryLock(CoreDefine.waitingThreshold, TimeUnit.MILLISECONDS)) {
-				try {
-					T tmp = removeFromContainer(objId);
-					if(tmp == null)
-						tmp = busyContainer.remove(objId);
-					full.signalAll();
-					return tmp;
-				} finally {
-					lock.unlock();
-				}
-			}
-		} catch (InterruptedException e) {
-			throw new LYException("Lock interrupted", e);
-		}
-		return null;
+		T tmp = removeFromContainer(objId);
+		// unless timeout, a busy item which shouldn't be removed.
+//		if(tmp == null)
+//			tmp = busyContainer.remove(objId);
+		return tmp;
 	}
 
 	protected int availableSize() {
 		return super.size();
 	}
 
-	protected T getFromAvailableContainer() {
-		try {
-			if (lock.tryLock(CoreDefine.waitingThreshold, TimeUnit.MILLISECONDS)) {
-				Long objId = availableKeySet().iterator().next();
-				return getFromAvailableContainer(objId);
-			}
-		} catch (InterruptedException e) {
-			throw new LYException("Lock interrupted", e);
-		}
-		return null;
+	protected synchronized T getFromAvailableContainer() {
+		Long objId = availableKeySet().iterator().next();
+		return getFromAvailableContainer(objId);
 	}
 	
-	protected T getFromAvailableContainer(Long objId) {
+	protected synchronized T getFromAvailableContainer(Long objId) {
 		if (isClosed() || objId == null)
 			return null;
 		if (availableSize() > 0)
 		{
-			try {
-				if (lock.tryLock(CoreDefine.waitingThreshold, TimeUnit.MILLISECONDS)) {
-					try {
-						T tmp = removeFromContainer(objId);
-						if (tmp != null)
-							busyContainer.put(objId, tmp);
-						return tmp;
-					} finally {
-						lock.unlock();
-					}
-				}
-			} catch (InterruptedException e) {
-				throw new LYException("Lock interrupted", e);
-			}
+			T tmp = removeFromContainer(objId);
+			if (tmp != null)
+				busyContainer.put(objId, tmp);
+			return tmp;
 		}
 		return null;
 	}
 	
-	protected T getFromBusyContainer(Long objId) {
+	protected synchronized T getFromBusyContainer(Long objId) {
 		if (isClosed() || objId == null)
 			return null;
 		if (busyContainer.size() > 0)
 		{
-			try {
-				if (lock.tryLock(CoreDefine.waitingThreshold, TimeUnit.MILLISECONDS)) {
-					try {
-						T tmp = busyContainer.get(objId);
-						return tmp;
-					} finally {
-						lock.unlock();
-					}
-				}
-			} catch (InterruptedException e) {
-				throw new LYException("Lock interrupted", e);
-			}
+			T tmp = busyContainer.get(objId);
+			return tmp;
 		}
 		return null;
 	}

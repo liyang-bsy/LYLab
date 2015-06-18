@@ -15,28 +15,36 @@ import net.vicp.lylab.core.LYError;
  *
  */
 public class SequencePool<T> extends AbstractPool<T> {
-	protected List<Long> keyList = new LinkedList<Long>();
+	protected List<Long> keyContainer = new LinkedList<Long>();
+
+	public SequencePool() {
+		this(DEFAULT_MAX_SIZE);
+	}
+
+	public SequencePool(Integer maxSize) {
+		super(maxSize);
+	}
 
 	@Override
-	public synchronized Long add(T t) {
+	public Long add(T t) {
 		return add(0, t);
 	}
-	
+
 	public synchronized Long add(Integer index, T t) {
 		Long id = null;
 		id = addToContainer(t);
 		if(id != null && id >= 0)
-			keyList.add(index, id);
+			keyContainer.add(index, id);
 		return id;
 	}
 
 	@Override
 	public synchronized T remove(Long objId) {
 		safeCheck();
-		if (keyList.isEmpty())
+		if (keyContainer.isEmpty())
 			return null;
 		T tmp = removeFromContainer(objId);
-		Iterator<Long> iterator = keyList.iterator();
+		Iterator<Long> iterator = keyContainer.iterator();
 		while(iterator.hasNext())
 		{
 			if(!iterator.next().equals(objId))
@@ -50,12 +58,12 @@ public class SequencePool<T> extends AbstractPool<T> {
 	@Override
 	public synchronized T accessOne() {
 		safeCheck();
-		if (keyList.isEmpty())
+		if (keyContainer.isEmpty())
 			return null;
 		T tmp = null;
-		Long key = keyList.get(0);
+		Long key = keyContainer.get(0);
 		tmp = getFromContainer(key);
-		keyList.remove(0);
+		keyContainer.remove(0);
 		return tmp;
 	}
 
@@ -63,7 +71,7 @@ public class SequencePool<T> extends AbstractPool<T> {
 	public synchronized List<T> accessMany(Integer amount) {
 		safeCheck();
 		List<T> retList = new ArrayList<T>();
-		Iterator<Long> iterator = keyList.iterator();
+		Iterator<Long> iterator = keyContainer.iterator();
 		for (int i = 0; !iterator.hasNext() && i < amount; i++) {
 			retList.add(getFromContainer(iterator.next()));
 			iterator.remove();
@@ -75,30 +83,30 @@ public class SequencePool<T> extends AbstractPool<T> {
 	public synchronized void clear() {
 		if(!isClosed())
 		{
-			keyList.clear();
+			keyContainer.clear();
 			super.clear();
 		}
 	}
 
 	@Override
 	public synchronized void close() {
-		if (keyList != null)
-			keyList.clear();
-		keyList = null;
+		if (keyContainer != null)
+			keyContainer.clear();
+		keyContainer = null;
 		super.close();
 	}
 
-	protected void safeCheck()
+	protected synchronized void safeCheck()
 	{
-		if(keyList.size() != size())
+		if(keyContainer.size() != size())
 			throw new LYError("Pool maintainence failed! To continue use, please clear before next use"
-					+ "\nkey list size is:" + keyList.size()
+					+ "\nkey list size is:" + keyContainer.size()
 					+ "\ncontainer size is:" + size());
 	}
 
 	@Override
 	public Iterator<T> iterator() {
-		return new SequencePoolIterator(keyList.iterator());
+		return new SequencePoolIterator(keyContainer.iterator());
 	}
 
 	class SequencePoolIterator implements Iterator<T> {
