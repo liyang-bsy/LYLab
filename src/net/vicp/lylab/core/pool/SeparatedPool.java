@@ -39,58 +39,68 @@ public abstract class SeparatedPool<T> extends AbstractPool<T> {
 
 	@Override
 	public void close() {
-		if (busyContainer != null)
-			busyContainer.clear();
-		busyContainer = null;
-		super.close();
-	}
-
-	@Override
-	public synchronized boolean isClosed() {
-		return (busyContainer == null || super.isClosed());
-	}
-
-	@Override
-	public synchronized void clear() {
-		if (isClosed())
-			throw new LYException("This pool is already closed");
-		busyContainer.clear();
-		super.clear();
-	}
-
-	public synchronized boolean takeBack(Long objId) {
-		if (isClosed() || objId == null)
-			return false;
-		T tmp = busyContainer.remove(objId);
-		if(tmp != null)
-		{
-			addToContainer(tmp);
-			return true;
+		synchronized (lock) {
+			if (busyContainer != null)
+				busyContainer.clear();
+			busyContainer = null;
+			super.close();
 		}
-		return false;
+	}
+
+	@Override
+	public boolean isClosed() {
+		synchronized (lock) {
+			return (busyContainer == null || super.isClosed());
+		}
+	}
+
+	@Override
+	public void clear() {
+		synchronized (lock) {
+			if (isClosed())
+				throw new LYException("This pool is already closed");
+			busyContainer.clear();
+			super.clear();
+		}
+	}
+
+	public boolean takeBack(Long objId) {
+		synchronized (lock) {
+			if (isClosed() || objId == null)
+				return false;
+			T tmp = busyContainer.remove(objId);
+			if(tmp != null)
+			{
+				addToContainer(tmp);
+				return true;
+			}
+			return false;
+		}
 	}
 
 	@Override
 	public synchronized T remove(Long objId) {
-		if (isClosed() || objId == null)
-			return null;
-		T tmp = removeFromContainer(objId);
-		// unless timeout, a busy item which shouldn't be removed.
-//		if(tmp == null)
-//			tmp = busyContainer.remove(objId);
-		return tmp;
+		synchronized (lock) {
+			if (isClosed() || objId == null)
+				return null;
+			T tmp = removeFromContainer(objId);
+			// unless timeout, a busy item which shouldn't be removed.
+//			if(tmp == null)
+//				tmp = busyContainer.remove(objId);
+			return tmp;
+		}
 	}
 
 	protected int availableSize() {
 		return super.size();
 	}
 
-	protected synchronized T getFromAvailableContainer() {
+	protected T getFromAvailableContainer() {
 		Long objId = availableKeySet().iterator().next();
 		return getFromAvailableContainer(objId);
 	}
 	
-	protected synchronized T getFromAvailableContainer(Long objId) {
+	protected T getFromAvailableContainer(Long objId) {
 		if (isClosed() || objId == null)
 			return null;
 		if (availableSize() > 0)
@@ -103,7 +113,7 @@ public abstract class SeparatedPool<T> extends AbstractPool<T> {
 		return null;
 	}
 	
-	protected synchronized T getFromBusyContainer(Long objId) {
+	protected T getFromBusyContainer(Long objId) {
 		if (isClosed() || objId == null)
 			return null;
 		if (busyContainer.size() > 0)

@@ -6,8 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
-import net.vicp.lylab.core.LYError;
-
 /**
  * 
  * @author liyang
@@ -16,7 +14,7 @@ import net.vicp.lylab.core.LYError;
  *
  */
 public class SequencePool<T> extends AbstractPool<T> {
-	protected List<Long> keyContainer = new LinkedList<Long>();
+	protected volatile List<Long> keyContainer = new LinkedList<Long>();
 
 	public SequencePool() {
 		this(DEFAULT_MAX_SIZE);
@@ -31,77 +29,100 @@ public class SequencePool<T> extends AbstractPool<T> {
 		return add(0, t);
 	}
 
-	public synchronized Long add(Integer index, T t) {
-		safeCheck();
-		Long id = null;
-		id = addToContainer(t);
-		if(id != null && id >= 0)
-			keyContainer.add(index, id);
-		return id;
-	}
-
-	@Override
-	public synchronized T remove(Long objId) {
-		safeCheck();
-		if (keyContainer.isEmpty())
-			return null;
-		T tmp = removeFromContainer(objId);
-		Iterator<Long> iterator = keyContainer.iterator();
-		while(iterator.hasNext())
-		{
-			if(!iterator.next().equals(objId))
-				continue;
-			iterator.remove();
-			break;
-		}
-		return tmp;
-	}
-
-	@Override
-	public synchronized T accessOne() {
-		safeCheck();
-		if (keyContainer.isEmpty())
-			return null;
-		T tmp = null;
-		Long key = keyContainer.get(0);
-		tmp = getFromContainer(key);
-		return tmp;
-	}
-
-	@Override
-	public synchronized List<T> accessMany(Integer amount) {
-		safeCheck();
-		List<T> retList = new ArrayList<T>();
-		Iterator<Long> iterator = keyContainer.iterator();
-		for (int i = 0; !iterator.hasNext() && i < amount; i++) {
-			retList.add(getFromContainer(iterator.next()));
-		}
-		return retList;
-	}
-
-	@Override
-	public synchronized void clear() {
-		if(!isClosed())
-		{
-			keyContainer.clear();
-			super.clear();
+	public Long add(Integer index, T t) {
+		synchronized (lock) {
+			safeCheck();
+			Long id = null;
+			id = addToContainer(t);
+			if(id != null && id >= 0)
+				keyContainer.add(index, id);
+			return id;
 		}
 	}
 
 	@Override
-	public synchronized void close() {
-		if (keyContainer != null)
-			keyContainer.clear();
-		keyContainer = null;
-		super.close();
+	public T remove(Long objId) {
+		synchronized (lock) {
+			safeCheck();
+			if (keyContainer.isEmpty())
+				return null;
+			T tmp = removeFromContainer(objId);
+			Iterator<Long> iterator = keyContainer.iterator();
+			while(iterator.hasNext())
+			{
+				if(!iterator.next().equals(objId))
+					continue;
+				iterator.remove();
+				break;
+			}
+			return tmp;
+		}
 	}
 
-	protected synchronized void safeCheck()
+	@Override
+	public T accessOne() {
+		synchronized (lock) {
+			safeCheck();
+			if (keyContainer.isEmpty())
+				return null;
+			T tmp = null;
+			Long key = null;
+			try {
+				key = keyContainer.get(0);
+			} catch (Exception e) {
+				System.out.println(keyContainer.isEmpty());
+				e.printStackTrace();
+			}
+			tmp = getFromContainer(key);
+			return tmp;
+		}
+	}
+
+	@Override
+	public List<T> accessMany(Integer amount) {
+		synchronized (lock) {
+			safeCheck();
+			List<T> retList = new ArrayList<T>();
+			Iterator<Long> iterator = keyContainer.iterator();
+			for (int i = 0; !iterator.hasNext() && i < amount; i++) {
+				retList.add(getFromContainer(iterator.next()));
+			}
+			return retList;
+		}
+	}
+
+	@Override
+	public void clear() {
+		synchronized (lock) {
+			if(!isClosed())
+			{
+				keyContainer.clear();
+				super.clear();
+			}
+		}
+	}
+
+	@Override
+	public void close() {
+		synchronized (lock) {
+			if (keyContainer != null)
+				keyContainer.clear();
+			keyContainer = null;
+			super.close();
+		}
+	}
+
+	protected void safeCheck()
 	{
-		if(keyContainer.size() != size())
-			throw new LYError("Pool maintainence failed! To continue use, please clear before next use"
-					+ "\nkey list size is:" + keyContainer.size()
-					+ "\ncontainer size is:" + size());
+		synchronized (lock) {
+			if(keyContainer.size() == size())
+				return;
+			keyContainer.clear();
+			keyContainer.addAll(availableKeySet());
+//			throw new LYError("Pool maintainence failed! To continue use, please clear before next use"
+//					+ "\nkey list size is:" + keyContainer.size()
+//					+ "\ncontainer size is:" + size());
+		}
 	}
 
 	@Override
@@ -132,8 +153,10 @@ public class SequencePool<T> extends AbstractPool<T> {
 		public void remove() {
 			if (lastId == null)
 				return;
-			iterator.remove();
-			removeFromContainer(lastId);
+			synchronized (lock) {
+				iterator.remove();
+				SequencePool.this.remove(lastId);
+			}
 		}
 	}
 }

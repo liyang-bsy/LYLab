@@ -19,6 +19,9 @@ public abstract class AbstractPool<T> implements Pool<T> {
 //	protected Lock lock = new ReentrantLock(true);
 //	protected Condition full = lock.newCondition();
 
+	static class Lock extends BaseObject { };
+	protected Lock lock = new Lock();
+	
 	private Map<Long, T> availableContainer;
 	protected Long idIndicator = 0L;
 	public static final Integer DEFAULT_MAX_SIZE = 50;
@@ -35,7 +38,9 @@ public abstract class AbstractPool<T> implements Pool<T> {
 	
 	@Override
 	public int size() {
-		return availableContainer.size();
+		synchronized (lock) {
+			return availableContainer.size();
+		}
 	}
 	
 	@Override
@@ -45,10 +50,12 @@ public abstract class AbstractPool<T> implements Pool<T> {
     }
 
 	@Override
-	public synchronized void close() {
-		if (availableContainer != null)
-			availableContainer.clear();
-		availableContainer = null;
+	public void close() {
+		synchronized (lock) {
+			if (availableContainer != null)
+				availableContainer.clear();
+			availableContainer = null;
+		}
 	}
 
 	@Override
@@ -57,11 +64,13 @@ public abstract class AbstractPool<T> implements Pool<T> {
 	}
 
 	@Override
-	public synchronized void clear() {
-		if (isClosed())
-			throw new LYException("This pool is already closed");
-		availableContainer.clear();
-		this.notifyAll();
+	public void clear() {
+		synchronized (lock) {
+			if (isClosed())
+				throw new LYException("This pool is already closed");
+			availableContainer.clear();
+			this.notifyAll();
+		}
 	}
 
 	protected T getFromContainer(Long objId) {
@@ -70,11 +79,11 @@ public abstract class AbstractPool<T> implements Pool<T> {
 		return availableContainer.get(objId);
 	}
 
-	protected synchronized T removeFromContainer(Long objId) {
+	protected T removeFromContainer(Long objId) {
 		if (isClosed() || objId == null)
 			return null;
 		T tmp = availableContainer.remove(objId);
-		this.notifyAll();
+		lock.notifyAll();
 		return tmp;
 	}
 	
@@ -86,7 +95,7 @@ public abstract class AbstractPool<T> implements Pool<T> {
 				Integer size = size();
 				if (size >= maxSize) {
 					try {
-						this.wait(CoreDefine.waitingThreshold);
+						lock.wait(CoreDefine.waitingThreshold);
 						continue;
 					} catch (InterruptedException e) {
 						throw new LYException("Wait interrupted", e);
@@ -119,6 +128,14 @@ public abstract class AbstractPool<T> implements Pool<T> {
 	public Set<Long> availableKeySet()
 	{
 		return availableContainer.keySet();
+	}
+
+	public Integer getMaxSize() {
+		return maxSize;
+	}
+
+	public void setMaxSize(Integer maxSize) {
+		this.maxSize = maxSize;
 	}
 
 }
