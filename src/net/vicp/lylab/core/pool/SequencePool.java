@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 
 import net.vicp.lylab.core.LYError;
 
@@ -31,6 +32,7 @@ public class SequencePool<T> extends AbstractPool<T> {
 	}
 
 	public synchronized Long add(Integer index, T t) {
+		safeCheck();
 		Long id = null;
 		id = addToContainer(t);
 		if(id != null && id >= 0)
@@ -63,7 +65,6 @@ public class SequencePool<T> extends AbstractPool<T> {
 		T tmp = null;
 		Long key = keyContainer.get(0);
 		tmp = getFromContainer(key);
-		keyContainer.remove(0);
 		return tmp;
 	}
 
@@ -74,7 +75,6 @@ public class SequencePool<T> extends AbstractPool<T> {
 		Iterator<Long> iterator = keyContainer.iterator();
 		for (int i = 0; !iterator.hasNext() && i < amount; i++) {
 			retList.add(getFromContainer(iterator.next()));
-			iterator.remove();
 		}
 		return retList;
 	}
@@ -106,25 +106,25 @@ public class SequencePool<T> extends AbstractPool<T> {
 
 	@Override
 	public Iterator<T> iterator() {
-		return new SequencePoolIterator(keyContainer.iterator());
+		return new SequencePoolIterator(((LinkedList<Long>) keyContainer).listIterator(keyContainer.size()));
 	}
 
 	class SequencePoolIterator implements Iterator<T> {
-		private Iterator<Long> iterator;
+		private ListIterator<Long> iterator;
 		private Long lastId;
 
-		public SequencePoolIterator(Iterator<Long> iterator) {
+		public SequencePoolIterator(ListIterator<Long> iterator) {
 			this.iterator = iterator;
 		}
 
 		@Override
 		public boolean hasNext() {
-			return iterator.hasNext();
+			return iterator.hasPrevious();
 		}
 
 		@Override
 		public T next() {
-			lastId = iterator.next();
+			lastId = iterator.previous();
 			return getFromContainer(lastId);
 		}
 
