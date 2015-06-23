@@ -2,9 +2,13 @@ package net.vicp.lylab.utils.tq;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import net.vicp.lylab.core.CloneableBaseObject;
+import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.Executor;
+import net.vicp.lylab.core.LYException;
+import net.vicp.lylab.utils.Utils;
 
 /**
  * 	Extends Task and reference to TaskQueue(manage class).<br>
@@ -17,7 +21,7 @@ import net.vicp.lylab.core.Executor;
  * @version 1.0.1
  * 
  */
-public abstract class Task implements Runnable, Executor, Cloneable, Serializable {
+public abstract class Task extends CloneableBaseObject implements Runnable, Executor, Serializable {
 
 	private static final long serialVersionUID = -505125638835928043L;
 	/**
@@ -30,8 +34,7 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 	protected volatile Integer retryCount = 0;
 	protected Thread thread;
 	
-	protected Long taskId;
-	protected volatile Integer state;
+	protected volatile AtomicInteger state = new AtomicInteger(0);
 	protected Date startTime;
 	
 	static public Long DEFAULTTIMEOUT = 60*60*1000L;			// 1 hour
@@ -48,8 +51,7 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 		thread = null;
 		startTime = null;
 		timeout = DEFAULTTIMEOUT;
-		taskId = null;
-		state = BEGAN;
+		state.set(BEGAN);
 	}
 	
 	public Object clone() throws CloneNotSupportedException {
@@ -61,27 +63,27 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 	 */
 	public final void run()
 	{
-		synchronized (state) {
-			if(state != BEGAN)
-				return;
-			state = STARTED;
-		}
 		try {
-			exec();
-			setState(COMPLETED);
-		} catch (Throwable e) {
-			e.printStackTrace();
-			setState(FAILED);
-		}
+			state.set(STARTED);
+			setStartTime(new Date());
+			try {
+				exec();
+			} catch (Throwable e) {
+				System.err.println(this.toString() +"\ncreated an error:\t" + Utils.getStringFromException(e));
+				setState(FAILED);
+			} finally {
+				if (state.get() == STARTED)
+					setState(COMPLETED);
+			}
 
-		synchronized (this) {
-			this.notifyAll();
-		}
-		try {
+			synchronized (this) {
+				this.notifyAll();
+			}
 			aftermath();
-			LYTaskQueue.taskEnded(getTaskId());
 		} catch (Throwable e) {
 			e.printStackTrace();
+		} finally {
+			LYTaskQueue.taskEnded(getTaskId());
 		}
 	}
 	
@@ -98,31 +100,43 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 	 * Alert! This function will block current thread!
 	 * The task is finished when this function is completed.
 	 * DO NOT use it with aftermath()
+	 * @throws InterruptedException 
 	 */
-	public final void waitingForFinish() {
-		synchronized (this)
-		{
-			while(state == STOPPED || state == BEGAN || state == STARTED)
-			{
-				try {
-					this.wait(LYTaskQueue.getWaitingThreshold());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
+	public synchronized final void waitingForFinish() throws InterruptedException {
+		while(!waitingForFinish(CoreDefine.waitingThreshold));
+	}
+	/**
+	 * Alert! This function will block current thread!
+	 * The task is finished when this function is completed.
+	 * DO NOT use it with aftermath()
+	 * @throws InterruptedException 
+	 */
+	public synchronized final boolean waitingForFinish(Long millionseconds) throws InterruptedException {
+		if(state.get() == STOPPED || state.get() == BEGAN || state.get() == STARTED)
+				this.wait(millionseconds);
+		if(state.get() == STOPPED || state.get() == BEGAN || state.get() == STARTED)
+			return false;
+		return true;
 	}
 	
 	public final synchronized void begin() {
-		this.setStartTime(new Date());
+		if(state.get() != BEGAN)
+			return;
 		Thread t = new Thread(this);
+		t.setName("Task(" + String.valueOf(getTaskId()) + ") - " + this.getClass().getSimpleName() + "");
 		this.setThread(t);
 		t.start();
 	}
 
 	public final synchronized void callStop() {
-		this.setState(STOPPED);
-		if(thread != null) thread.interrupt();
+		int oldState = state.getAndSet(CANCELLED);
+		if (oldState != COMPLETED) {
+			if (oldState != BEGAN)
+				state.set(STOPPED);
+			if (thread != null)
+				thread.interrupt();
+		} else
+			state.set(COMPLETED);
 	}
 
 	@Deprecated
@@ -132,8 +146,9 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 		}
 		if(thread != null)
 		{
-			getThread().stop(new TimeoutException());
+			getThread().stop(new LYException("Task " + getTaskId() + " timeout"));
 			LYTaskQueue.taskEnded(getTaskId());
+			thread = null;
 		}
 	}
 
@@ -142,22 +157,25 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 	}
 	
 	public final Long getTaskId() {
-		return taskId;
+		return getObjectId();
 	}
 
 	public final Task setTaskId(Long taskId) {
-		this.taskId = taskId;
+		this.setObjectId(taskId);
 		return this;
 	}
 
 	public Integer getState() {
-		return state;
+		return state.get();
 	}
-
-	public Task setState(Integer state) {
-		synchronized (this.state) {
-			this.state = state;
-		}
+	
+	public Task resetState() {
+		state.set(BEGAN);
+		return this;
+	}
+	
+	private Task setState(Integer state) {
+		this.state.set(state);
 		return this;
 	}
 
@@ -203,9 +221,12 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 	public String toString()
 	{
 		String sState = "UNKNOWN";
-		switch (state) {
-		case -2:
+		switch (state.get()) {
+		case -3:
 			sState = "STOPPED";
+			break;
+		case -2:
+			sState = "CANCELLED";
 			break;
 		case -1:
 			sState = "FAILED";
@@ -219,13 +240,10 @@ public abstract class Task implements Runnable, Executor, Cloneable, Serializabl
 		case 2:
 			sState = "COMPLETED";
 			break;
-		case 3:
-			sState = "CANCELLED";
-			break;
 		default:
 			break;
 		}
-		return "taskId=" + taskId + ",className=" + getClass().getName() + ",state=" + sState + ",startTime=" + startTime + ",timeout=" + timeout;
+		return "taskId=" + getTaskId() + ",className=" + getClass().getName() + ",state=" + sState + ",startTime=" + startTime + ",timeout=" + timeout;
 	}
 
 }

@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.vicp.lylab.core.LYException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -26,25 +28,24 @@ public final class WatchDog extends Task implements Runnable {
 	private List<Task> forewarnList;
 	@Override
 	public void exec() {
-		if(!init)
-		{
-			forewarnList = new ArrayList<Task>();
-			instance = this;
-			init = true;
-		}
-		if(isRunning)
-			return;
-		while(!getThread().isInterrupted())
-		{
-			if(isStopped()) break;
-			try {
+		try {
+			if (!init) {
+				forewarnList = new ArrayList<Task>();
+				instance = this;
+				init = true;
+			}
+			if (isRunning)
+				return;
+			while (!getThread().isInterrupted()) {
+				if (isStopped())
+					break;
 				Thread.sleep(interval);
 				getInstance().timeoutControl();
 			}
-			catch (InterruptedException e) { }
-			catch (Throwable e) {
-				e.printStackTrace();
-			}
+		} catch (InterruptedException e) {
+			throw new LYException("WatchDog is interrupted");
+		} finally {
+			isRunning = false;
 		}
 	}
 
@@ -55,7 +56,7 @@ public final class WatchDog extends Task implements Runnable {
 		for(Task task : LYTaskQueue.getThreadPool())
 		{
 			// skip WatchDog itself
-//			if(task instanceof WatchDog) continue;
+			if(task instanceof WatchDog) continue;
 			if(isStopped()) continue;
 			// -1L means infinite
 			if(task.getTimeout() == -1L || task.getState() == Task.COMPLETED || task.getState() == Task.FAILED)
@@ -70,9 +71,9 @@ public final class WatchDog extends Task implements Runnable {
 			task.forceStop();
 			if(task.getRetryCount() > 0)
 			{
-				log.error("Timeout task was killed, but this task requested retry:\n" + task.toString());
-				task.retryCount--;
-				task.setState(Task.BEGAN);
+				log.error("Timeout task was killed, but this task requested retry(" + task.getRetryCount() + "):\n" + task.toString());
+				task.setRetryCount(task.getRetryCount() - 1);
+				task.resetState();
 				LYTaskQueue.addTask(task);
 				forewarnList.add(task);
 			}
@@ -93,6 +94,13 @@ public final class WatchDog extends Task implements Runnable {
 		WatchDog.instance = instance;
 	}
 
+	@SuppressWarnings("deprecation")
+	public static void killAll() {
+		for(Task task : LYTaskQueue.getThreadPool())
+			task.forceStop();
+		getInstance().forceStop();
+	}
+
 	public static void stopWatchDog() {
 		getInstance().callStop();
 	}
@@ -111,6 +119,12 @@ public final class WatchDog extends Task implements Runnable {
 
 	public void setTolerance(Long tolerance) {
 		this.tolerance = tolerance;
+	}
+
+	public List<Task> getForewarnList() {
+		List<Task> tmp = forewarnList;
+		forewarnList = new ArrayList<Task>();
+		return tmp;
 	}
 	
 }
