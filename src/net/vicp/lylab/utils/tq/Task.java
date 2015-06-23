@@ -2,7 +2,6 @@ package net.vicp.lylab.utils.tq;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDefine;
@@ -34,24 +33,24 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	protected volatile Integer retryCount = 0;
 	protected Thread thread;
 	
-	protected volatile AtomicInteger state = new AtomicInteger(0);
+	protected volatile Integer state = new Integer(0);
 	protected Date startTime;
 	
 	static public Long DEFAULTTIMEOUT = 60*60*1000L;			// 1 hour
 	
-	static public final Integer STOPPED = -3;
-	static public final Integer CANCELLED = -2;
-	static public final Integer FAILED = -1;
-	static public final Integer BEGAN = 0;
-	static public final Integer STARTED = 1;
-	static public final Integer COMPLETED = 2;
+	static public final int STOPPED = -3;
+	static public final int CANCELLED = -2;
+	static public final int FAILED = -1;
+	static public final int BEGAN = 0;
+	static public final int STARTED = 1;
+	static public final int COMPLETED = 2;
 
 	public Task()
 	{
 		thread = null;
 		startTime = null;
 		timeout = DEFAULTTIMEOUT;
-		state.set(BEGAN);
+		state = BEGAN;
 	}
 	
 	public Object clone() throws CloneNotSupportedException {
@@ -64,15 +63,15 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	public final void run()
 	{
 		try {
-			state.set(STARTED);
+			state = STARTED;
 			setStartTime(new Date());
 			try {
 				exec();
 			} catch (Throwable e) {
-				System.err.println(this.toString() +"\ncreated an error:\t" + Utils.getStringFromException(e));
+				System.err.print(this.toString() +"\ncreated an error:\t" + Utils.getStringFromException(e));
 				setState(FAILED);
 			} finally {
-				if (state.get() == STARTED)
+				if (state.intValue() == STARTED)
 					setState(COMPLETED);
 			}
 
@@ -112,31 +111,46 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 * @throws InterruptedException 
 	 */
 	public synchronized final boolean waitingForFinish(Long millionseconds) throws InterruptedException {
-		if(state.get() == STOPPED || state.get() == BEGAN || state.get() == STARTED)
+		if(state.intValue() == STOPPED || state.intValue() == BEGAN || state.intValue() == STARTED)
 				this.wait(millionseconds);
-		if(state.get() == STOPPED || state.get() == BEGAN || state.get() == STARTED)
+		if(state.intValue() == STOPPED || state.intValue() == BEGAN || state.intValue() == STARTED)
 			return false;
 		return true;
 	}
 	
 	public final synchronized void begin() {
-		if(state.get() != BEGAN)
+		if(state.intValue() != BEGAN)
 			return;
 		Thread t = new Thread(this);
 		t.setName("Task(" + String.valueOf(getTaskId()) + ") - " + this.getClass().getSimpleName() + "");
 		this.setThread(t);
 		t.start();
 	}
-
+	
 	public final synchronized void callStop() {
-		int oldState = state.getAndSet(CANCELLED);
-		if (oldState != COMPLETED) {
-			if (oldState != BEGAN)
-				state.set(STOPPED);
-			if (thread != null)
-				thread.interrupt();
-		} else
-			state.set(COMPLETED);
+		switch (state.intValue()) {
+		case STOPPED:
+			state = STOPPED;
+			break;
+		case CANCELLED:
+			state = STOPPED;
+			break;
+		case FAILED:
+			state = STOPPED;
+			break;
+		case BEGAN:
+			state = CANCELLED;
+			break;
+		case STARTED:
+			state = STOPPED;
+			break;
+		case COMPLETED:
+			break;
+		default:
+			throw new LYException("Unknow state code: " + state);
+		}
+		if (thread != null)
+			thread.interrupt();
 	}
 
 	@Deprecated
@@ -166,16 +180,17 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	}
 
 	public Integer getState() {
-		return state.get();
+		return state.intValue();
 	}
 	
-	public Task resetState() {
-		state.set(BEGAN);
+	public Task reset() {
+		setObjectId(null);
+		state = BEGAN;
 		return this;
 	}
 	
 	private Task setState(Integer state) {
-		this.state.set(state);
+		this.state = state;
 		return this;
 	}
 
@@ -221,7 +236,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	public String toString()
 	{
 		String sState = "UNKNOWN";
-		switch (state.get()) {
+		switch (state.intValue()) {
 		case -3:
 			sState = "STOPPED";
 			break;

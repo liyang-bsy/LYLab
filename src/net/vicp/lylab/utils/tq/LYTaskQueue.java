@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,15 +27,15 @@ import net.vicp.lylab.utils.Utils;
  * @version 1.1.0
  * 
  */
-public final class LYTaskQueue extends Thread implements Runnable{
+public final class LYTaskQueue extends Thread {
 
 	protected static Log log = LogFactory.getLog(LYTaskQueue.class);
 	
 	private volatile static Boolean useWatchDog = false;
 	private static String permanentFileName = "lytaskqueue.bin";
 
-	private static AtomicBoolean isRunning = new AtomicBoolean(false);
-	private static AtomicBoolean isTerminated = new AtomicBoolean(false);
+	private static Boolean isRunning = new Boolean(false);
+	private static volatile boolean isTerminated = false;
 
 	private volatile static Long lastTaskId = 0L;
 	private volatile static Integer maxQueue = 1000;
@@ -46,19 +45,6 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	private static Pool<Task> threadPool = new SequencePool<Task>(maxThread);
 	
 	public static final Long DEFAULT_TERMINATE_TIMEOUT = 5*60*1000L;
-	
-	/**
-	 * Reserved entrance for multi-threaded. DO NOT call this method.
-	 */
-	@Override
-	public synchronized final void run() {
-		try {
-			execute();
-		} catch (Throwable e) {
-		} finally {
-			isRunning.set(false);
-		}
-	}
 
 	/**
 	 * At your service!
@@ -66,8 +52,10 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	 * task which should be executed, it will be cloned and its clone will be enqueued.
 	 * <br>[!] Original parameter 'task' will never be used or changed by LYTaskQueue.addTask(Task task)
 	 * @return
-	 * A taskId used to recognise specific task.
-	 * <br>If returns '-1', means LYTaskQueue was try to terminate itself. No more task will be accepted.
+	 * A non-negative taskId returns to recognize specific task.
+	 * <br>-1, means LYTaskQueue didn't obtain cloned task.
+	 * <br>-2, means LYTaskQueue was try to terminate itself. No more task will be accepted.
+	 * <br>-3, means LYTaskQueue couldn't add task into task pool.
 	 */
 	public synchronized static Long addTask(Task task)
 	{
@@ -76,14 +64,18 @@ public final class LYTaskQueue extends Thread implements Runnable{
 			task0 = (Task) task.clone();
 		} catch (CloneNotSupportedException e) { }
 		if(task0 == null)
-			return null;
-		while(!isTerminated.get())
+			return -1L;
+		if(isTerminated)
+			return -2L;
+		if((lastTaskId = taskPool.add(task0)) == null)
+			return -3L;
+		if(!isRunning)
 		{
-			if((lastTaskId = taskPool.add(task0)) != null) break;
+			isRunning = true;
+			Thread t = new LYTaskQueue();
+			t.setName("LYTaskQueue");
+			t.start();
 		}
-		if(lastTaskId == null) return -1L;
-		if(!isTerminated.get() && !isRunning.getAndSet(true))
-			new LYTaskQueue().start();
 		return task0.getTaskId();
 	}
 
@@ -95,7 +87,7 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	 * true: cancelled<br>false: cancel failed
 	 */
 	public synchronized static Boolean cancel(Long taskId) {
-		if(isTerminated.get() || taskId == null || taskId < 0L)
+		if(isTerminated || taskId == null || taskId < 0L)
 			return false;
 		if(lastTaskId < taskId)
 			return false;
@@ -114,7 +106,7 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	 * true: cancelled<br>false: cancel failed
 	 */
 	public synchronized static Boolean stop(Long taskId) {
-		if(isTerminated.get() || taskId == null || taskId < 0L)
+		if(isTerminated || taskId == null || taskId < 0L)
 			return false;
 		if(lastTaskId < taskId)
 			return false;
@@ -124,14 +116,22 @@ public final class LYTaskQueue extends Thread implements Runnable{
 		tk.callStop();
 		return true;
 	}
-	
-	private static void execute()
-	{
-		while(!isTerminated.get() && !taskPool.isEmpty())
-		{
-			Task task = taskPool.accessOne();
-			task.begin();
-			threadPool.add(task);
+
+	/**
+	 * Reserved entrance for multi-threaded. DO NOT call this method.
+	 */
+	@Override
+	public synchronized final void run() {
+		try {
+			while(!isTerminated && !taskPool.isEmpty())
+			{
+				Task task = taskPool.accessOne();
+				task.begin();
+				threadPool.add(task);
+			}
+		} catch (Throwable e) {
+		} finally {
+			isRunning = false;
 		}
 	}
 	
@@ -161,7 +161,7 @@ public final class LYTaskQueue extends Thread implements Runnable{
 			while(total-->0)
 			{
 				Task tk = (Task) ois.readObject();
-				tk.resetState();
+				tk.reset();
 				LYTaskQueue.addTask(tk);
 			}
 			ois.close();
@@ -181,7 +181,8 @@ public final class LYTaskQueue extends Thread implements Runnable{
 	}
 	
 	public static void terminate(Long timeout) {
-		if(LYTaskQueue.isTerminated.getAndSet(true)) return;
+		if(isTerminated) return;
+		isTerminated = true;
 		if(timeout == 0L) timeout = 1L;
 
 		synchronized (getThreadPool()) {
@@ -221,7 +222,7 @@ public final class LYTaskQueue extends Thread implements Runnable{
 		}
 	}
 
-	public static AtomicBoolean getIsTerminated() {
+	public static Boolean getIsTerminated() {
 		return isTerminated;
 	}
 
