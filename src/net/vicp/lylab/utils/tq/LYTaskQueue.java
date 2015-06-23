@@ -57,20 +57,18 @@ public final class LYTaskQueue extends Thread {
 	 * <br>-2, means LYTaskQueue was try to terminate itself. No more task will be accepted.
 	 * <br>-3, means LYTaskQueue couldn't add task into task pool.
 	 */
-	public synchronized static Long addTask(Task task)
-	{
+	public synchronized static Long addTask(Task task) {
 		Task task0 = null;
 		try {
 			task0 = (Task) task.clone();
 		} catch (CloneNotSupportedException e) { }
-		if(task0 == null)
+		if (task0 == null)
 			return -1L;
-		if(isTerminated)
+		if (isTerminated)
 			return -2L;
-		if((lastTaskId = taskPool.add(task0)) == null)
+		if ((lastTaskId = taskPool.add(task0)) == null)
 			return -3L;
-		if(!isRunning)
-		{
+		if (!isRunning) {
 			isRunning = true;
 			Thread t = new LYTaskQueue();
 			t.setName("LYTaskQueue");
@@ -87,9 +85,9 @@ public final class LYTaskQueue extends Thread {
 	 * true: cancelled<br>false: cancel failed
 	 */
 	public synchronized static Boolean cancel(Long taskId) {
-		if(isTerminated || taskId == null || taskId < 0L)
+		if (isTerminated || taskId == null || taskId < 0L)
 			return false;
-		if(lastTaskId < taskId)
+		if (lastTaskId < taskId)
 			return false;
 		Task tk = taskPool.remove(taskId);
 		if (tk == null || tk.getState() != Task.BEGAN)
@@ -106,12 +104,12 @@ public final class LYTaskQueue extends Thread {
 	 * true: cancelled<br>false: cancel failed
 	 */
 	public synchronized static Boolean stop(Long taskId) {
-		if(isTerminated || taskId == null || taskId < 0L)
+		if (isTerminated || taskId == null || taskId < 0L)
 			return false;
-		if(lastTaskId < taskId)
+		if (lastTaskId < taskId)
 			return false;
 		Task tk = taskPool.remove(taskId);
-		if(tk == null)
+		if (tk == null)
 			return false;
 		tk.callStop();
 		return true;
@@ -123,8 +121,7 @@ public final class LYTaskQueue extends Thread {
 	@Override
 	public synchronized final void run() {
 		try {
-			while(!isTerminated && !taskPool.isEmpty())
-			{
+			while (!isTerminated && !taskPool.isEmpty()) {
 				Task task = taskPool.accessOne();
 				task.begin();
 				threadPool.add(task);
@@ -153,13 +150,12 @@ public final class LYTaskQueue extends Thread {
 		
 		LYTaskQueue.useWatchDog = useWatchDog;
 	}
-	
+
 	static {
 		try {
 			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(permanentFileName));
 			Integer total = (Integer) ois.readObject();
-			while(total-->0)
-			{
+			while (total-- > 0) {
 				Task tk = (Task) ois.readObject();
 				tk.reset();
 				LYTaskQueue.addTask(tk);
@@ -173,33 +169,44 @@ public final class LYTaskQueue extends Thread {
 			e.printStackTrace();
 		}
 	}
-	
+
+	/**
+	 * This action will call off the task queue, then wait tasks in running for 5 minutes, then killed, and save tasks in queue onto disk
+	 */
 	public static void terminate()
 	{
 		// default timeout is 5 minutes
 		terminate(DEFAULT_TERMINATE_TIMEOUT);
 	}
 	
+	/**
+	 * This action will call off the task queue, then wait tasks in running for specific timeout, then killed, and save tasks in queue onto disk
+	 * @param timeout waiting limit for running tasks in million second
+	 */
 	public static void terminate(Long timeout) {
-		if(isTerminated) return;
+		if (isTerminated)
+			return;
 		isTerminated = true;
-		if(timeout == 0L) timeout = 1L;
+		if (timeout == 0L)
+			timeout = 1L;
 
 		synchronized (getThreadPool()) {
-			for(Task t:getThreadPool())
+			for (Task t : getThreadPool())
 				t.setTimeout(timeout);
 		}
-		
-		if(!useWatchDog)
+
+		if (!useWatchDog)
 			LYTaskQueue.useWatchDog(useWatchDog);
 		LYTaskQueue.useWatchDog = true;
 		try {
 			File p = new File(permanentFileName);
-			if(!p.exists()) p.createNewFile();
-			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(p));
+			if (!p.exists())
+				p.createNewFile();
+			ObjectOutputStream oos = new ObjectOutputStream(
+					new FileOutputStream(p));
 			synchronized (taskPool) {
 				oos.writeObject(new Integer(taskPool.size()));
-				while(!taskPool.isEmpty())
+				while (!taskPool.isEmpty())
 					oos.writeObject(taskPool.accessOne());
 			}
 			oos.close();
@@ -208,16 +215,14 @@ public final class LYTaskQueue extends Thread {
 			e.printStackTrace();
 		}
 		try {
-			while(threadPool.size() > 0)
-					threadPool.accessOne().waitingForFinish();
+			while (threadPool.size() > 0)
+				threadPool.accessOne().waitingForFinish();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (Throwable e) {
 			e.printStackTrace();
 			WatchDog.killAll();
-		}
-		finally
-		{
+		} finally {
 			WatchDog.stopWatchDog();
 		}
 	}
