@@ -6,6 +6,7 @@ import java.util.List;
 import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Recyclable;
+import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.Task;
 
 public final class TimeoutController extends Task {
@@ -14,7 +15,7 @@ public final class TimeoutController extends Task {
 	private static Boolean init = false;
 	private static TimeoutController instance = null;
 
-	private List<Recyclable> watchList;
+	private List<Recyclable> watchList = new ArrayList<Recyclable>();
 	
 	@Override
 	public boolean isDaemon()
@@ -26,7 +27,6 @@ public final class TimeoutController extends Task {
 	public void exec() {
 		try {
 			if (!init) {
-				if(watchList == null) watchList = new ArrayList<Recyclable>();
 				instance = this;
 				init = true;
 			}
@@ -56,9 +56,11 @@ public final class TimeoutController extends Task {
 		}
 	}
 	
-	public boolean addToWatch(Recyclable rec)
+	public static boolean addToWatch(Recyclable rec)
 	{
-		return watchList.add(rec);
+		if(getInstance().getState() == Task.BEGAN)
+			getInstance().begin();
+		return getInstance().getWatchList().add(rec);
 	}
 
 	public static TimeoutController getInstance() {
@@ -67,6 +69,10 @@ public final class TimeoutController extends Task {
 
 	public static void setInstance(TimeoutController instance) {
 		TimeoutController.instance = instance;
+	}
+
+	private List<Recyclable> getWatchList() {
+		return watchList;
 	}
 
 }

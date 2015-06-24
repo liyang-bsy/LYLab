@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.interfaces.Recyclable;
+import net.vicp.lylab.utils.controller.TimeoutController;
 
 /**
  * 
@@ -39,6 +40,7 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 	public TimeoutRecyclePool(Map<Long, T> container, Long timeout, Integer maxSize)
 	{
 		super(new ConcurrentHashMap<Long, T>(), maxSize);
+		TimeoutController.addToWatch(this);
 	}
 
 	@Override

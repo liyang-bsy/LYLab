@@ -61,7 +61,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	/**
 	 * Reserved entrance for multi-threaded. DO NOT call this method.
 	 */
-	public final void run()
+	public synchronized final void run()
 	{
 		try {
 			state = STARTED;
