@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDefine;
-import net.vicp.lylab.core.LYException;
+import net.vicp.lylab.core.exception.LYException;
 
 /**
  * 

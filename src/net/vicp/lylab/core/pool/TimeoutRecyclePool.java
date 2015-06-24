@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDefine;
-import net.vicp.lylab.core.Recyclable;
+import net.vicp.lylab.core.interfaces.Recyclable;
 
 /**
  * 

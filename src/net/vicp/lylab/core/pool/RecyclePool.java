@@ -8,8 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.vicp.lylab.core.LYException;
-import net.vicp.lylab.core.Recyclable;
+import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.Recyclable;
 
 /**
  * 

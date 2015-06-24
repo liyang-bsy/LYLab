@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.vicp.lylab.core.LYException;
+import net.vicp.lylab.core.exception.LYException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

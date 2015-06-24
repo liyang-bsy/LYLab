@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.vicp.lylab.core.CoreDefine;
-import net.vicp.lylab.core.LYException;
-import net.vicp.lylab.core.Recyclable;
+import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.tq.Task;
 
 public final class TimeoutController extends Task {

@@ -5,9 +5,9 @@ import java.util.Date;
 
 import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDefine;
-import net.vicp.lylab.core.Executor;
-import net.vicp.lylab.core.LYException;
-import net.vicp.lylab.core.Recyclable;
+import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.Executor;
+import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.Utils;
 
 /**
