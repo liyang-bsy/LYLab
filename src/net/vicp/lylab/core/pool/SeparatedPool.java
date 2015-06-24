@@ -112,6 +112,11 @@ public abstract class SeparatedPool<T> extends AbstractPool<T> {
 		}
 		return null;
 	}
+
+	protected T getFromBusyContainer() {
+		Long objId = busyKeySet().iterator().next();
+		return getFromBusyContainer(objId);
+	}
 	
 	protected T getFromBusyContainer(Long objId) {
 		if (isClosed() || objId == null)
