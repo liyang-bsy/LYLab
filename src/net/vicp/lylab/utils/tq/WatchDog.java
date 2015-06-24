@@ -27,9 +27,10 @@ public final class WatchDog extends Task implements Runnable {
 	
 	private List<Task> forewarnList;
 	
-	public WatchDog()
+	@Override
+	public boolean isDaemon()
 	{
-		isDaemon = true;
+		return true;
 	}
 	
 	@Override

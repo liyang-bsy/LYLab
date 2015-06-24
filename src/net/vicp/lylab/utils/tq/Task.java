@@ -33,8 +33,6 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	protected volatile Integer retryCount = 0;
 	protected Thread thread;
 	
-	protected boolean isDaemon = false;
-	
 	protected volatile Integer state = new Integer(0);
 	protected Date startTime;
 	
@@ -125,7 +123,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			return;
 		Thread t = new Thread(this);
 		t.setName("Task(" + String.valueOf(getTaskId()) + ") - " + this.getClass().getSimpleName() + "");
-		t.setDaemon(isDaemon);
+		t.setDaemon(isDaemon());
 		this.setThread(t);
 		t.start();
 	}
@@ -169,6 +167,10 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		}
 	}
 
+	protected boolean isDaemon() {
+		return false;
+	}
+	
 	public Boolean isStopped() {
 		return getState() == STOPPED;
 	}
@@ -186,9 +188,13 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		return state.intValue();
 	}
 	
+	@SuppressWarnings("deprecation")
 	public Task reset() {
 		setObjectId(null);
 		state = BEGAN;
+		if(thread != null && getThread().isAlive())
+			getThread().stop();
+		thread = null;
 		return this;
 	}
 	
