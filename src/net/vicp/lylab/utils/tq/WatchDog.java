@@ -26,6 +26,12 @@ public final class WatchDog extends Task implements Runnable {
 	private Long tolerance = DEFAULTTOLERANCE;
 	
 	private List<Task> forewarnList;
+	
+	public WatchDog()
+	{
+		isDaemon = true;
+	}
+	
 	@Override
 	public void exec() {
 		try {

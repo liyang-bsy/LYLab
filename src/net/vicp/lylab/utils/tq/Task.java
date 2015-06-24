@@ -33,6 +33,8 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	protected volatile Integer retryCount = 0;
 	protected Thread thread;
 	
+	protected boolean isDaemon = false;
+	
 	protected volatile Integer state = new Integer(0);
 	protected Date startTime;
 	
@@ -123,6 +125,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			return;
 		Thread t = new Thread(this);
 		t.setName("Task(" + String.valueOf(getTaskId()) + ") - " + this.getClass().getSimpleName() + "");
+		t.setDaemon(isDaemon);
 		this.setThread(t);
 		t.start();
 	}
