@@ -13,6 +13,21 @@ package net.vicp.lylab.core.interfaces;
  */
 
 public interface Recyclable {
+	/**
+	 * Check if need to recycle
+	 */
 	public boolean isRecyclable();
-	public void recycle();
+	/**
+	 * Check if object is recycled
+	 */
+	public boolean isRecycled();
+	/**
+	 * Did I successfully recycle it?
+	 */
+	public boolean recycle();
+	/**
+	 * Force stop it
+	 */
+	public void forceStop();
+	
 }

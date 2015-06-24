@@ -1,12 +1,11 @@
 package net.vicp.lylab.utils.controller;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Recyclable;
-import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.Task;
 
 public final class TimeoutController extends Task {
@@ -15,11 +14,10 @@ public final class TimeoutController extends Task {
 	private static Boolean init = false;
 	private static TimeoutController instance = null;
 
-	private List<Recyclable> watchList = new ArrayList<Recyclable>();
+	private Map<Recyclable, Integer> watchList = new WeakHashMap<Recyclable, Integer>();
 	
 	@Override
-	public boolean isDaemon()
-	{
+	public boolean isDaemon() {
 		return true;
 	}
 	
@@ -47,7 +45,8 @@ public final class TimeoutController extends Task {
 	}
 
 	private void timeoutControl() {
-		for(Recyclable rec : watchList)
+		System.gc();
+		for(Recyclable rec : watchList.keySet())
 		{
 			// skip myself
 			if(rec instanceof TimeoutController) continue;
@@ -56,11 +55,11 @@ public final class TimeoutController extends Task {
 		}
 	}
 	
-	public static boolean addToWatch(Recyclable rec)
+	public synchronized static boolean addToWatch(Recyclable rec)
 	{
 		if(getInstance().getState() == Task.BEGAN)
 			getInstance().begin();
-		return getInstance().getWatchList().add(rec);
+		return getInstance().getWatchList().put(rec, CoreDefine.DEFAULT_TOLERANCE) != null;
 	}
 
 	public static TimeoutController getInstance() {
@@ -71,7 +70,7 @@ public final class TimeoutController extends Task {
 		TimeoutController.instance = instance;
 	}
 
-	private List<Recyclable> getWatchList() {
+	private Map<Recyclable, Integer> getWatchList() {
 		return watchList;
 	}
 

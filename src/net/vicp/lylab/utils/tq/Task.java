@@ -61,7 +61,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	/**
 	 * Reserved entrance for multi-threaded. DO NOT call this method.
 	 */
-	public synchronized final void run()
+	public final void run()
 	{
 		try {
 			state = STARTED;
@@ -129,7 +129,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		t.start();
 	}
 	
-	public final synchronized void callStop() {
+	public final void callStop() {
 		switch (state.intValue()) {
 		case STOPPED:
 			state = STOPPED;
@@ -156,6 +156,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	}
 
 	@Deprecated
+	@Override
 	public final synchronized void forceStop() {
 		synchronized (this) {
 			this.notifyAll();
@@ -171,22 +172,28 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	protected boolean isDaemon() {
 		return false;
 	}
-	
+
 	public Boolean isStopped() {
+		return getState() == STOPPED || getState() == CANCELLED || getState() == FAILED;
+	}
+	
+	@Override
+	public boolean isRecycled() {
+		return getRetryCount() >= 0;
+	}
+	
+	@Override
+	public boolean isRecyclable() {
 		return getState() == STOPPED || getState() == CANCELLED || getState() == FAILED;
 	}
 
 	@Override
-	public boolean isRecyclable() {
-		return isStopped();
-	}
-
-	@Override
-	public void recycle() {
+	public boolean recycle() {
 		this.setRetryCount(this.getRetryCount() - 1);
 		reset();
+		return true;
 	}
-
+	
 	public final Long getTaskId() {
 		return getObjectId();
 	}

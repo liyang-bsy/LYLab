@@ -65,7 +65,7 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 	}
 
 	@Override
-	public void recycle() {
+	public boolean recycle() {
 		for (Long id : startTime.keySet()) {
 			Date start = startTime.get(id);
 			if (new Date().getTime() - start.getTime() > timeout) {
@@ -76,11 +76,22 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 				startTime.remove(id);
 			}
 		}
+		return true;
 	}
 
 	@Override
 	public boolean isRecyclable() {
 		return true;
+	}
+
+	@Override
+	public void forceStop() {
+		return;
+	}
+
+	@Override
+	public boolean isRecycled() {
+		return false;
 	}
 
 }
