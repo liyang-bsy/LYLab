@@ -78,11 +78,8 @@ public final class WatchDog extends Task implements Runnable {
 			task.forceStop();
 			if(task.getRetryCount() > 0)
 			{
-				log.error("Timeout task was killed, but this task requested retry(" + task.getRetryCount() + "):\n" + task.toString());
-				task.setRetryCount(task.getRetryCount() - 1);
-				task.reset();
+				task.recycle();
 				LYTaskQueue.addTask(task);
-				forewarnList.add(task);
 			}
 			else log.error("Timeout task was killed:\n" + task.toString());
 		}

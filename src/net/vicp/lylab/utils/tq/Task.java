@@ -7,6 +7,7 @@ import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.Executor;
 import net.vicp.lylab.core.LYException;
+import net.vicp.lylab.core.Recyclable;
 import net.vicp.lylab.utils.Utils;
 
 /**
@@ -20,7 +21,7 @@ import net.vicp.lylab.utils.Utils;
  * @version 1.0.1
  * 
  */
-public abstract class Task extends CloneableBaseObject implements Runnable, Executor, Serializable {
+public abstract class Task extends CloneableBaseObject implements Runnable, Executor, Recyclable, Serializable {
 
 	private static final long serialVersionUID = -505125638835928043L;
 	/**
@@ -102,7 +103,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 * @throws InterruptedException 
 	 */
 	public synchronized final void waitingForFinish() throws InterruptedException {
-		while(!waitingForFinish(CoreDefine.waitingThreshold));
+		while(!waitingForFinish(CoreDefine.WAITING));
 	}
 	/**
 	 * Alert! This function will block current thread!
@@ -172,9 +173,20 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	}
 	
 	public Boolean isStopped() {
-		return getState() == STOPPED;
+		return getState() == STOPPED || getState() == CANCELLED || getState() == FAILED;
 	}
-	
+
+	@Override
+	public boolean isRecyclable() {
+		return isStopped();
+	}
+
+	@Override
+	public void recycle() {
+		this.setRetryCount(this.getRetryCount() - 1);
+		reset();
+	}
+
 	public final Long getTaskId() {
 		return getObjectId();
 	}

@@ -95,7 +95,7 @@ public abstract class AbstractPool<T> implements Pool<T> {
 				Integer size = size();
 				if (size >= maxSize) {
 					try {
-						lock.wait(CoreDefine.waitingThreshold);
+						lock.wait(CoreDefine.WAITING_SHORT);
 						continue;
 					} catch (InterruptedException e) {
 						throw new LYException("Wait interrupted", e);
