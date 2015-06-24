@@ -46,6 +46,8 @@ public final class TimeoutController extends Task {
 
 	private void timeoutControl() {
 		System.gc();
+//		List<Task> callStopList = new LinkedList<Task>();
+//		List<Task> forceStopList = new LinkedList<Task>();
 		for(Recyclable rec : watchList.keySet())
 		{
 			// skip myself
@@ -53,6 +55,27 @@ public final class TimeoutController extends Task {
 			if(isStopped() && !rec.isRecyclable()) continue;
 			rec.recycle();
 		}
+//		for(Task task : LYTaskQueue.getThreadPool())
+//		{
+//			// skip WatchDog itself
+//			if(task instanceof WatchDog) continue;
+//			if(isStopped()) continue;
+//			// -1L means infinite
+//			if()
+//				continue;
+//		}
+//		for(Task task : forceStopList)
+//		{
+//			task.forceStop();
+//			if(task.getRetryCount() > 0)
+//				task.recycle();
+//			else log.error("Timeout task was killed:\n" + task.toString());
+//		}
+//		for(Task task : callStopList)
+//		{
+//			task.callStop();
+//			log.info("Try to stop timeout task:" + task.getTaskId());
+//		}
 	}
 	
 	public synchronized static boolean addToWatch(Recyclable rec)

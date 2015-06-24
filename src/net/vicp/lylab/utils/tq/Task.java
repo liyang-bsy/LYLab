@@ -179,7 +179,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	
 	@Override
 	public boolean isRecycled() {
-		return getRetryCount() >= 0;
+		return getRetryCount() > 0;
 	}
 	
 	@Override
@@ -191,6 +191,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	public boolean recycle() {
 		this.setRetryCount(this.getRetryCount() - 1);
 		reset();
+		LYTaskQueue.addTask(this);
 		return true;
 	}
 	

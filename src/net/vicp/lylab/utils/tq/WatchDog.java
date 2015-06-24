@@ -77,10 +77,7 @@ public final class WatchDog extends Task implements Runnable {
 		{
 			task.forceStop();
 			if(task.getRetryCount() > 0)
-			{
 				task.recycle();
-				LYTaskQueue.addTask(task);
-			}
 			else log.error("Timeout task was killed:\n" + task.toString());
 		}
 		for(Task task : callStopList)
