@@ -5,20 +5,15 @@ import net.vicp.lylab.core.CloneableBaseObject;
 public class AtomicObject<T> extends CloneableBaseObject {
 	protected volatile T value;
 	
-	public AtomicObject()
-	{
-		value = null;
+	public AtomicObject(T initValue) {
+		value = initValue;
 	}
 	
-	public AtomicObject(T t) {
-		value = t;
-	}
-	
-	public T getAndSet(T t)
+	public T getAndSet(T newValue)
 	{
-		synchronized (value) {
+		synchronized (lock) {
 			T tmp = value;
-			value = t;
+			value = newValue;
 			return tmp;
 		}
 	}
@@ -28,20 +23,29 @@ public class AtomicObject<T> extends CloneableBaseObject {
 		return value;
 	}
 
-	public void unsafeSet(T t)
+	public void set(T newValue)
 	{
-//		synchronized (value) {
-//				while(!value.equals(t))
-			value = t;
-//		}
+		synchronized (lock) {
+			value = newValue;
+		}
 	}
 
-	public void set(T t)
+	public boolean compareAndSet(T expect, T update)
 	{
-		synchronized (value) {
-				while(!value.equals(t))
-			value = t;
+		synchronized (lock) {
+			if(!value.equals(expect))
+				return false;
+			value = update;
+			return true;
 		}
+	}
+	
+	public boolean weakCompareAndSet(T expect, T update)
+	{
+		if(!value.equals(expect))
+			return false;
+		value = update;
+		return true;
 	}
 	
 }

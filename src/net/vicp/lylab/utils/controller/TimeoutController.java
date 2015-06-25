@@ -1,22 +1,28 @@
 package net.vicp.lylab.utils.controller;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Recyclable;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.tq.Task;
 
 public final class TimeoutController extends Task {
 	private static final long serialVersionUID = -4494667245957319328L;
 
+	protected Log log = LogFactory.getLog(getClass());
+	
 	private static Boolean init = false;
 	private static TimeoutController instance = null;
 
-	private List<WeakReference<Recyclable>> watchList = new ArrayList<WeakReference<Recyclable>>();
+	private List<WeakReference<Recyclable>> watchList = new LinkedList<WeakReference<Recyclable>>();
 
 	public static void init() {
 		if (!init) {
@@ -49,15 +55,16 @@ public final class TimeoutController extends Task {
 		System.gc();
 		Iterator<WeakReference<Recyclable>> iterator = watchList.iterator();
 		while (iterator.hasNext()) {
-			WeakReference<Recyclable> wref = iterator.next();
-			Recyclable rec = wref.get();
+			Recyclable rec = iterator.next().get();
 			if (rec == null) {
 				iterator.remove();
 				continue;
 			}
-			if (!rec.isRecyclable())
-				continue;
-			rec.recycle();
+			try {
+				if (rec.isRecyclable()) rec.recycle();
+			} catch (Throwable e) {
+				log.error(Utils.getStringFromException(e));
+			}
 		}
 	}
 
@@ -66,7 +73,18 @@ public final class TimeoutController extends Task {
 	}
 
 	public synchronized static void removeFromWatch(Recyclable rec) {
-		getInstance().getWatchList().remove(rec);
+		System.gc();
+		Iterator<WeakReference<Recyclable>> iterator = getInstance().getWatchList().iterator();
+		while (iterator.hasNext()) {
+			Recyclable tmp = iterator.next().get();
+			if (tmp == null)
+				iterator.remove();
+			else if (rec.equals(tmp))
+			{
+				iterator.remove();
+				break;
+			}
+		}
 	}
 
 	public static TimeoutController getInstance() {

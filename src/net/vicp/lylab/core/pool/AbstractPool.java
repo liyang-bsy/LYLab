@@ -15,12 +15,7 @@ import net.vicp.lylab.core.exception.LYException;
  * 抽象池
  *
  */
-public abstract class AbstractPool<T> implements Pool<T> {
-//	protected Lock lock = new ReentrantLock(true);
-//	protected Condition full = lock.newCondition();
-
-	static class Lock extends BaseObject { };
-	protected Lock lock = new Lock();
+public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 	
 	private Map<Long, T> availableContainer;
 	protected Long idIndicator = 1L;

@@ -33,13 +33,13 @@ public class Utils extends NonCloneableBaseObject {
 	 * @param t
 	 * @return
 	 */
-	public static String getStringFromException(Throwable t) {
+	public static String getStringFromException(Throwable e) {
 		try {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
-			t.printStackTrace(pw);
+			e.printStackTrace(pw);
 			return "\r\n" + sw.toString() + "\r\n";
-		} catch (Exception e) {
+		} catch (Exception ex) {
 			return "bad getErrorInfoFromException";
 		}
 	}

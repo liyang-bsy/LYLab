@@ -1,12 +1,12 @@
 package net.vicp.lylab.utils.atomic;
 
-public class AtomicInteger extends AtomicObject<Integer> {
+public final class AtomicInteger extends AtomicObject<Integer> {
 
 	public AtomicInteger() {
-		super();
+		super(0);
 	}
 	
-	public AtomicInteger(Integer t) {
+	public AtomicInteger(int t) {
 		super(t);
 	}
 	

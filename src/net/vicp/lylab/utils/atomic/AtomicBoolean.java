@@ -1,12 +1,12 @@
 package net.vicp.lylab.utils.atomic;
 
-public class AtomicBoolean extends AtomicObject<Boolean> {
+public final class AtomicBoolean extends AtomicObject<Boolean> {
 
 	public AtomicBoolean() {
-		super();
+		super(false);
 	}
 	
-	public AtomicBoolean(Boolean t) {
+	public AtomicBoolean(boolean t) {
 		super(t);
 	}
 	

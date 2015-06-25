@@ -2,19 +2,20 @@ package net.vicp.lylab.utils.tq;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.pool.Pool;
 import net.vicp.lylab.core.pool.SequencePool;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.atomic.AtomicBoolean;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Manager class to execute all task.<br>
@@ -35,8 +36,8 @@ public final class LYTaskQueue extends Thread {
 	private volatile static Boolean useWatchDog = false;
 	private static String permanentFileName = "lytaskqueue.bin";
 
-	private static Boolean isRunning = new Boolean(false);
-	private static volatile boolean isTerminated = false;
+	private static volatile AtomicBoolean isRunning = new AtomicBoolean(false);
+	private static volatile AtomicBoolean isTerminated = new AtomicBoolean(false);
 
 	private volatile static Long lastTaskId = 0L;
 	private volatile static Integer maxQueue = 1000;
@@ -47,6 +48,9 @@ public final class LYTaskQueue extends Thread {
 
 	public static final Long DEFAULT_TERMINATE_TIMEOUT = 5 * 60 * 1000L;
 
+	// static initialize
+	static { init(); }
+	
 	/**
 	 * At your service!
 	 * 
@@ -68,12 +72,11 @@ public final class LYTaskQueue extends Thread {
 		} catch (CloneNotSupportedException e) { }
 		if (task0 == null)
 			return -1L;
-		if (isTerminated)
+		if (isTerminated.get())
 			return -2L;
 		if ((lastTaskId = taskPool.add(task0)) == null)
 			return -3L;
-		if (!isRunning) {
-			isRunning = true;
+		if (isRunning.compareAndSet(false, true)) {
 			Thread t = new LYTaskQueue();
 			t.setName("LYTaskQueue");
 			t.start();
@@ -90,7 +93,7 @@ public final class LYTaskQueue extends Thread {
 	 *         false: cancel failed
 	 */
 	public synchronized static Boolean cancel(Long taskId) {
-		if (isTerminated || taskId == null || taskId < 0L)
+		if (isTerminated.get() || taskId == null || taskId < 0L)
 			return false;
 		if (lastTaskId < taskId)
 			return false;
@@ -110,7 +113,7 @@ public final class LYTaskQueue extends Thread {
 	 *         false: cancel failed
 	 */
 	public synchronized static Boolean stop(Long taskId) {
-		if (isTerminated || taskId == null || taskId < 0L)
+		if (isTerminated.get() || taskId == null || taskId < 0L)
 			return false;
 		if (lastTaskId < taskId)
 			return false;
@@ -127,14 +130,14 @@ public final class LYTaskQueue extends Thread {
 	@Override
 	public synchronized final void run() {
 		try {
-			while (!isTerminated && !taskPool.isEmpty()) {
+			while (!isTerminated.get() && !taskPool.isEmpty()) {
 				Task task = taskPool.accessOne();
 				task.begin();
 				threadPool.add(task);
 			}
 		} catch (Throwable e) {
 		} finally {
-			isRunning = false;
+			isRunning.set(false);
 		}
 	}
 
@@ -156,22 +159,32 @@ public final class LYTaskQueue extends Thread {
 		LYTaskQueue.useWatchDog = useWatchDog;
 	}
 
-	static {
+	public static void init() {
+		isTerminated.set(false);
+		ObjectInputStream ois = null;
 		try {
-			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(permanentFileName));
-			Integer total = (Integer) ois.readObject();
-			while (total-- > 0) {
-				Task tk = (Task) ois.readObject();
-				tk.reset();
-				LYTaskQueue.addTask(tk);
+			File file = new File(permanentFileName);
+			if (file.exists()) {
+				ois = new ObjectInputStream(new FileInputStream(file));
+				Integer total = (Integer) ois.readObject();
+				while (total-- > 0) {
+					Task tk = (Task) ois.readObject();
+					tk.reset();
+					LYTaskQueue.addTask(tk);
+				}
 			}
-			ois.close();
 			Utils.deleteFile(permanentFileName);
-		} catch (FileNotFoundException e) {
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			throw new LYException("Unable to load data from last permanent file", e);
+		} finally {
+			if (ois != null) {
+				try {
+					ois.close();
+					ois = null;
+				} catch (IOException e) {
+					throw new LYException("Unable to close permanent file:" + permanentFileName, e);
+				}
+			}
 		}
 	}
 
@@ -192,9 +205,8 @@ public final class LYTaskQueue extends Thread {
 	 *            waiting limit for running tasks in million second
 	 */
 	public static void terminate(Long timeout) {
-		if (isTerminated)
+		if (isTerminated.compareAndSet(false, true))
 			return;
-		isTerminated = true;
 		if (timeout == 0L)
 			timeout = 1L;
 
@@ -224,7 +236,7 @@ public final class LYTaskQueue extends Thread {
 		}
 		try {
 			while (threadPool.size() > 0)
-				threadPool.accessOne().waitingForFinish();
+				threadPool.accessOne().join();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (Throwable e) {
@@ -235,8 +247,9 @@ public final class LYTaskQueue extends Thread {
 		}
 	}
 
+	// getter & setter below
 	public static Boolean getIsTerminated() {
-		return isTerminated;
+		return isTerminated.get();
 	}
 
 	public static Pool<Task> getThreadPool() {

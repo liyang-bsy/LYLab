@@ -2,7 +2,9 @@ package net.vicp.lylab.core;
 
 public class CloneableBaseObject extends BaseObject implements Cloneable {
 	@Override
-	public Object clone() throws CloneNotSupportedException {
-		return super.clone();
+	public BaseObject clone() throws CloneNotSupportedException {
+		BaseObject obj = (BaseObject) super.clone();
+		obj.setObjectId(null);
+		return obj;
 	}
 }

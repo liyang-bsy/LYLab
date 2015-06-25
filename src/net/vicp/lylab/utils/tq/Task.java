@@ -5,6 +5,7 @@ import java.util.Date;
 
 import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.exception.LYError;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Executor;
 import net.vicp.lylab.utils.Utils;
@@ -65,22 +66,16 @@ public abstract class Task extends CloneableBaseObject implements Runnable,
 	 */
 	public final void run() {
 		try {
-			int past = state.getAndSet(STARTED);
-			if(past != BEGAN)
-			{
-				state.set(past);
+			if(!state.compareAndSet(BEGAN, STARTED))
 				return;
-			}
 			setStartTime(new Date());
 			try {
 				exec();
 			} catch (Throwable e) {
 				System.err.print(this.toString() + "\ncreated an error:\t" + Utils.getStringFromException(e));
-				if (state.get().intValue() == STARTED)
-					state.set(FAILED);
+				state.compareAndSet(STARTED, FAILED);
 			} finally {
-				if (state.get().intValue() == STARTED)
-					state.set(COMPLETED);
+				state.compareAndSet(STARTED, COMPLETED);
 			}
 
 			synchronized (this) {
@@ -110,8 +105,8 @@ public abstract class Task extends CloneableBaseObject implements Runnable,
 	 * 
 	 * @throws InterruptedException
 	 */
-	public synchronized final void waitingForFinish() throws InterruptedException {
-		while (!waitingForFinish(CoreDefine.WAITING));
+	public final void join() throws InterruptedException {
+		while (!join(CoreDefine.WAITING));
 	}
 
 	/**
@@ -120,11 +115,14 @@ public abstract class Task extends CloneableBaseObject implements Runnable,
 	 * 
 	 * @throws InterruptedException
 	 */
-	public synchronized final boolean waitingForFinish(Long millionseconds) throws InterruptedException {
-		if (state.get().intValue() == STOPPED || state.get().intValue() == BEGAN || state.get().intValue() == STARTED)
-			this.wait(millionseconds);
-		if (state.get().intValue() == STOPPED || state.get().intValue() == BEGAN || state.get().intValue() == STARTED)
+	public final boolean join(Long millis) throws InterruptedException {
+		if (millis <= 0)
+			throw new LYException("Timeout value must be positive");
+		if (!isFinished())
+		{
+			thread.join(millis);
 			return false;
+		}
 		return true;
 	}
 
@@ -146,33 +144,19 @@ public abstract class Task extends CloneableBaseObject implements Runnable,
 	}
 
 	public final void callStop() {
-		switch (state.get().intValue()) {
-		case STOPPED:
-			state.set(STOPPED);
-			break;
-		case CANCELLED:
-			state.set(STOPPED);
-			break;
-		case FAILED:
-			state.set(STOPPED);
-			break;
-		case BEGAN:
-			state.set(CANCELLED);
-			break;
-		case STARTED:
-			state.set(STOPPED);
-			break;
-		case COMPLETED:
-			break;
-		default:
-			throw new LYException("Unknow state code: " + state);
-		}
+		state.compareAndSet(STOPPED, STOPPED);
+		state.compareAndSet(CANCELLED, STOPPED);
+		state.compareAndSet(FAILED, STOPPED);
+		state.compareAndSet(BEGAN, CANCELLED);
+		state.compareAndSet(STARTED, STOPPED);
+//		state.compareAndSet(COMPLETED, COMPLETED);		// non-sense
 		if (thread != null)
 			thread.interrupt();
 	}
 
 	@Deprecated
 	public final synchronized void forceStop() {
+		callStop();
 		synchronized (this) {
 			this.notifyAll();
 		}
@@ -185,6 +169,10 @@ public abstract class Task extends CloneableBaseObject implements Runnable,
 
 	public Boolean isStopped() {
 		return getState() == STOPPED || getState() == CANCELLED || getState() == FAILED;
+	}
+	
+	public Boolean isFinished() {
+		return isStopped() || getState() == COMPLETED;
 	}
 
 	protected boolean isDaemon() {
@@ -201,17 +189,16 @@ public abstract class Task extends CloneableBaseObject implements Runnable,
 	}
 
 	public Integer getState() {
-		return state.get().intValue();
+		return state.get();
 	}
 
-	@SuppressWarnings("deprecation")
-	public Task reset() {
+	public boolean reset() {
+		if(!state.compareAndSet(STOPPED, BEGAN)) return false;
 		setObjectId(null);
-		state.set(BEGAN);
 		if (thread != null && getThread().isAlive())
-			getThread().stop();
+			throw new LYError("Reset an alive task");
 		thread = null;
-		return this;
+		return true;
 	}
 
 	public Thread getThread() {

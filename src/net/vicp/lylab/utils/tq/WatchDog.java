@@ -5,23 +5,26 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.interfaces.Recyclable;
+import net.vicp.lylab.utils.atomic.AtomicReference;
+import net.vicp.lylab.utils.atomic.AtomicSoftReference;
+import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class WatchDog implements Recyclable {
-
+public final class WatchDog extends BaseObject implements Recyclable {
 	protected Log log = LogFactory.getLog(getClass());
 
-	private static WatchDog instance = null;
+	private static AtomicReference<WatchDog> instance = new AtomicSoftReference<WatchDog>();
 
 	private Long interval = CoreDefine.INTERVAL;
 	private Long tolerance = CoreDefine.WAITING_TOLERANCE;
 	
-	private List<Task> forewarnList;
+	private List<Task> forewarnList = new ArrayList<Task>();
 	
 	@Override
 	public boolean isRecyclable()
@@ -37,7 +40,7 @@ public final class WatchDog implements Recyclable {
 		for(Task task : LYTaskQueue.getThreadPool())
 		{
 			// -1L means infinite
-			if(task.getTimeout() == -1L || task.getState() == Task.COMPLETED || task.getState() == Task.FAILED)
+			if(task.getTimeout() == -1L)
 				continue;
 			if(task.getTimeout() + tolerance < new Date().getTime() - task.getStartTime().getTime())
 				forceStopList.add(task);
@@ -53,6 +56,7 @@ public final class WatchDog implements Recyclable {
 				task.setRetryCount(task.getRetryCount() - 1);
 				task.reset();
 				LYTaskQueue.addTask(task);
+				forewarnList.add(task);
 			}
 			else log.error("Timeout task was killed:\n" + task.toString());
 		}
@@ -63,10 +67,6 @@ public final class WatchDog implements Recyclable {
 		}
 	}
 
-	public static WatchDog getInstance() {
-		return instance;
-	}
-
 	@SuppressWarnings("deprecation")
 	public static void killAll() {
 		for(Task task : LYTaskQueue.getThreadPool())
@@ -74,15 +74,15 @@ public final class WatchDog implements Recyclable {
 	}
 
 	public static void stopWatchDog() {
-		if(instance == null) return;
-		TimeoutController.removeFromWatch(instance);
-		instance = null;
+		TimeoutController.removeFromWatch(getInstance());
 	}
 	
 	public static void startWatchDog() {
-		if(instance != null) return;
-		instance = new WatchDog();
-		TimeoutController.addToWatch(instance);
+		TimeoutController.addToWatch(getInstance());
+	}
+
+	public static WatchDog getInstance() {
+		return instance.createInstance(WatchDog.class);
 	}
 
 	public Long getInterval() {
