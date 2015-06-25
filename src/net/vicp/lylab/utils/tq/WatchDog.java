@@ -10,7 +10,6 @@ import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.atomic.AtomicReference;
 import net.vicp.lylab.utils.atomic.AtomicSoftReference;
-import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
 import org.apache.commons.logging.Log;
