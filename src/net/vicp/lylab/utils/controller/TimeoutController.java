@@ -25,7 +25,7 @@ public final class TimeoutController extends Task {
 			instance.begin("TimeoutController");
 		}
 	}
-
+	
 	@Override
 	public boolean isDaemon() {
 		return true;
