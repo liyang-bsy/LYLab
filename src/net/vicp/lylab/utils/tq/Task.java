@@ -53,15 +53,12 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		state = BEGAN;
 	}
 	
-	public Object clone() throws CloneNotSupportedException {
-		return super.clone();
-	}
-
 	/**
 	 * Reserved entrance for multi-threaded. DO NOT call this method.
 	 */
 	public final void run()
 	{
+		if(state != BEGAN) return;
 		try {
 			state = STARTED;
 			setStartTime(new Date());
