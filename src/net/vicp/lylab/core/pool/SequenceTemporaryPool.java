@@ -17,7 +17,7 @@ public class SequenceTemporaryPool<T> extends SequencePool<T> {
 		this(DEFAULT_MAX_SIZE);
 	}
 
-	public SequenceTemporaryPool(Integer maxSize) {
+	public SequenceTemporaryPool(int maxSize) {
 		super(maxSize);
 	}
 	
@@ -36,7 +36,7 @@ public class SequenceTemporaryPool<T> extends SequencePool<T> {
 	}
 
 	@Override
-	public List<T> accessMany(Integer amount) {
+	public List<T> accessMany(int amount) {
 		synchronized (lock) {
 			safeCheck();
 			List<T> retList = new ArrayList<T>();

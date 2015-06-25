@@ -24,72 +24,84 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 	 */
 	public TimeoutRecyclePool()
 	{
-		this(new ConcurrentHashMap<Long, T>(), 2*CoreDefine.MINUTE, DEFAULT_MAX_SIZE);
+		this(2*CoreDefine.MINUTE, DEFAULT_MAX_SIZE);
 	}
 	
-	public TimeoutRecyclePool(Long timeout)
+	public TimeoutRecyclePool(long timeout)
 	{
-		this(new ConcurrentHashMap<Long, T>(), timeout, DEFAULT_MAX_SIZE);
+		this(timeout, DEFAULT_MAX_SIZE);
 	}
 	
-	public TimeoutRecyclePool(Integer maxSize)
+	public TimeoutRecyclePool(int maxSize)
 	{
-		this(new ConcurrentHashMap<Long, T>(), 2*CoreDefine.MINUTE, maxSize);
+		this(2*CoreDefine.MINUTE, maxSize);
 	}
 	
-	public TimeoutRecyclePool(Map<Long, T> container, Long timeout, Integer maxSize)
+	public TimeoutRecyclePool(long timeout, int maxSize)
 	{
-		super(new ConcurrentHashMap<Long, T>(), maxSize);
+		super(maxSize);
+		startTime = new ConcurrentHashMap<Long, Date>();
+		this.timeout = timeout;
 		TimeoutController.addToWatch(this);
 	}
 
 	@Override
-	public Long add(T t) {
-		return add(0, t);
-	}
-
-	@Override
-	public Long add(Integer index, T t) {
+	public void clear() {
 		synchronized (lock) {
-			safeCheck();
-			if (keyContainer.size() >= maxSize)
-				return null;
-			Long id = null;
-			id = addToContainer(t);
-			if (id != null && id >= 0) {
-				startTime.put(id, new Date());
-				keyContainer.add(id);
-			}
-			return id;
+			super.clear();
+			startTime.clear();
 		}
 	}
+	@Override
+	protected T getFromAvailableContainer(long objId) {
+		safeCheck();
+		if (availableSize() > 0)
+		{
+			T tmp = removeFromContainer(objId);
+			if (tmp != null)
+			{
+				busyContainer.put(objId, tmp);
+				startTime.put(objId, new Date());
+			}
+			return tmp;
+		}
+		return null;
+	}
 
-	@SuppressWarnings("unchecked")
+//	@SuppressWarnings("unchecked")
 	@Override
 	public void recycle() {
+		int sr = 0;
+		int tr = 0;
+		int ava=availableSize(), bus=busyContainer.size();
 		for (Long id : startTime.keySet()) {
 			Date start = startTime.get(id);
 			if (new Date().getTime() - start.getTime() > timeout) {
-				T tmp = remove(id);
-				if (tmp == null) {
-					tmp = busyContainer.remove(id);
+				T tmp = busyContainer.remove(id);
+				if (tmp != null) {
 					keyContainer.remove(id);
-
-					while(size()<maxSize)
-						try {
-							addToContainer((T) tmp.getClass().newInstance());
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
+					tr++;
+//					while(size()<maxSize)
+//						try {
+//							addToContainer((T) tmp.getClass().newInstance());
+//						} catch (Exception e) {
+//							e.printStackTrace();
+//						}
 				}
 				startTime.remove(id);
+				sr++;
 			}
 		}
+		if(keyContainer.size() == size())
+			safeCheck();
+		System.out.println("\t回收报告:\tMax:" + (ava+bus) + "\tBava:" + ava + "\tBbus:" + bus +"\t\tava:" + availableSize() + "\tbus:" + busyContainer.size()
+				+ (sr!=tr?"\t异常sr:" + sr + "\ttr:" + tr:""));
 	}
 
 	@Override
 	public boolean isRecyclable() {
-		return busyContainer.size() != 0;
+		safeCheck();
+		return startTime.size() != 0;
 	}
 
 }

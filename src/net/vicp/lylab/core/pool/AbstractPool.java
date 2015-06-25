@@ -31,8 +31,8 @@ public abstract class AbstractPool<T> implements Pool<T> {
 		this(DEFAULT_MAX_SIZE);
 	}
 
-	public AbstractPool(Integer maxSize) {
-		this.maxSize = (maxSize != null && maxSize > 0)? maxSize : DEFAULT_MAX_SIZE;
+	public AbstractPool(int maxSize) {
+		this.maxSize = ((maxSize > 0)? maxSize : DEFAULT_MAX_SIZE);
 		this.availableContainer = new ConcurrentHashMap<Long, T>();
 	}
 	
@@ -73,14 +73,14 @@ public abstract class AbstractPool<T> implements Pool<T> {
 		}
 	}
 
-	protected T getFromContainer(Long objId) {
-		if (isClosed() || objId == null)
+	protected T getFromContainer(long objId) {
+		if (isClosed())
 			return null;
 		return availableContainer.get(objId);
 	}
 
-	protected T removeFromContainer(Long objId) {
-		if (isClosed() || objId == null)
+	protected T removeFromContainer(long objId) {
+		if (isClosed())
 			return null;
 		T tmp = availableContainer.remove(objId);
 		lock.notifyAll();

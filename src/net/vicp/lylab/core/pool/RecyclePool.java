@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Recyclable;
 
 /**
@@ -23,25 +22,15 @@ public class RecyclePool<T> extends AbstractPool<T> {
 	protected Set<Long> keyContainer = new HashSet<Long>();
 
 	public RecyclePool() {
-		this(new ConcurrentHashMap<Long, T>(), DEFAULT_MAX_SIZE);
-	}
-	
-	public RecyclePool(Map<Long, T> container) {
-		this(container, DEFAULT_MAX_SIZE);
+		this(DEFAULT_MAX_SIZE);
 	}
 	
 	public RecyclePool(Integer maxSize) {
-		this(new ConcurrentHashMap<Long, T>(), maxSize);
+		super(maxSize);
+		busyContainer = new ConcurrentHashMap<Long, T>();
 	}
 
-	public RecyclePool(Map<Long, T> container, Integer maxSize) {
-		super(maxSize);
-		if(container == null)
-			throw new LYException("Undefined pool type");
-		busyContainer = container;
-	}
-	
-	public T viewById(Long objId) {
+	public T viewById(long objId) {
 		safeCheck();
 		T tmp = getFromContainer(objId);
 		if(tmp == null)
@@ -67,10 +56,10 @@ public class RecyclePool<T> extends AbstractPool<T> {
 	@Override
 	public void close() {
 		synchronized (lock) {
+			super.close();
 			if (busyContainer != null)
 				busyContainer.clear();
 			busyContainer = null;
-			super.close();
 		}
 	}
 
@@ -84,10 +73,9 @@ public class RecyclePool<T> extends AbstractPool<T> {
 	@Override
 	public void clear() {
 		synchronized (lock) {
-			if (isClosed())
-				throw new LYException("This pool is already closed");
-			busyContainer.clear();
 			super.clear();
+			keyContainer.clear();
+			busyContainer.clear();
 		}
 	}
 
@@ -96,10 +84,9 @@ public class RecyclePool<T> extends AbstractPool<T> {
 		return busyContainer.keySet();
 	}
 
-	public boolean recycle(Long objId) {
+	public T recycle(long objId) {
 		synchronized (lock) {
-			if (isClosed() || objId == null)
-				return false;
+			safeCheck();
 			T tmp = busyContainer.remove(objId);
 			if(tmp != null)
 			{
@@ -107,9 +94,9 @@ public class RecyclePool<T> extends AbstractPool<T> {
 					((Recyclable) tmp).recycle();
 				}
 				addToContainer(tmp);
-				return true;
+				return tmp;
 			}
-			return false;
+			return null;
 		}
 	}
 
@@ -118,7 +105,7 @@ public class RecyclePool<T> extends AbstractPool<T> {
 		return add(0, t);
 	}
 
-	public Long add(Integer index, T t) {
+	public Long add(int index, T t) {
 		synchronized (lock) {
 			safeCheck();
 			if (keyContainer.size() >= maxSize)
@@ -132,11 +119,9 @@ public class RecyclePool<T> extends AbstractPool<T> {
 	}
 
 	@Override
-	public T remove(Long objId) {
+	public T remove(long objId) {
 		synchronized (lock) {
 			safeCheck();
-			if (isClosed() || objId == null)
-				return null;
 			T tmp = removeFromContainer(objId);
 			if(tmp != null)
 				keyContainer.remove(objId);
@@ -149,9 +134,8 @@ public class RecyclePool<T> extends AbstractPool<T> {
 		return getFromAvailableContainer(objId);
 	}
 	
-	protected T getFromAvailableContainer(Long objId) {
-		if (isClosed() || objId == null)
-			return null;
+	protected T getFromAvailableContainer(long objId) {
+		safeCheck();
 		if (availableSize() > 0)
 		{
 			T tmp = removeFromContainer(objId);
@@ -167,9 +151,8 @@ public class RecyclePool<T> extends AbstractPool<T> {
 		return getFromBusyContainer(objId);
 	}
 	
-	protected T getFromBusyContainer(Long objId) {
-		if (isClosed() || objId == null)
-			return null;
+	protected T getFromBusyContainer(long objId) {
+		safeCheck();
 		if (busyContainer.size() <= 0)
 			return null;
 		return busyContainer.get(objId);
@@ -196,12 +179,12 @@ public class RecyclePool<T> extends AbstractPool<T> {
 	}
 
 	@Override
-	public List<T> accessMany(Integer amount)
+	public List<T> accessMany(int amount)
 	{
 		return accessMany(amount, false);
 	}
 
-	public List<T> accessMany(Integer amount, boolean available) {
+	public List<T> accessMany(int amount, boolean available) {
 		safeCheck();
 		synchronized (lock) {
 			List<T> retList = new ArrayList<T>();
@@ -230,7 +213,7 @@ public class RecyclePool<T> extends AbstractPool<T> {
 	protected void safeCheck()
 	{
 		synchronized (lock) {
-			if(keyContainer.size() == size())
+			if(isClosed() || keyContainer.size() == size())
 				return;
 			keyContainer.clear();
 			keyContainer.addAll(availableKeySet());
@@ -244,6 +227,7 @@ public class RecyclePool<T> extends AbstractPool<T> {
 	
 	@Override
 	public Iterator<T> iterator() {
+		safeCheck();
 		return new RecyclePoolIterator(keyContainer.iterator());
 	}
 

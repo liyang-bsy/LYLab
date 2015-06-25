@@ -20,11 +20,11 @@ public class SequencePool<T> extends AbstractPool<T> {
 		this(DEFAULT_MAX_SIZE);
 	}
 
-	public SequencePool(Integer maxSize) {
+	public SequencePool(int maxSize) {
 		super(maxSize);
 	}
 	
-	public T viewById(Long objId) {
+	public T viewById(long objId) {
 		safeCheck();
 		T tmp = getFromContainer(objId);
 		return tmp;
@@ -35,7 +35,7 @@ public class SequencePool<T> extends AbstractPool<T> {
 		return add(0, t);
 	}
 
-	public Long add(Integer index, T t) {
+	public Long add(int index, T t) {
 		synchronized (lock) {
 			safeCheck();
 			Long id = null;
@@ -47,7 +47,7 @@ public class SequencePool<T> extends AbstractPool<T> {
 	}
 
 	@Override
-	public T remove(Long objId) {
+	public T remove(long objId) {
 		synchronized (lock) {
 			safeCheck();
 			if (keyContainer.isEmpty())
@@ -85,7 +85,7 @@ public class SequencePool<T> extends AbstractPool<T> {
 	}
 
 	@Override
-	public List<T> accessMany(Integer amount) {
+	public List<T> accessMany(int amount) {
 		synchronized (lock) {
 			safeCheck();
 			List<T> retList = new ArrayList<T>();
@@ -100,21 +100,18 @@ public class SequencePool<T> extends AbstractPool<T> {
 	@Override
 	public void clear() {
 		synchronized (lock) {
-			if(!isClosed())
-			{
-				keyContainer.clear();
-				super.clear();
-			}
+			super.clear();
+			keyContainer.clear();
 		}
 	}
 
 	@Override
 	public void close() {
 		synchronized (lock) {
+			super.close();
 			if (keyContainer != null)
 				keyContainer.clear();
 			keyContainer = null;
-			super.close();
 		}
 	}
 
