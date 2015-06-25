@@ -23,6 +23,12 @@ public class SequencePool<T> extends AbstractPool<T> {
 	public SequencePool(Integer maxSize) {
 		super(maxSize);
 	}
+	
+	public T viewById(Long objId) {
+		safeCheck();
+		T tmp = getFromContainer(objId);
+		return tmp;
+	}
 
 	@Override
 	public Long add(T t) {

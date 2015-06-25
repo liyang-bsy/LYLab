@@ -18,16 +18,8 @@ public interface Recyclable {
 	 */
 	public boolean isRecyclable();
 	/**
-	 * Check if object is recycled
+	 * Recycle it
 	 */
-	public boolean isRecycled();
-	/**
-	 * Did I successfully recycle it?
-	 */
-	public boolean recycle();
-	/**
-	 * Force stop it
-	 */
-	public void forceStop();
+	public void recycle();
 	
 }

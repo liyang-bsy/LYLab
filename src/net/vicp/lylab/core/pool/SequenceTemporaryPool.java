@@ -21,12 +21,6 @@ public class SequenceTemporaryPool<T> extends SequencePool<T> {
 		super(maxSize);
 	}
 	
-	public T viewOne(Long objId) {
-		safeCheck();
-		T tmp = getFromContainer(objId);
-		return tmp;
-	}
-	
 	@Override
 	public T accessOne() {
 		synchronized (lock) {

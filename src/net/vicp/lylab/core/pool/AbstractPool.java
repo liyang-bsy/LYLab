@@ -23,7 +23,7 @@ public abstract class AbstractPool<T> implements Pool<T> {
 	protected Lock lock = new Lock();
 	
 	private Map<Long, T> availableContainer;
-	protected Long idIndicator = 0L;
+	protected Long idIndicator = 1L;
 	public static final Integer DEFAULT_MAX_SIZE = 50;
 	public Integer maxSize;
 
@@ -105,22 +105,18 @@ public abstract class AbstractPool<T> implements Pool<T> {
 					if (idIndicator == Long.MAX_VALUE)
 						idIndicator = 0L;
 					savedId = idIndicator++;
-					if(t instanceof BaseObject)
-					{
-						Long id = ((BaseObject) t).getObjectId();
-						if (id == null || id.longValue() < 0L) {
-							((BaseObject) t).setObjectId(savedId.longValue());
-							availableContainer.put(savedId, t);
-						} else {
-							availableContainer.put(((BaseObject) t).getObjectId(), t);
-							savedId = ((BaseObject) t).getObjectId();
-							idIndicator--;
-						}
-					}
-					else
-					{
+//					if (t instanceof BaseObject) {
+//						Long id = ((BaseObject) t).getObjectId();
+//						if (id == null || id.longValue() < 0L) {
+//							((BaseObject) t).setObjectId(savedId.longValue());
+//							availableContainer.put(savedId, t);
+//						} else {
+//							availableContainer.put(((BaseObject) t).getObjectId(), t);
+//							savedId = ((BaseObject) t).getObjectId();
+//							idIndicator--;
+//						}
+//					} else
 						availableContainer.put(savedId, t);
-					}
 					break;
 				}
 			}

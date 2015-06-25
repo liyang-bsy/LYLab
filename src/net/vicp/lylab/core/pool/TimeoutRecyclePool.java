@@ -65,33 +65,30 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 	}
 
 	@Override
-	public boolean recycle() {
+	public void recycle() {
 		for (Long id : startTime.keySet()) {
 			Date start = startTime.get(id);
 			if (new Date().getTime() - start.getTime() > timeout) {
-				if (remove(id) == null) {
-					busyContainer.remove(id);
+				T tmp = remove(id);
+				if (tmp == null) {
+					tmp = busyContainer.remove(id);
 					keyContainer.remove(id);
+
+					while(size()<maxSize)
+						try {
+							addToContainer((T) tmp.getClass().newInstance());
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
 				}
 				startTime.remove(id);
 			}
 		}
-		return true;
 	}
 
 	@Override
 	public boolean isRecyclable() {
-		return true;
-	}
-
-	@Override
-	public void forceStop() {
-		return;
-	}
-
-	@Override
-	public boolean isRecycled() {
-		return false;
+		return busyContainer.size() != 0;
 	}
 
 }

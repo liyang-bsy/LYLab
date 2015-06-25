@@ -41,6 +41,14 @@ public class RecyclePool<T> extends AbstractPool<T> {
 		busyContainer = container;
 	}
 	
+	public T viewById(Long objId) {
+		safeCheck();
+		T tmp = getFromContainer(objId);
+		if(tmp == null)
+			tmp = getFromBusyContainer(objId);
+		return tmp;
+	}
+	
 	@Override
 	public int size() {
 		return availableSize() + busyContainer.size();
@@ -162,12 +170,9 @@ public class RecyclePool<T> extends AbstractPool<T> {
 	protected T getFromBusyContainer(Long objId) {
 		if (isClosed() || objId == null)
 			return null;
-		if (busyContainer.size() > 0)
-		{
-			T tmp = busyContainer.get(objId);
-			return tmp;
-		}
-		return null;
+		if (busyContainer.size() <= 0)
+			return null;
+		return busyContainer.get(objId);
 	}
 
 	@Override
