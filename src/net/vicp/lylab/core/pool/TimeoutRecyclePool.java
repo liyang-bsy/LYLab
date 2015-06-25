@@ -64,6 +64,7 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void recycle() {
 		for (Long id : startTime.keySet()) {

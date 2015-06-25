@@ -5,66 +5,37 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.interfaces.Recyclable;
+import net.vicp.lylab.utils.controller.TimeoutController;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class WatchDog extends Task implements Runnable {
-
-	private static final long serialVersionUID = -4494667245957319328L;
+public final class WatchDog implements Recyclable {
 
 	protected Log log = LogFactory.getLog(getClass());
 
-	private static Boolean init = false;
-	private static Boolean isRunning = false;
 	private static WatchDog instance = null;
 
-	public static Integer DEFAULTINTERVAL = 2000;			// 2 second
-	public static Long DEFAULTTOLERANCE = 5*1000L;			// 5 min
-	private Integer interval = DEFAULTINTERVAL;
-	private Long tolerance = DEFAULTTOLERANCE;
+	private Long interval = CoreDefine.INTERVAL;
+	private Long tolerance = CoreDefine.WAITING_TOLERANCE;
 	
 	private List<Task> forewarnList;
 	
 	@Override
-	public boolean isDaemon()
+	public boolean isRecyclable()
 	{
 		return true;
 	}
 	
-	@Override
-	public void exec() {
-		try {
-			if (!init) {
-				forewarnList = new ArrayList<Task>();
-				instance = this;
-				init = true;
-			}
-			if (isRunning)
-				return;
-			while (!getThread().isInterrupted()) {
-				if (isStopped())
-					break;
-				Thread.sleep(interval);
-				getInstance().timeoutControl();
-			}
-		} catch (InterruptedException e) {
-			throw new LYException("WatchDog is interrupted");
-		} finally {
-			isRunning = false;
-		}
-	}
-
 	@SuppressWarnings("deprecation")
-	private void timeoutControl() {
+	@Override
+	public void recycle() {
 		List<Task> callStopList = new LinkedList<Task>();
 		List<Task> forceStopList = new LinkedList<Task>();
 		for(Task task : LYTaskQueue.getThreadPool())
 		{
-			// skip WatchDog itself
-			if(task instanceof WatchDog) continue;
-			if(isStopped()) continue;
 			// -1L means infinite
 			if(task.getTimeout() == -1L || task.getState() == Task.COMPLETED || task.getState() == Task.FAILED)
 				continue;
@@ -75,9 +46,15 @@ public final class WatchDog extends Task implements Runnable {
 		}
 		for(Task task : forceStopList)
 		{
-//			task.forceStop();
-			task.recycle();
-			log.error("Timeout task was killed:\n" + task.toString());
+			task.forceStop();
+			if(task.getRetryCount() > 0)
+			{
+				log.error("Timeout task was killed, but this task requested retry(" + task.getRetryCount() + "):\n" + task.toString());
+				task.setRetryCount(task.getRetryCount() - 1);
+				task.reset();
+				LYTaskQueue.addTask(task);
+			}
+			else log.error("Timeout task was killed:\n" + task.toString());
 		}
 		for(Task task : callStopList)
 		{
@@ -90,26 +67,29 @@ public final class WatchDog extends Task implements Runnable {
 		return instance;
 	}
 
-	public static void setInstance(WatchDog instance) {
-		WatchDog.instance = instance;
-	}
-
 	@SuppressWarnings("deprecation")
 	public static void killAll() {
 		for(Task task : LYTaskQueue.getThreadPool())
 			task.forceStop();
-		getInstance().forceStop();
 	}
 
 	public static void stopWatchDog() {
-		getInstance().callStop();
+		if(instance == null) return;
+		TimeoutController.removeFromWatch(instance);
+		instance = null;
+	}
+	
+	public static void startWatchDog() {
+		if(instance != null) return;
+		instance = new WatchDog();
+		TimeoutController.addToWatch(instance);
 	}
 
-	public Integer getInterval() {
+	public Long getInterval() {
 		return interval;
 	}
 
-	public void setInterval(Integer interval) {
+	public void setInterval(Long interval) {
 		this.interval = interval;
 	}
 

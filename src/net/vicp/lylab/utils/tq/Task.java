@@ -7,7 +7,6 @@ import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Executor;
-import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.Utils;
 
 /**
@@ -21,7 +20,7 @@ import net.vicp.lylab.utils.Utils;
  * @version 1.0.1
  * 
  */
-public abstract class Task extends CloneableBaseObject implements Runnable, Executor, Recyclable, Serializable {
+public abstract class Task extends CloneableBaseObject implements Runnable, Executor, Serializable {
 
 	private static final long serialVersionUID = -505125638835928043L;
 	/**
@@ -34,7 +33,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	protected volatile Integer retryCount = 0;
 	protected Thread thread;
 	
-	protected volatile Integer state = new Integer(0);
+	private volatile Integer state = new Integer(0);
 	protected Date startTime;
 	
 	static public Long DEFAULTTIMEOUT = 60*60*1000L;			// 1 hour
@@ -85,6 +84,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			e.printStackTrace();
 		} finally {
 			LYTaskQueue.taskEnded(getTaskId());
+			setThread(null);
 		}
 	}
 	
@@ -92,7 +92,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 * If you need do something when this task completed, override this.<br>
 	 * It will execute unless this task was successfully CANCELLED<br><br>
 	 */
-	public void aftermath()
+	protected void aftermath()
 	{
 		return;
 	}
@@ -120,13 +120,20 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		return true;
 	}
 	
-	public final synchronized void begin() {
-		if(state.intValue() != BEGAN)
+	public final void begin() {
+		begin(null);
+	}
+	
+	public final synchronized void begin(String threadName) {
+		if(state.intValue() != BEGAN || this.thread != null)
 			return;
-		Thread t = new Thread(this);
-		t.setName("Task(" + String.valueOf(getTaskId()) + ") - " + this.getClass().getSimpleName() + "");
+		setThread(new Thread(this));
+		Thread t = getThread();
+		if(threadName == null)
+			t.setName("Task(" + String.valueOf(getTaskId()) + ") - " + this.getClass().getSimpleName() + "");
+		else
+			t.setName(threadName);
 		t.setDaemon(isDaemon());
-		this.setThread(t);
 		t.start();
 	}
 	
@@ -157,36 +164,20 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	}
 
 	@Deprecated
-	@Override
 	public final synchronized void forceStop() {
 		synchronized (this) {
 			this.notifyAll();
 		}
+		if(thread != null)
+		{
+			getThread().stop(new LYException("Task " + getTaskId() + " timeout"));
+			thread = null;
+		}
 		LYTaskQueue.taskEnded(getTaskId());
-		recycle();
 	}
 
 	public Boolean isStopped() {
 		return getState() == STOPPED || getState() == CANCELLED || getState() == FAILED;
-	}
-	
-	@Override
-	public boolean isRecycled() {
-		return getRetryCount() > 0 || getState() == FAILED;
-	}
-	
-	@Override
-	public boolean isRecyclable() {
-		return getState() == STOPPED || getState() == CANCELLED;
-	}
-
-	@Override
-	public boolean recycle() {
-		setRetryCount(getRetryCount() - 1);
-		reset();
-		if(getRetryCount() > 0)
-			LYTaskQueue.addTask(this);
-		return true;
 	}
 	
 	protected boolean isDaemon() {

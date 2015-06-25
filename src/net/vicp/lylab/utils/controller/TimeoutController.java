@@ -9,6 +9,7 @@ import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.tq.Task;
+import net.vicp.lylab.utils.tq.WatchDog;
 
 public final class TimeoutController extends Task {
 	private static final long serialVersionUID = -4494667245957319328L;

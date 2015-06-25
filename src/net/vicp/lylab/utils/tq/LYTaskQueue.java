@@ -141,10 +141,8 @@ public final class LYTaskQueue extends Thread {
 	}
 
 	public static void useWatchDog(Boolean useWatchDog) {
-		if(LYTaskQueue.useWatchDog == useWatchDog) return;
-		
 		if(useWatchDog)
-			LYTaskQueue.addTask(new WatchDog().setTimeout(0L));
+			WatchDog.startWatchDog();
 		else
 			WatchDog.stopWatchDog();
 		
