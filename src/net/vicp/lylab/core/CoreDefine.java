@@ -11,6 +11,7 @@ public class CoreDefine {
 	public static final Long INTERVAL_LONG = 5000L;				// 5 second
 	
 	public static final Long WAITING_TOLERANCE = 5*1000L;			// 5 min
+	public static final Long DEFAUL_TTIMEOUT = 60*60*1000L; // 1 hour
 	
 	public static final Long ONE_TIME_TASK = 0L;
 	public static final Long MILLISECOND = 1L;

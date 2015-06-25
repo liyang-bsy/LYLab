@@ -17,10 +17,11 @@ import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 
 /**
- * 	Manager class to execute all task.<br>
- * 	Finish tasks within certain threads.<br>
+ * Manager class to execute all task.<br>
+ * Finish tasks within certain threads.<br>
  * 
- * 	<br>Release Under GNU Lesser General Public License (LGPL).
+ * <br>
+ * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee
  * @since 2015.06.23
@@ -30,7 +31,7 @@ import net.vicp.lylab.utils.Utils;
 public final class LYTaskQueue extends Thread {
 
 	protected static Log log = LogFactory.getLog(LYTaskQueue.class);
-	
+
 	private volatile static Boolean useWatchDog = false;
 	private static String permanentFileName = "lytaskqueue.bin";
 
@@ -40,22 +41,25 @@ public final class LYTaskQueue extends Thread {
 	private volatile static Long lastTaskId = 0L;
 	private volatile static Integer maxQueue = 1000;
 	private volatile static Integer maxThread = 200;
-	
+
 	private static Pool<Task> taskPool = new SequenceTemporaryPool<Task>(maxQueue);
 	private static Pool<Task> threadPool = new SequencePool<Task>(maxThread);
-	
-	public static final Long DEFAULT_TERMINATE_TIMEOUT = 5*60*1000L;
+
+	public static final Long DEFAULT_TERMINATE_TIMEOUT = 5 * 60 * 1000L;
 
 	/**
 	 * At your service!
-	 * @param
-	 * task which should be executed, it will be cloned and its clone will be enqueued.
-	 * <br>[!] Original parameter 'task' will never be used or changed by LYTaskQueue.addTask(Task task)
-	 * @return
-	 * A non-negative taskId returns to recognize specific task.
-	 * <br>-1, means LYTaskQueue didn't obtain cloned task.
-	 * <br>-2, means LYTaskQueue was try to terminate itself. No more task will be accepted.
-	 * <br>-3, means LYTaskQueue couldn't add task into task pool.
+	 * 
+	 * @param task
+	 *            which should be executed, it will be cloned and its clone will
+	 *            be enqueued. <br>
+	 *            [!] Original parameter 'task' will never be used or changed by
+	 *            LYTaskQueue.addTask(Task task)
+	 * @return A non-negative taskId returns to recognize specific task. <br>
+	 *         -1, means LYTaskQueue didn't obtain cloned task. <br>
+	 *         -2, means LYTaskQueue was try to terminate itself. No more task
+	 *         will be accepted. <br>
+	 *         -3, means LYTaskQueue couldn't add task into task pool.
 	 */
 	public synchronized static Long addTask(Task task) {
 		Task task0 = null;
@@ -79,10 +83,11 @@ public final class LYTaskQueue extends Thread {
 
 	/**
 	 * Cancel a task.
-	 * @param
-	 * taskId which you will get from LYTaskQueue.addTask()
-	 * @return
-	 * true: cancelled<br>false: cancel failed
+	 * 
+	 * @param taskId
+	 *            which you will get from LYTaskQueue.addTask()
+	 * @return true: cancelled<br>
+	 *         false: cancel failed
 	 */
 	public synchronized static Boolean cancel(Long taskId) {
 		if (isTerminated || taskId == null || taskId < 0L)
@@ -95,13 +100,14 @@ public final class LYTaskQueue extends Thread {
 		tk.callStop();
 		return true;
 	}
-	
+
 	/**
 	 * Stop a task.
-	 * @param
-	 * taskId which you will get from LYTaskQueue.addTask()
-	 * @return
-	 * true: cancelled<br>false: cancel failed
+	 * 
+	 * @param taskId
+	 *            which you will get from LYTaskQueue.addTask()
+	 * @return true: cancelled<br>
+	 *         false: cancel failed
 	 */
 	public synchronized static Boolean stop(Long taskId) {
 		if (isTerminated || taskId == null || taskId < 0L)
@@ -131,21 +137,22 @@ public final class LYTaskQueue extends Thread {
 			isRunning = false;
 		}
 	}
-	
+
 	public static void taskEnded(Long taskId) {
-		threadPool.remove(taskId);
+		if(taskId != null)
+			threadPool.remove(taskId);
 	}
-	
+
 	public static Boolean isUsingWatchDog() {
 		return useWatchDog;
 	}
 
 	public static void useWatchDog(Boolean useWatchDog) {
-		if(useWatchDog)
+		if (useWatchDog)
 			WatchDog.startWatchDog();
 		else
 			WatchDog.stopWatchDog();
-		
+
 		LYTaskQueue.useWatchDog = useWatchDog;
 	}
 
@@ -169,17 +176,20 @@ public final class LYTaskQueue extends Thread {
 	}
 
 	/**
-	 * This action will call off the task queue, then wait tasks in running for 5 minutes, then killed, and save tasks in queue onto disk
+	 * This action will call off the task queue, then wait tasks in running for
+	 * 5 minutes, then killed, and save tasks in queue onto disk
 	 */
-	public static void terminate()
-	{
+	public static void terminate() {
 		// default timeout is 5 minutes
 		terminate(DEFAULT_TERMINATE_TIMEOUT);
 	}
-	
+
 	/**
-	 * This action will call off the task queue, then wait tasks in running for specific timeout, then killed, and save tasks in queue onto disk
-	 * @param timeout waiting limit for running tasks in million second
+	 * This action will call off the task queue, then wait tasks in running for
+	 * specific timeout, then killed, and save tasks in queue onto disk
+	 * 
+	 * @param timeout
+	 *            waiting limit for running tasks in million second
 	 */
 	public static void terminate(Long timeout) {
 		if (isTerminated)

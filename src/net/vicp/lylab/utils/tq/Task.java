@@ -8,19 +8,22 @@ import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Executor;
 import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.atomic.AtomicInteger;
 
 /**
- * 	Extends Task and reference to TaskQueue(manage class).<br>
- * 	Override exec() to satisfy your needs.<br>
+ * Extends Task and reference to TaskQueue(manage class).<br>
+ * Override exec() to satisfy your needs.<br>
  * 
- * 	<br>Release Under GNU Lesser General Public License (LGPL).
+ * <br>
+ * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee
  * @since 2015.03.17
  * @version 1.0.1
  * 
  */
-public abstract class Task extends CloneableBaseObject implements Runnable, Executor, Serializable {
+public abstract class Task extends CloneableBaseObject implements Runnable,
+		Executor, Serializable {
 
 	private static final long serialVersionUID = -505125638835928043L;
 	/**
@@ -31,13 +34,18 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 * How many time you want retry if this task was killed by WatchDog
 	 */
 	protected volatile Integer retryCount = 0;
+	/**
+	 * Control its running thread
+	 */
 	protected Thread thread;
-	
-	private volatile Integer state = new Integer(0);
+
+	/**
+	 * Indicate when this task start run()
+	 */
 	protected Date startTime;
-	
-	static public Long DEFAULTTIMEOUT = 60*60*1000L;			// 1 hour
-	
+
+	private volatile AtomicInteger state = new AtomicInteger(BEGAN);
+
 	static public final int STOPPED = -3;
 	static public final int CANCELLED = -2;
 	static public final int FAILED = -1;
@@ -45,32 +53,34 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	static public final int STARTED = 1;
 	static public final int COMPLETED = 2;
 
-	public Task()
-	{
+	public Task() {
 		thread = null;
 		startTime = null;
-		timeout = DEFAULTTIMEOUT;
-		state = BEGAN;
+		timeout = CoreDefine.DEFAUL_TTIMEOUT;
+		state.set(BEGAN);
 	}
-	
+
 	/**
 	 * Reserved entrance for multi-threaded. DO NOT call this method.
 	 */
-	public final void run()
-	{
-		if(state != BEGAN) return;
+	public final void run() {
 		try {
-			state = STARTED;
+			int past = state.getAndSet(STARTED);
+			if(past != BEGAN)
+			{
+				state.set(past);
+				return;
+			}
 			setStartTime(new Date());
 			try {
 				exec();
 			} catch (Throwable e) {
-				System.err.print(this.toString() +"\ncreated an error:\t" + Utils.getStringFromException(e));
-				if (state.intValue() == STARTED)
-					state = FAILED;
+				System.err.print(this.toString() + "\ncreated an error:\t" + Utils.getStringFromException(e));
+				if (state.get().intValue() == STARTED)
+					state.set(FAILED);
 			} finally {
-				if (state.intValue() == STARTED)
-					state = COMPLETED;
+				if (state.get().intValue() == STARTED)
+					state.set(COMPLETED);
 			}
 
 			synchronized (this) {
@@ -84,72 +94,73 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			setThread(null);
 		}
 	}
-	
+
 	/**
 	 * If you need do something when this task completed, override this.<br>
-	 * It will execute unless this task was successfully CANCELLED<br><br>
+	 * It will execute unless this task was successfully CANCELLED<br>
+	 * <br>
 	 */
-	protected void aftermath()
-	{
+	protected void aftermath() {
 		return;
 	}
 
 	/**
-	 * Alert! This function will block current thread!
-	 * The task is finished when this function is completed.
-	 * DO NOT use it with aftermath()
-	 * @throws InterruptedException 
+	 * Alert! This function will block current thread! The task is finished when
+	 * this function is completed. DO NOT use it with aftermath()
+	 * 
+	 * @throws InterruptedException
 	 */
 	public synchronized final void waitingForFinish() throws InterruptedException {
-		while(!waitingForFinish(CoreDefine.WAITING));
+		while (!waitingForFinish(CoreDefine.WAITING));
 	}
+
 	/**
-	 * Alert! This function will block current thread!
-	 * The task is finished when this function is completed.
-	 * DO NOT use it with aftermath()
-	 * @throws InterruptedException 
+	 * Alert! This function will block current thread! The task is finished when
+	 * this function is completed. DO NOT use it with aftermath()
+	 * 
+	 * @throws InterruptedException
 	 */
 	public synchronized final boolean waitingForFinish(Long millionseconds) throws InterruptedException {
-		if(state.intValue() == STOPPED || state.intValue() == BEGAN || state.intValue() == STARTED)
-				this.wait(millionseconds);
-		if(state.intValue() == STOPPED || state.intValue() == BEGAN || state.intValue() == STARTED)
+		if (state.get().intValue() == STOPPED || state.get().intValue() == BEGAN || state.get().intValue() == STARTED)
+			this.wait(millionseconds);
+		if (state.get().intValue() == STOPPED || state.get().intValue() == BEGAN || state.get().intValue() == STARTED)
 			return false;
 		return true;
 	}
-	
+
 	public final void begin() {
 		begin(null);
 	}
-	
+
 	public final synchronized void begin(String threadName) {
-		if(state.intValue() != BEGAN || this.thread != null)
+		if (state.get().intValue() != BEGAN || this.thread != null)
 			return;
 		setThread(new Thread(this));
 		Thread t = getThread();
-		if(threadName == null)
-			t.setName("Task(" + String.valueOf(getTaskId()) + ") - " + this.getClass().getSimpleName() + "");
+		if (threadName == null)
+			t.setName("Task(" + getTaskId() + ") - " + getClass().getSimpleName() + "");
 		else
 			t.setName(threadName);
 		t.setDaemon(isDaemon());
 		t.start();
 	}
-	
+
 	public final void callStop() {
-		switch (state.intValue()) {
+		switch (state.get().intValue()) {
 		case STOPPED:
-			state = STOPPED;
+			state.set(STOPPED);
 			break;
 		case CANCELLED:
-			state = STOPPED;
+			state.set(STOPPED);
 			break;
 		case FAILED:
-			state = STOPPED;
+			state.set(STOPPED);
 			break;
 		case BEGAN:
-			state = CANCELLED;
+			state.set(CANCELLED);
 			break;
 		case STARTED:
-			state = STOPPED;
+			state.set(STOPPED);
 			break;
 		case COMPLETED:
 			break;
@@ -165,8 +176,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		synchronized (this) {
 			this.notifyAll();
 		}
-		if(thread != null)
-		{
+		if (thread != null) {
 			getThread().stop(new LYException("Task " + getTaskId() + " timeout"));
 			thread = null;
 		}
@@ -176,7 +186,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	public Boolean isStopped() {
 		return getState() == STOPPED || getState() == CANCELLED || getState() == FAILED;
 	}
-	
+
 	protected boolean isDaemon() {
 		return false;
 	}
@@ -191,19 +201,19 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	}
 
 	public Integer getState() {
-		return state.intValue();
+		return state.get().intValue();
 	}
-	
+
 	@SuppressWarnings("deprecation")
 	public Task reset() {
 		setObjectId(null);
-		state = BEGAN;
-		if(thread != null && getThread().isAlive())
+		state.set(BEGAN);
+		if (thread != null && getThread().isAlive())
 			getThread().stop();
 		thread = null;
 		return this;
 	}
-	
+
 	public Thread getThread() {
 		return thread;
 	}
@@ -230,7 +240,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		this.timeout = timeout;
 		return this;
 	}
-	
+
 	public Integer getRetryCount() {
 		return retryCount;
 	}
@@ -243,10 +253,9 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		String sState = "UNKNOWN";
-		switch (state.intValue()) {
+		switch (state.get().intValue()) {
 		case -3:
 			sState = "STOPPED";
 			break;
@@ -268,7 +277,9 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		default:
 			break;
 		}
-		return "taskId=" + getTaskId() + ",className=" + getClass().getName() + ",state=" + sState + ",startTime=" + startTime + ",timeout=" + timeout;
+		return "taskId=" + getTaskId() + ",className=" + getClass().getName()
+				+ ",state=" + sState + ",startTime=" + startTime + ",timeout="
+				+ timeout;
 	}
 
 }

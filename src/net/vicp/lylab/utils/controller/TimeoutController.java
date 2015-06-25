@@ -15,7 +15,7 @@ public final class TimeoutController extends Task {
 
 	private static Boolean init = false;
 	private static TimeoutController instance = null;
-	
+
 	private List<WeakReference<Recyclable>> watchList = new ArrayList<WeakReference<Recyclable>>();
 
 	public static void init() {
@@ -25,7 +25,7 @@ public final class TimeoutController extends Task {
 			instance.begin("TimeoutController");
 		}
 	}
-	
+
 	@Override
 	public boolean isDaemon() {
 		return true;
@@ -48,18 +48,15 @@ public final class TimeoutController extends Task {
 	private void timeoutControl() {
 		System.gc();
 		Iterator<WeakReference<Recyclable>> iterator = watchList.iterator();
-		while(iterator.hasNext())
-		{
-//			// skip myself
-//			if(rec instanceof TimeoutController) continue;
+		while (iterator.hasNext()) {
 			WeakReference<Recyclable> wref = iterator.next();
 			Recyclable rec = wref.get();
-			if(rec == null)
-			{
+			if (rec == null) {
 				iterator.remove();
 				continue;
 			}
-			if(!rec.isRecyclable()) continue;
+			if (!rec.isRecyclable())
+				continue;
 			rec.recycle();
 		}
 	}
