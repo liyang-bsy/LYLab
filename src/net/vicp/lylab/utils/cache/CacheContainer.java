@@ -46,7 +46,7 @@ public final class CacheContainer {
 					do {
 						c.flush(dec);
 						dec/=2;
-					} while(c.getMemoryUsage() > c.getMemoryLimitation()*c.threshold);
+					} while(c.getMemoryUsage() > c.getMemoryLimitation()*c.threshold / 2);
 				}
 				public Task setC(CacheContainer cc) {
 					this.c = cc;
