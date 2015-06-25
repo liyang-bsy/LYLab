@@ -70,10 +70,11 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 				exec();
 			} catch (Throwable e) {
 				System.err.print(this.toString() +"\ncreated an error:\t" + Utils.getStringFromException(e));
-				setState(FAILED);
+				if (state.intValue() == STARTED)
+					state = FAILED;
 			} finally {
 				if (state.intValue() == STARTED)
-					setState(COMPLETED);
+					state = COMPLETED;
 			}
 
 			synchronized (this) {
@@ -161,16 +162,8 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		synchronized (this) {
 			this.notifyAll();
 		}
-		if(thread != null)
-		{
-			getThread().stop(new LYException("Task " + getTaskId() + " timeout"));
-			LYTaskQueue.taskEnded(getTaskId());
-			thread = null;
-		}
-	}
-
-	protected boolean isDaemon() {
-		return false;
+		LYTaskQueue.taskEnded(getTaskId());
+		recycle();
 	}
 
 	public Boolean isStopped() {
@@ -179,22 +172,27 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	
 	@Override
 	public boolean isRecycled() {
-		return getRetryCount() > 0;
+		return getRetryCount() > 0 || getState() == FAILED;
 	}
 	
 	@Override
 	public boolean isRecyclable() {
-		return getState() == STOPPED || getState() == CANCELLED || getState() == FAILED;
+		return getState() == STOPPED || getState() == CANCELLED;
 	}
 
 	@Override
 	public boolean recycle() {
-		this.setRetryCount(this.getRetryCount() - 1);
+		setRetryCount(getRetryCount() - 1);
 		reset();
-		LYTaskQueue.addTask(this);
+		if(getRetryCount() > 0)
+			LYTaskQueue.addTask(this);
 		return true;
 	}
 	
+	protected boolean isDaemon() {
+		return false;
+	}
+
 	public final Long getTaskId() {
 		return getObjectId();
 	}
@@ -218,11 +216,6 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		return this;
 	}
 	
-	private Task setState(Integer state) {
-		this.state = state;
-		return this;
-	}
-
 	public Thread getThread() {
 		return thread;
 	}
