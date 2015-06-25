@@ -14,9 +14,9 @@ public interface Pool<T> extends Cloneable, Iterable<T> {
 	public Long add(T t);
     public int size();
     public boolean isEmpty();
-	public T remove(Long objId);
+	public T remove(long objId);
 	public T accessOne();
-	public List<T> accessMany(Integer amount);
+	public List<T> accessMany(int amount);
 	public void clear();
     public void close();
     public boolean isClosed();

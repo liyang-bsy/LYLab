@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDefine;
-import net.vicp.lylab.core.LYException;
+import net.vicp.lylab.core.exception.LYException;
 
 /**
  * 
@@ -23,7 +23,7 @@ public abstract class AbstractPool<T> implements Pool<T> {
 	protected Lock lock = new Lock();
 	
 	private Map<Long, T> availableContainer;
-	protected Long idIndicator = 0L;
+	protected Long idIndicator = 1L;
 	public static final Integer DEFAULT_MAX_SIZE = 50;
 	public Integer maxSize;
 
@@ -31,8 +31,8 @@ public abstract class AbstractPool<T> implements Pool<T> {
 		this(DEFAULT_MAX_SIZE);
 	}
 
-	public AbstractPool(Integer maxSize) {
-		this.maxSize = (maxSize != null && maxSize > 0)? maxSize : DEFAULT_MAX_SIZE;
+	public AbstractPool(int maxSize) {
+		this.maxSize = ((maxSize > 0)? maxSize : DEFAULT_MAX_SIZE);
 		this.availableContainer = new ConcurrentHashMap<Long, T>();
 	}
 	
@@ -73,14 +73,14 @@ public abstract class AbstractPool<T> implements Pool<T> {
 		}
 	}
 
-	protected T getFromContainer(Long objId) {
-		if (isClosed() || objId == null)
+	protected T getFromContainer(long objId) {
+		if (isClosed())
 			return null;
 		return availableContainer.get(objId);
 	}
 
-	protected T removeFromContainer(Long objId) {
-		if (isClosed() || objId == null)
+	protected T removeFromContainer(long objId) {
+		if (isClosed())
 			return null;
 		T tmp = availableContainer.remove(objId);
 		lock.notifyAll();
@@ -95,7 +95,7 @@ public abstract class AbstractPool<T> implements Pool<T> {
 				Integer size = size();
 				if (size >= maxSize) {
 					try {
-						lock.wait(CoreDefine.waitingThreshold);
+						lock.wait(CoreDefine.WAITING_SHORT);
 						continue;
 					} catch (InterruptedException e) {
 						throw new LYException("Wait interrupted", e);
@@ -105,8 +105,7 @@ public abstract class AbstractPool<T> implements Pool<T> {
 					if (idIndicator == Long.MAX_VALUE)
 						idIndicator = 0L;
 					savedId = idIndicator++;
-					if(t instanceof BaseObject)
-					{
+					if (t instanceof BaseObject) {
 						Long id = ((BaseObject) t).getObjectId();
 						if (id == null || id.longValue() < 0L) {
 							((BaseObject) t).setObjectId(savedId.longValue());
@@ -116,11 +115,8 @@ public abstract class AbstractPool<T> implements Pool<T> {
 							savedId = ((BaseObject) t).getObjectId();
 							idIndicator--;
 						}
-					}
-					else
-					{
+					} else
 						availableContainer.put(savedId, t);
-					}
 					break;
 				}
 			}
