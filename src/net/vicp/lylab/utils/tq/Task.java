@@ -5,7 +5,6 @@ import java.util.Date;
 
 import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDefine;
-import net.vicp.lylab.core.exception.LYError;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Executor;
 import net.vicp.lylab.utils.Utils;
@@ -19,8 +18,8 @@ import net.vicp.lylab.utils.atomic.AtomicInteger;
  * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee
- * @since 2015.03.17
- * @version 1.0.1
+ * @since 2015.06.26
+ * @version 2.0.0
  * 
  */
 public abstract class Task extends CloneableBaseObject implements Runnable, Executor, Serializable {
@@ -113,11 +112,17 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		}
 		return true;
 	}
-
+	
+	/**
+	 * Begin a task, if you put it into LYTaskQueue, then it will auto start
+	 */
 	public final void begin() {
 		begin(null);
 	}
 
+	/**
+	 * Begin a task yourself and assign a specific thread name to it
+	 */
 	public final void begin(String threadName) {
 		if (state.get().intValue() != BEGAN || this.thread != null)
 			return;
@@ -131,6 +136,9 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		t.start();
 	}
 
+	/**
+	 * Try to call off the task, but can't ensure it will be end after calling this
+	 */
 	public final void callStop() {
 		state.compareAndSet(STOPPED, STOPPED);
 		state.compareAndSet(CANCELLED, STOPPED);
@@ -142,6 +150,9 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			thread.interrupt();
 	}
 
+	/**
+	 * If you found a task was lost itself in death loop or dead lock
+	 */
 	@Deprecated
 	public final void forceStop() {
 		callStop();
@@ -152,18 +163,31 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		LYTaskQueue.taskEnded(getTaskId());
 	}
 
+	/**
+	 * @return
+	 * <tt>true</tt> if the task is stopped
+	 */
 	public Boolean isStopped() {
 		return getState() == STOPPED || getState() == CANCELLED || getState() == FAILED;
 	}
-	
+
+	/**
+	 * @return
+	 * <tt>true</tt> if the task is finished
+	 */
 	public Boolean isFinished() {
 		return isStopped() || getState() == COMPLETED;
 	}
 
+	/**
+	 * @return
+	 * <tt>true</tt> if the task is a deamon
+	 */
 	protected boolean isDaemon() {
 		return false;
 	}
 
+	// getters & setters below
 	public final Long getTaskId() {
 		return getObjectId();
 	}
@@ -173,25 +197,41 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		return this;
 	}
 
+	/**
+	 * @return
+	 * The state of the task
+	 */
 	public Integer getState() {
 		return state.get();
 	}
 
+	/**
+	 * Reset a task
+	 * @return
+	 * <tt>true</tt> if the task is resetted
+	 * @throws
+	 * 		LYException if the task is alive
+	 */
 	public boolean reset() {
 		if(state.get() == STARTED) return false;
 //		if(!state.compareAndSet(STOPPED, BEGAN)) return false;
-		setObjectId(0);
 		if (thread != null && getThread().isAlive())
-			throw new LYError("Reset an alive task");
+			throw new LYException("Reset an alive task");
 		thread = null;
+		setObjectId(0);
 		return true;
 	}
 
-	public Thread getThread() {
+	protected Thread getThread() {
 		return thread;
 	}
 
-	public Task setThread(Thread thread) {
+	/**
+	 * Read only to outside
+	 * @param thread
+	 * @return
+	 */
+	private Task setThread(Thread thread) {
 		this.thread = thread;
 		return this;
 	}
@@ -223,6 +263,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		return this;
 	}
 
+	// toString
 	@Override
 	public String toString() {
 		String sState = "UNKNOWN";

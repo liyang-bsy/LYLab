@@ -28,8 +28,8 @@ import org.apache.commons.logging.LogFactory;
  * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee
- * @since 2015.06.23
- * @version 1.1.0
+ * @since 2015.06.26
+ * @version 2.0.0
  * 
  */
 public final class LYTaskQueue extends Task {
@@ -53,7 +53,7 @@ public final class LYTaskQueue extends Task {
 
 	public static final Long DEFAULT_TERMINATE_TIMEOUT = 5 * 60 * 1000L;
 
-	// static initialize
+	// static auto initialize
 	static { init(); }
 	
 	/**
@@ -94,7 +94,9 @@ public final class LYTaskQueue extends Task {
 	public final void exec() {
 		try {
 			while (!getInstance().getIsTerminated().get()) {
-				while (!getTaskPool().isEmpty() && !isThreadFull()) {
+				while (!getInstance().getIsTerminated().get()
+						&& !getTaskPool().isEmpty()
+						&& !isThreadPoolFull()) {
 					Task task = getTaskPool().accessOne();
 					synchronized (lock) {
 						task.begin();
@@ -105,16 +107,16 @@ public final class LYTaskQueue extends Task {
 					synchronized (lock) {
 						lock.wait(CoreDefine.WAITING_SHORT);
 					}
-				} catch (Throwable e) { log.error("Exception in LYTaskQueue#exec wait()"); }
+				} catch (Throwable e) {
+					log.error("Exception in LYTaskQueue#exec wait():\n"
+							+ Utils.getStringFromException(e));
+				}
 			}
 		} catch (Throwable e) {
 		} finally {
 			isRunning.set(false);
 		}
 	}
-	
-	@Override
-	protected void aftermath() {};
 
 	/**
 	 * Cancel a task.
@@ -152,6 +154,9 @@ public final class LYTaskQueue extends Task {
 		return true;
 	}
 
+	/**
+	 * Initialize procedure
+	 */
 	public static void init() {
 		getInstance().getIsTerminated().set(false);
 		ObjectInputStream ois = null;
@@ -241,11 +246,19 @@ public final class LYTaskQueue extends Task {
 	}
 
 	// Functional methods
+	/**
+	 * Remove specific task out of thread pool, please call after you ensure the task is ended.
+	 * <br>By the way, it will be called if any task is end.
+	 */
 	public static void taskEnded(Long taskId) {
 		if(taskId != null)
 			getInstance().removeFromThreadPool(taskId);
 	}
-
+	/**
+	 * Remove specific task out of thread pool, but can't determine if this task is alive
+	 * @param taskId
+	 * @return the removed task, {@code null} if the specific task doesn't not exist
+	 */
 	private Task removeFromThreadPool(long taskId)
 	{
 		Task tmp = null;
@@ -256,11 +269,19 @@ public final class LYTaskQueue extends Task {
 		return tmp;
 	}
 
+	/**
+	 * Remove specific task out of task pool
+	 * @param taskId
+	 * @return the removed task, {@code null} if the specific task doesn't not exist
+	 */
 	private Task removeFromTaskPool(long taskId)
 	{
 		return getTaskPool().remove(taskId);
 	}
 
+	/**
+	 * Turn on WatchDog
+	 */
 	public static void useWatchDog(Boolean useWatchDog) {
 		if (useWatchDog)
 			WatchDog.startWatchDog();
@@ -270,11 +291,19 @@ public final class LYTaskQueue extends Task {
 		LYTaskQueue.useWatchDog = useWatchDog;
 	}
 	
-	public static Boolean isThreadFull() {
+	/**
+	 * @return
+	 * <tt>true</tt> if the thread pool is full
+	 */
+	public static Boolean isThreadPoolFull() {
 		return getInstance().getThreadPool().size() == maxThread.intValue();
 	}
-	
-	public static Boolean isTaskFull() {
+
+	/**
+	 * @return
+	 * <tt>true</tt> if the task pool is full
+	 */
+	public static Boolean isTaskPoolFull() {
 		return getInstance().getTaskPool().size() == maxQueue.intValue();
 	}
 
@@ -290,7 +319,7 @@ public final class LYTaskQueue extends Task {
 		return getInstance().getThreadPool().size();
 	}
 
-	// special getter & setter below
+	// special getters & setters below
 	public static void setMaxQueue(int maxQueue) {
 		if(maxQueue <= 0) throw new LYException("maxQueue must be positive");
 		LYTaskQueue.maxQueue = maxQueue;
@@ -315,7 +344,7 @@ public final class LYTaskQueue extends Task {
 		return taskPool;
 	}
 
-	// getter & setter below
+	// getters & setters below
 	public AtomicBoolean getIsTerminated() {
 		return isTerminated;
 	}

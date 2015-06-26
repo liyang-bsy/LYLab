@@ -17,6 +17,18 @@ import net.vicp.lylab.utils.controller.TimeoutController;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Manager class to recycle tasks in thread pool(Which should be in running).<br>
+ * Kill & Restart tasks within certain timeout.<br>
+ * 
+ * <br>
+ * Release Under GNU Lesser General Public License (LGPL).
+ * 
+ * @author Young Lee
+ * @since 2015.06.26
+ * @version 2.0.0
+ * 
+ */
 public final class WatchDog extends BaseObject implements Recyclable {
 	protected Log log = LogFactory.getLog(getClass());
 
@@ -27,12 +39,18 @@ public final class WatchDog extends BaseObject implements Recyclable {
 
 	private List<Task> forewarnList = new ArrayList<Task>();
 	
+	/**
+	 * WatchDog is always recyclable unless LYTaskQueue call off it
+	 */
 	@Override
 	public boolean isRecyclable()
 	{
 		return true;
 	}
-	
+
+	/**
+	 * Major cycle to recycle tasks in running
+	 */
 	@SuppressWarnings("deprecation")
 	@Override
 	public void recycle() {
@@ -77,24 +95,38 @@ public final class WatchDog extends BaseObject implements Recyclable {
 		}
 	}
 
+	/**
+	 * You should better never call this, to killAll tasks in running
+	 */
 	@SuppressWarnings("deprecation")
 	public static void killAll() {
 		for(Task task : LYTaskQueue.getInstance().getThreadPool())
 			task.forceStop();
 	}
 
+	/**
+	 * Call off WatchDog
+	 */
 	public static void stopWatchDog() {
 		TimeoutController.removeFromWatch(getInstance());
 	}
-	
+
+	/**
+	 * Turn on WatchDog
+	 */
 	public static void startWatchDog() {
 		TimeoutController.addToWatch(getInstance());
 	}
 
+	/**
+	 * Auto generate itself (thread-safe)
+	 * @return
+	 */
 	public static WatchDog getInstance() {
 		return instance.get(WatchDog.class);
 	}
-
+	
+	// getters & setters below
 	public Long getInterval() {
 		return interval;
 	}
