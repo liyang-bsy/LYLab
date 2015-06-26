@@ -37,11 +37,17 @@ public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 			return availableContainer.size();
 		}
 	}
-	
+
 	@Override
     public boolean isEmpty()
     {
 		return availableContainer.isEmpty();
+    }
+
+	@Override
+    public boolean isFull()
+    {
+		return availableContainer.size() == maxSize;
     }
 
 	@Override
@@ -95,20 +101,16 @@ public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 					} catch (InterruptedException e) {
 						throw new LYException("Wait interrupted", e);
 					}
-				}
-				if (size <= maxSize && size >= 0) {
-					if (idIndicator == Long.MAX_VALUE)
-						idIndicator = 0L;
-					savedId = idIndicator++;
+				} else {
+					savedId = nextAvailableId(idIndicator);
 					if (t instanceof BaseObject) {
 						Long id = ((BaseObject) t).getObjectId();
-						if (id == null || id.longValue() < 0L) {
+						if (id == null || id.longValue() <= 0L) {
 							((BaseObject) t).setObjectId(savedId.longValue());
 							availableContainer.put(savedId, t);
 						} else {
 							availableContainer.put(((BaseObject) t).getObjectId(), t);
 							savedId = ((BaseObject) t).getObjectId();
-							idIndicator--;
 						}
 					} else
 						availableContainer.put(savedId, t);
@@ -119,16 +121,27 @@ public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 		return savedId;
 	}
 	
+	private long nextAvailableId(Long id) {
+		do {
+			if (id == Long.MAX_VALUE)
+				id = 1L;
+			id++;
+		} while(availableContainer.get(id) != null);
+		return id;
+	}
+	
 	public Set<Long> availableKeySet()
 	{
 		return availableContainer.keySet();
 	}
 
+	@Override
 	public Integer getMaxSize() {
 		return maxSize;
 	}
 
-	public void setMaxSize(Integer maxSize) {
+	@Override
+	public void setMaxSize(int maxSize) {
 		this.maxSize = maxSize;
 	}
 

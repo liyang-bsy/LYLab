@@ -1,11 +1,12 @@
 package net.vicp.lylab.utils.atomic;
 
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.AutoInitialize;
 
-public final class AtomicStrongReference<T> extends AtomicObject<T> {
+public final class AtomicStrongReference<T> extends AtomicObject<T> implements AutoInitialize<T> {
 
 	public AtomicStrongReference() {
-		this(null);
+		super(null);
 	}
 
 	public AtomicStrongReference(T obj) {

@@ -1,15 +1,17 @@
 package net.vicp.lylab.utils.tq;
 
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.Recyclable;
-import net.vicp.lylab.utils.atomic.AtomicReference;
-import net.vicp.lylab.utils.atomic.AtomicSoftReference;
+import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
 import org.apache.commons.logging.Log;
@@ -18,11 +20,11 @@ import org.apache.commons.logging.LogFactory;
 public final class WatchDog extends BaseObject implements Recyclable {
 	protected Log log = LogFactory.getLog(getClass());
 
-	private static AtomicReference<WatchDog> instance = new AtomicSoftReference<WatchDog>();
+	private static AutoInitialize<WatchDog> instance = new AtomicStrongReference<WatchDog>();
 
 	private Long interval = CoreDefine.INTERVAL;
 	private Long tolerance = CoreDefine.WAITING_TOLERANCE;
-	
+
 	private List<Task> forewarnList = new ArrayList<Task>();
 	
 	@Override
@@ -36,16 +38,25 @@ public final class WatchDog extends BaseObject implements Recyclable {
 	public void recycle() {
 		List<Task> callStopList = new LinkedList<Task>();
 		List<Task> forceStopList = new LinkedList<Task>();
-		for(Task task : LYTaskQueue.getThreadPool())
-		{
-			// -1L means infinite
-			if(task.getTimeout() == -1L)
-				continue;
-			if(task.getTimeout() + tolerance < new Date().getTime() - task.getStartTime().getTime())
-				forceStopList.add(task);
-			else if(task.getTimeout() < new Date().getTime() - task.getStartTime().getTime())
-				callStopList.add(task);
-		}
+		Iterator<Task> iterator = LYTaskQueue.getInstance().getThreadPool().iterator();
+		boolean finished = false;
+		do {
+			try {
+				while (iterator.hasNext()) {
+					Task task = iterator.next();
+					// -1L means infinite
+					if (task.getTimeout() == -1L)
+						continue;
+					if(task.getStartTime() == null)
+						task.setStartTime(new Date());
+					if (task.getTimeout() + tolerance < new Date().getTime() - task.getStartTime().getTime())
+						forceStopList.add(task);
+					else if (task.getTimeout() < new Date().getTime() - task.getStartTime().getTime())
+						callStopList.add(task);
+				}
+				finished = true;
+			} catch (ConcurrentModificationException e) { }
+		} while (finished);
 		for(Task task : forceStopList)
 		{
 			task.forceStop();
@@ -68,7 +79,7 @@ public final class WatchDog extends BaseObject implements Recyclable {
 
 	@SuppressWarnings("deprecation")
 	public static void killAll() {
-		for(Task task : LYTaskQueue.getThreadPool())
+		for(Task task : LYTaskQueue.getInstance().getThreadPool())
 			task.forceStop();
 	}
 

@@ -4,15 +4,18 @@ import java.lang.ref.Reference;
 import java.lang.reflect.Constructor;
 
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.AutoInitialize;
 
-public abstract class AtomicReference<T> extends AtomicObject<Reference<T>> {
+public abstract class AtomicReference<T> extends AtomicObject<Reference<T>> implements AutoInitialize<T> {
 
 	public AtomicReference() {
-		this(null);
+		super(null);
 	}
 
 	public AtomicReference(Reference<T> ref) {
 		super(ref);
+		if(ref.get() == null)
+			throw new LYException("Reference to nothing");
 	}
 
 	public T get(Class<T> instanceClass)

@@ -5,11 +5,11 @@ import java.lang.ref.SoftReference;
 public final class AtomicSoftReference<T> extends AtomicReference<T> {
 
 	public AtomicSoftReference() {
-		this(null);
+		super();
 	}
 
-	public AtomicSoftReference(SoftReference<T> ref) {
-		super(ref);
+	public AtomicSoftReference(T ref) {
+		super(new SoftReference<T>(ref));
 	}
 
 	public T get(Class<T> instanceClass)

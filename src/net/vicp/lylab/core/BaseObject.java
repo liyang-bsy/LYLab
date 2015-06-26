@@ -5,13 +5,13 @@ public class BaseObject {
 	protected static class Lock { };
 	protected Lock lock = new Lock();
 	
-	protected Long objectId;
+	protected long objectId = 0L;
 
-	public Long getObjectId() {
+	public long getObjectId() {
 		return objectId;
 	}
 
-	public BaseObject setObjectId(Long objectId) {
+	public BaseObject setObjectId(long objectId) {
 		this.objectId = objectId;
 		return this;
 	}
