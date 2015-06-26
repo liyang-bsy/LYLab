@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.interfaces.Recyclable;
 
 /**
@@ -22,7 +23,7 @@ public class RecyclePool<T> extends AbstractPool<T> {
 	protected Set<Long> keyContainer = new HashSet<Long>();
 
 	public RecyclePool() {
-		this(DEFAULT_MAX_SIZE);
+		this(CoreDefine.DEFAULT_MAX_SIZE);
 	}
 	
 	public RecyclePool(Integer maxSize) {

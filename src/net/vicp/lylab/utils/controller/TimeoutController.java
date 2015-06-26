@@ -5,38 +5,59 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.AutoInitialize;
+import net.vicp.lylab.core.interfaces.Recyclable;
+import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.atomic.AtomicBoolean;
+import net.vicp.lylab.utils.atomic.AtomicStrongReference;
+import net.vicp.lylab.utils.tq.Task;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import net.vicp.lylab.core.CoreDefine;
-import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.Recyclable;
-import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.tq.Task;
-
+/**
+ * Manager class to recycle target in watch list.<br>
+ * Will recycle if a target reports true by isRecyclable().<br>
+ * 
+ * <br>
+ * Release Under GNU Lesser General Public License (LGPL).
+ * 
+ * @author Young Lee
+ * @since 2015.06.26
+ * @version 2.0.0
+ * 
+ */
 public final class TimeoutController extends Task {
 	private static final long serialVersionUID = -4494667245957319328L;
 
 	protected Log log = LogFactory.getLog(getClass());
 	
-	private static Boolean init = false;
-	private static TimeoutController instance = null;
+	private static AtomicBoolean init = new AtomicBoolean(false);
+	private static AutoInitialize<TimeoutController> instance = new AtomicStrongReference<TimeoutController>();
 
 	private List<WeakReference<Recyclable>> watchList = new LinkedList<WeakReference<Recyclable>>();
 
+	/**
+	 * Initialize procedure
+	 */
 	public static void init() {
-		if (!init) {
-			instance = new TimeoutController();
-			init = true;
-			instance.begin("TimeoutController");
-		}
+		if (init.compareAndSet(false, true))
+			getInstance().begin("TimeoutController");
 	}
 
+	/**
+	 * TimeoutController is always a daemon
+	 */
 	@Override
 	public boolean isDaemon() {
 		return true;
 	}
 
+	/**
+	 * Major cycle to check timoutControl()
+	 */
 	@Override
 	public void exec() {
 		try {
@@ -51,6 +72,9 @@ public final class TimeoutController extends Task {
 		}
 	}
 
+	/**
+	 * Major cycle to recycle every target is recyclable
+	 */
 	private void timeoutControl() {
 		System.gc();
 		Iterator<WeakReference<Recyclable>> iterator = watchList.iterator();
@@ -68,10 +92,20 @@ public final class TimeoutController extends Task {
 		}
 	}
 
+	/**
+	 * Add an recyclable target into watch list
+	 * @param rec
+	 * @return
+	 * <tt>true</tt>
+	 */
 	public synchronized static boolean addToWatch(Recyclable rec) {
 		return getInstance().getWatchList().add(new WeakReference<Recyclable>(rec));
 	}
 
+	/**
+	 * Remove an recyclable target into watch list
+	 * @param rec
+	 */
 	public synchronized static void removeFromWatch(Recyclable rec) {
 		System.gc();
 		Iterator<WeakReference<Recyclable>> iterator = getInstance().getWatchList().iterator();
@@ -87,21 +121,23 @@ public final class TimeoutController extends Task {
 		}
 	}
 
+	/**
+	 * TimeoutController will end unless interrupted
+	 */
+	@Override
+	protected void aftermath() {
+		init.set(false);
+		instance = null;
+		super.aftermath();
+	}
+
+	// getters below
 	public static TimeoutController getInstance() {
-		if (instance == null)
-			init();
-		return instance;
+		return instance.get(TimeoutController.class);
 	}
 
 	private List<WeakReference<Recyclable>> getWatchList() {
 		return watchList;
-	}
-
-	@Override
-	protected void aftermath() {
-		init = false;
-		instance = null;
-		super.aftermath();
 	}
 
 }

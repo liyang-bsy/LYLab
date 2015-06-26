@@ -19,15 +19,14 @@ public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 	
 	private Map<Long, T> availableContainer;
 	protected Long idIndicator = 1L;
-	public static final Integer DEFAULT_MAX_SIZE = 50;
 	public Integer maxSize;
 
 	public AbstractPool() {
-		this(DEFAULT_MAX_SIZE);
+		this(CoreDefine.DEFAULT_MAX_SIZE);
 	}
 
 	public AbstractPool(int maxSize) {
-		this.maxSize = ((maxSize > 0)? maxSize : DEFAULT_MAX_SIZE);
+		this.maxSize = ((maxSize > 0)? maxSize : CoreDefine.DEFAULT_MAX_SIZE);
 		this.availableContainer = new ConcurrentHashMap<Long, T>();
 	}
 	

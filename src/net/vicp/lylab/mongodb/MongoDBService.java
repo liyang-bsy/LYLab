@@ -9,7 +9,7 @@ import org.mongodb.morphia.query.Criteria;
 import org.mongodb.morphia.query.CriteriaContainer;
 import org.mongodb.morphia.query.Query;
 
-import net.vicp.lylab.core.datastructure.Pair;
+import net.vicp.lylab.core.model.Pair;
 import net.vicp.lylab.utils.Page;
 import net.vicp.lylab.mongodb.transaction.AddBatchTransaction;
 import net.vicp.lylab.mongodb.transaction.AddTransaction;
