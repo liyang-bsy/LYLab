@@ -24,7 +24,6 @@ import net.vicp.lylab.utils.atomic.AtomicInteger;
  * 
  */
 public abstract class Task extends CloneableBaseObject implements Runnable, Executor, Serializable {
-
 	private static final long serialVersionUID = -505125638835928043L;
 	/**
 	 * This value doesn't make any sense if you didn't use WatchDog
@@ -69,10 +68,6 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			setStartTime(new Date());
 			exec();
 			aftermath();
-
-			synchronized (this) {
-				this.notifyAll();
-			}
 		} catch (Throwable e) {
 			System.err.print(this.toString() + "\ncreated an error:\t" + Utils.getStringFromException(e));
 			state.compareAndSet(STARTED, FAILED);
@@ -123,7 +118,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		begin(null);
 	}
 
-	public final synchronized void begin(String threadName) {
+	public final void begin(String threadName) {
 		if (state.get().intValue() != BEGAN || this.thread != null)
 			return;
 		setThread(new Thread(this));
@@ -148,11 +143,8 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	}
 
 	@Deprecated
-	public final synchronized void forceStop() {
+	public final void forceStop() {
 		callStop();
-		synchronized (this) {
-			this.notifyAll();
-		}
 		if (thread != null) {
 			getThread().stop(new LYException("Task " + getTaskId() + " timeout and killed"));
 			thread = null;
@@ -227,9 +219,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	}
 
 	public Task setRetryCount(Integer retryCount) {
-		synchronized (retryCount) {
-			this.retryCount = retryCount;
-		}
+		this.retryCount = retryCount;
 		return this;
 	}
 
