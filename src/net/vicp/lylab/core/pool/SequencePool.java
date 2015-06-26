@@ -14,7 +14,7 @@ import java.util.ListIterator;
  *
  */
 public class SequencePool<T> extends AbstractPool<T> {
-	protected volatile List<Long> keyContainer = new LinkedList<Long>();
+	protected volatile LinkedList<Long> keyContainer = new LinkedList<Long>();
 
 	public SequencePool() {
 		this(DEFAULT_MAX_SIZE);
@@ -32,7 +32,14 @@ public class SequencePool<T> extends AbstractPool<T> {
 
 	@Override
 	public Long add(T t) {
-		return add(0, t);
+		synchronized (lock) {
+			safeCheck();
+			Long id = null;
+			id = addToContainer(t);
+			if(id != null && id >= 0)
+				keyContainer.addLast(id);
+			return id;
+		}
 	}
 
 	public Long add(int index, T t) {

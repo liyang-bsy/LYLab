@@ -23,14 +23,13 @@ import net.vicp.lylab.utils.atomic.AtomicInteger;
  * @version 1.0.1
  * 
  */
-public abstract class Task extends CloneableBaseObject implements Runnable,
-		Executor, Serializable {
+public abstract class Task extends CloneableBaseObject implements Runnable, Executor, Serializable {
 
 	private static final long serialVersionUID = -505125638835928043L;
 	/**
 	 * This value doesn't make any sense if you didn't use WatchDog
 	 */
-	protected Long timeout;
+	protected long timeout = CoreDefine.DEFAULT_TASK_TTIMEOUT;
 	/**
 	 * How many time you want retry if this task was killed by WatchDog
 	 */
@@ -57,7 +56,6 @@ public abstract class Task extends CloneableBaseObject implements Runnable,
 	public Task() {
 		thread = null;
 		startTime = null;
-		timeout = CoreDefine.DEFAUL_TTIMEOUT;
 		state.set(BEGAN);
 	}
 
@@ -66,25 +64,20 @@ public abstract class Task extends CloneableBaseObject implements Runnable,
 	 */
 	public final void run() {
 		try {
-			if(!state.compareAndSet(BEGAN, STARTED))
+			if (!state.compareAndSet(BEGAN, STARTED))
 				return;
 			setStartTime(new Date());
-			try {
-				exec();
-			} catch (Throwable e) {
-				System.err.print(this.toString() + "\ncreated an error:\t" + Utils.getStringFromException(e));
-				state.compareAndSet(STARTED, FAILED);
-			} finally {
-				state.compareAndSet(STARTED, COMPLETED);
-			}
+			exec();
+			aftermath();
 
 			synchronized (this) {
 				this.notifyAll();
 			}
-			aftermath();
 		} catch (Throwable e) {
-			e.printStackTrace();
+			System.err.print(this.toString() + "\ncreated an error:\t" + Utils.getStringFromException(e));
+			state.compareAndSet(STARTED, FAILED);
 		} finally {
+			state.compareAndSet(STARTED, COMPLETED);
 			LYTaskQueue.taskEnded(getTaskId());
 			setThread(null);
 		}
@@ -193,8 +186,9 @@ public abstract class Task extends CloneableBaseObject implements Runnable,
 	}
 
 	public boolean reset() {
-		if(!state.compareAndSet(STOPPED, BEGAN)) return false;
-		setObjectId(null);
+		if(state.get() == STARTED) return false;
+//		if(!state.compareAndSet(STOPPED, BEGAN)) return false;
+		setObjectId(0);
 		if (thread != null && getThread().isAlive())
 			throw new LYError("Reset an alive task");
 		thread = null;
@@ -219,7 +213,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable,
 		return this;
 	}
 
-	public Long getTimeout() {
+	public long getTimeout() {
 		return timeout;
 	}
 

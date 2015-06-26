@@ -38,9 +38,9 @@ public final class WatchDog extends BaseObject implements Recyclable {
 	public void recycle() {
 		List<Task> callStopList = new LinkedList<Task>();
 		List<Task> forceStopList = new LinkedList<Task>();
-		Iterator<Task> iterator = LYTaskQueue.getInstance().getThreadPool().iterator();
 		boolean finished = false;
 		do {
+			Iterator<Task> iterator = LYTaskQueue.getInstance().getThreadPool().iterator();
 			try {
 				while (iterator.hasNext()) {
 					Task task = iterator.next();
@@ -55,7 +55,7 @@ public final class WatchDog extends BaseObject implements Recyclable {
 						callStopList.add(task);
 				}
 				finished = true;
-			} catch (ConcurrentModificationException e) { }
+			} catch (NullPointerException | ConcurrentModificationException e) { }
 		} while (finished);
 		for(Task task : forceStopList)
 		{

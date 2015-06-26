@@ -102,7 +102,12 @@ public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 						throw new LYException("Wait interrupted", e);
 					}
 				} else {
-					savedId = nextAvailableId(idIndicator);
+					do {
+						if (idIndicator == Long.MAX_VALUE)
+							idIndicator = 1L;
+						idIndicator++;
+					} while(availableContainer.get(idIndicator) != null);
+					savedId = idIndicator;
 					if (t instanceof BaseObject) {
 						Long id = ((BaseObject) t).getObjectId();
 						if (id == null || id.longValue() <= 0L) {
@@ -119,15 +124,6 @@ public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 			}
 		}
 		return savedId;
-	}
-	
-	private long nextAvailableId(Long id) {
-		do {
-			if (id == Long.MAX_VALUE)
-				id = 1L;
-			id++;
-		} while(availableContainer.get(id) != null);
-		return id;
 	}
 	
 	public Set<Long> availableKeySet()
