@@ -57,7 +57,7 @@ public final class WatchDog extends BaseObject implements Recyclable {
 				LYTaskQueue.addTask(task);
 				forewarnList.add(task);
 			}
-			else log.error("Timeout task was killed:\n" + task.toString());
+//			else log.error("Timeout task was killed:\n" + task.toString());
 		}
 		for(Task task : callStopList)
 		{
@@ -81,7 +81,7 @@ public final class WatchDog extends BaseObject implements Recyclable {
 	}
 
 	public static WatchDog getInstance() {
-		return instance.createInstance(WatchDog.class);
+		return instance.get(WatchDog.class);
 	}
 
 	public Long getInterval() {

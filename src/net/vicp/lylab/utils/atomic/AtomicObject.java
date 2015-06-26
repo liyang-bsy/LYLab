@@ -47,5 +47,5 @@ public class AtomicObject<T> extends CloneableBaseObject {
 		value = update;
 		return true;
 	}
-	
+
 }

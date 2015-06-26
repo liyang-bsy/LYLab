@@ -161,7 +161,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable,
 			this.notifyAll();
 		}
 		if (thread != null) {
-			getThread().stop(new LYException("Task " + getTaskId() + " timeout"));
+			getThread().stop(new LYException("Task " + getTaskId() + " timeout and killed"));
 			thread = null;
 		}
 		LYTaskQueue.taskEnded(getTaskId());

@@ -7,14 +7,16 @@ public final class AtomicSoftReference<T> extends AtomicReference<T> {
 	public AtomicSoftReference() {
 		this(null);
 	}
-	
+
 	public AtomicSoftReference(SoftReference<T> ref) {
 		super(ref);
 	}
-	
-	public T createInstance(Class<T> instanceClass)
+
+	public T get(Class<T> instanceClass)
 	{
-		return super.createInstance(instanceClass, SoftReference.class);
+		if(value == null) createInstance(instanceClass, SoftReference.class);
+		return value.get();
 	}
 	
+
 }
