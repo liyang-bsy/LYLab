@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
@@ -73,11 +74,18 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 		for (Long id : startTime.keySet()) {
 			Date start = startTime.get(id);
 			if (new Date().getTime() - start.getTime() > timeout) {
-				T tmp = busyContainer.remove(id);
-				if (tmp != null) {
-					keyContainer.remove(id);
+				try {
+					T tmp = busyContainer.get(id);
+					if (tmp != null) {
+						if (tmp instanceof AutoCloseable)
+							((AutoCloseable) tmp).close();
+						busyContainer.remove(id);
+						keyContainer.remove(id);
+						startTime.remove(id);
+					}
+				} catch (Exception e) {
+					throw new LYException("Recycle failed", e);
 				}
-				startTime.remove(id);
 			}
 		}
 		if(keyContainer.size() == size())

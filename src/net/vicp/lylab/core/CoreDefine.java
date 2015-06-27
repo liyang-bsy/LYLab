@@ -13,6 +13,8 @@ package net.vicp.lylab.core;
 public class CoreDefine {
 	public static final String VERSION = "1.0.0";
 	
+	public static Object[] dock = new Object[16];
+	
 	public static final long WAITING = 1000L;
 	public static final long WAITING_SHORT = 100L;
 	public static final long WAITING_LONG = 3000L;

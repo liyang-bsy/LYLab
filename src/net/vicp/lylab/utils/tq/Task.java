@@ -36,6 +36,10 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 * Control its running thread
 	 */
 	protected Thread thread;
+	/**
+	 * Report itself to LYTaskQueue
+	 */
+	private LYTaskQueue controller;
 
 	/**
 	 * Indicate when this task start run()
@@ -72,7 +76,8 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			state.compareAndSet(STARTED, FAILED);
 		} finally {
 			state.compareAndSet(STARTED, COMPLETED);
-			LYTaskQueue.taskEnded(getTaskId());
+			if(controller != null)
+				controller.taskEnded(this);
 			setThread(null);
 		}
 	}
@@ -160,7 +165,8 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			getThread().stop(new LYException("Task " + getTaskId() + " timeout and killed"));
 			thread = null;
 		}
-		LYTaskQueue.taskEnded(getTaskId());
+		if(controller != null)
+			controller.taskEnded(this);
 	}
 
 	/**
@@ -260,6 +266,11 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 
 	public Task setRetryCount(Integer retryCount) {
 		this.retryCount = retryCount;
+		return this;
+	}
+
+	public Task setController(LYTaskQueue controller) {
+		this.controller = controller;
 		return this;
 	}
 

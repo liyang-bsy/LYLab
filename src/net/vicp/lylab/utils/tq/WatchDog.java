@@ -1,6 +1,5 @@
 package net.vicp.lylab.utils.tq;
 
-import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.Iterator;
@@ -34,11 +33,8 @@ public final class WatchDog extends BaseObject implements Recyclable {
 
 	private static AutoInitialize<WatchDog> instance = new AtomicStrongReference<WatchDog>();
 
-	private Long interval = CoreDefine.INTERVAL;
 	private Long tolerance = CoreDefine.WAITING_TOLERANCE;
 
-	private List<Task> forewarnList = new ArrayList<Task>();
-	
 	/**
 	 * WatchDog is always recyclable unless LYTaskQueue call off it
 	 */
@@ -84,9 +80,7 @@ public final class WatchDog extends BaseObject implements Recyclable {
 				task.setRetryCount(task.getRetryCount() - 1);
 				task.reset();
 				LYTaskQueue.addTask(task);
-				forewarnList.add(task);
 			}
-//			else log.error("Timeout task was killed:\n" + task.toString());
 		}
 		for(Task task : callStopList)
 		{
@@ -127,26 +121,12 @@ public final class WatchDog extends BaseObject implements Recyclable {
 	}
 	
 	// getters & setters below
-	public Long getInterval() {
-		return interval;
-	}
-
-	public void setInterval(Long interval) {
-		this.interval = interval;
-	}
-
 	public Long getTolerance() {
 		return tolerance;
 	}
 
 	public void setTolerance(Long tolerance) {
 		this.tolerance = tolerance;
-	}
-
-	public List<Task> getForewarnList() {
-		List<Task> tmp = forewarnList;
-		forewarnList = new ArrayList<Task>();
-		return tmp;
 	}
 	
 }

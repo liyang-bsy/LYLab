@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.vicp.lylab.core.CoreDefine;
 import net.vicp.lylab.core.exception.LYException;
@@ -36,14 +38,15 @@ public final class LYTaskQueue extends Task {
 	private static final long serialVersionUID = 4935143671023467585L;
 
 	protected static Log log = LogFactory.getLog(LYTaskQueue.class);
-
-	private volatile static Boolean useWatchDog = false;
 	private static String permanentFileName = "lytaskqueue.bin";
+	private static AutoInitialize<LYTaskQueue> instance = new AtomicSoftReference<LYTaskQueue>();
 
+	private volatile Boolean useWatchDog = false;
 	private static volatile AtomicBoolean isRunning = new AtomicBoolean(false);
 	private volatile AtomicBoolean isTerminated = new AtomicBoolean(false);
-	
-	private static AutoInitialize<LYTaskQueue> instance = new AtomicSoftReference<LYTaskQueue>();
+
+	private volatile boolean recordFailed = false;
+	private List<Task> forewarnList = new ArrayList<Task>();
 
 	private volatile static Integer maxQueue = 100000;
 	private volatile static Integer maxThread = 200;
@@ -76,6 +79,7 @@ public final class LYTaskQueue extends Task {
 			return -1L;
 		if (getInstance().getIsTerminated().get())
 			return -2L;
+		task0.setController(getInstance());
 		if (getInstance().getTaskPool().add(task0) == null)
 			return -3L;
 		synchronized (getInstance().lock) {
@@ -213,9 +217,9 @@ public final class LYTaskQueue extends Task {
 				t.setTimeout(timeout);
 		}
 
-		if (!useWatchDog)
-			LYTaskQueue.useWatchDog(useWatchDog);
-		LYTaskQueue.useWatchDog = true;
+		if (!getInstance().useWatchDog)
+			LYTaskQueue.useWatchDog(getInstance().useWatchDog);
+		getInstance().useWatchDog = true;
 		try {
 			File p = new File(permanentFileName);
 			if (!p.exists())
@@ -250,9 +254,14 @@ public final class LYTaskQueue extends Task {
 	 * Remove specific task out of thread pool, please call after you ensure the task is ended.
 	 * <br>By the way, it will be called if any task is end.
 	 */
-	public static void taskEnded(Long taskId) {
-		if(taskId != null)
-			getInstance().removeFromThreadPool(taskId);
+	public void taskEnded(Task task) {
+		if(task == null) return;
+		if(task.getTaskId() != null)
+		{
+			Task tmp = removeFromThreadPool(task.getTaskId());
+			if(recordFailed && tmp != null && task.getState() != Task.COMPLETED)
+				forewarnList.add(tmp);
+		}
 	}
 	/**
 	 * Remove specific task out of thread pool, but can't determine if this task is alive
@@ -288,7 +297,7 @@ public final class LYTaskQueue extends Task {
 		else
 			WatchDog.stopWatchDog();
 
-		LYTaskQueue.useWatchDog = useWatchDog;
+		getInstance().useWatchDog = useWatchDog;
 	}
 	
 	/**
@@ -307,10 +316,6 @@ public final class LYTaskQueue extends Task {
 		return getInstance().getTaskPool().size() == maxQueue.intValue();
 	}
 
-	public static Boolean isUsingWatchDog() {
-		return useWatchDog;
-	}
-	
 	public static Integer getWaitingTaskCount() {
 		return getInstance().getTaskPool().size();
 	}
@@ -320,6 +325,12 @@ public final class LYTaskQueue extends Task {
 	}
 
 	// special getters & setters below
+	public List<Task> getForewarnList() {
+		List<Task> tmp = forewarnList;
+		forewarnList = new ArrayList<Task>();
+		return tmp;
+	}
+	
 	public static void setMaxQueue(int maxQueue) {
 		if(maxQueue <= 0) throw new LYException("maxQueue must be positive");
 		LYTaskQueue.maxQueue = maxQueue;
