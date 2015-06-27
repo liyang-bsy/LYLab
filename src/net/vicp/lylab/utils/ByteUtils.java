@@ -1,5 +1,8 @@
 ﻿package net.vicp.lylab.utils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.vicp.lylab.core.exception.LYException;
 
 public final class ByteUtils {
@@ -53,4 +56,33 @@ public final class ByteUtils {
 			return 0;
 		}
 	}
+	
+	/**
+	 * Copy bytes from List into byte[]
+	 * @param container
+	 * @return
+	 */
+	public static byte[] copyBytesFromContainer(List<Byte> container)
+	{
+		if(container == null) throw new LYException("Parameter container is null");
+		byte[] bytes = new byte[container.size()];
+		for(int i=0;i<container.size();i++)
+			bytes[i] = container.get(i);
+		return bytes;
+	}
+	
+	/**
+	 * Move bytes from array into List(original array will be reset)
+	 * @param container
+	 * @return
+	 */
+	public static List<Byte> moveBytesToContainer(byte[] bytes) {
+		List<Byte> container = new ArrayList<Byte>();
+		for (int i = 0; i < bytes.length; i++) {
+			container.add(bytes[i]);
+			bytes[i] = 0;
+		}
+		return container;
+	}
+	
 }

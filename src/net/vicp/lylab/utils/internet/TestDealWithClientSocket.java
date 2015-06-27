@@ -1,26 +1,25 @@
 package net.vicp.lylab.utils.internet;
 
-import java.net.Socket;
+import java.net.ServerSocket;
 
 public class TestDealWithClientSocket extends ClientSocketFactory {
 	private static final long serialVersionUID = -2516954630546529661L;
 	
-	public TestDealWithClientSocket(Socket socket)
+	public TestDealWithClientSocket(ServerSocket serverSocket)
 	{
-		super(socket);
-		System.out.println(socket.getInetAddress().getHostAddress());
-		System.out.println(socket.getPort());
+		super(serverSocket);
+		System.out.println(serverSocket.getInetAddress().getHostAddress());
 	}
 
 	@Override
 	public void exec() {
 		try {
 			while (true) {
-				System.out.println("-收:" + Protocol.fromBytes(longSocket.receive()));
-				System.out.println("-发");
-				MyData m = new MyData();
-				m.setValue("来自Server:");
-				longSocket.send(m.encode().toBytes());
+//				MyData m = new MyData();
+//				m.setValue("来自Server:");
+				System.out.println("-收:" + Protocol.fromBytes(longSocket.receive()).transformData());
+//				System.out.println("-发:\t" + m.encode().transformData());
+//				longSocket.send(m.encode().toBytes());
 				System.out.println("-发完");
 
 				System.out.println("-等");

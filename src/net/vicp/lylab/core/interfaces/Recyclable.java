@@ -1,10 +1,11 @@
 package net.vicp.lylab.core.interfaces;
 
 /**
- * 	General Recyclable interface for all classes.<br>
- * 	If run() was used.<br>
- * 
- * 	<br>Release Under GNU Lesser General Public License (LGPL).
+ * General Recyclable interface for all classes.<br>
+ * Implement this means it could be recycled by<br>
+ * {@link net.vicp.lylab.utils.controller.TimeoutController}
+ * <br><br>
+ * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee
  * @since 2015.03.17

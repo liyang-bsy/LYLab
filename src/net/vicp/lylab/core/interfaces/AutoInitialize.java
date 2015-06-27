@@ -3,10 +3,9 @@ package net.vicp.lylab.core.interfaces;
 import net.vicp.lylab.core.exception.LYException;
 
 /**
- * 	General Auto Initialize Object interface for all classes.<br>
- * 	If run() was used.<br>
- * 
- * 	<br>Release Under GNU Lesser General Public License (LGPL).
+ * General Auto Initialize Object interface for all classes.
+ * <br><br>
+ * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee
  * @since 2015.03.17

@@ -1,9 +1,9 @@
 package net.vicp.lylab.utils.internet;
 
 import java.net.ServerSocket;
-import java.net.Socket;
 
 import net.vicp.lylab.core.BaseObject;
+import net.vicp.lylab.utils.tq.Task;
 
 public class LongSocketServer extends BaseObject {
 
@@ -21,8 +21,8 @@ public class LongSocketServer extends BaseObject {
 		server = new ServerSocket(port);
 		while(true)
 		{
-			Socket socket = server.accept();
-			new TestDealWithClientSocket(socket).begin("server client");
+			Task t = new TestDealWithClientSocket(server);
+			t.begin("server client");
 		}
 	}
 

@@ -8,6 +8,20 @@ public class LYException extends RuntimeException {
 	public LYException(String message) {
 		this(0, message);
 	}
+
+	public LYException(Throwable e) {
+		this(0, e);
+	}
+	
+	public LYException(int code) {
+		super();
+		this.code = code;
+	}
+	
+	public LYException(int code, Throwable e) {
+		super(e);
+		this.code = code;
+	}
 	
 	public LYException(int code, String message) {
 		super(message);

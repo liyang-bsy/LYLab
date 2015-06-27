@@ -1,17 +1,17 @@
 package net.vicp.lylab.utils.internet;
 
-import java.net.Socket;
+import java.net.ServerSocket;
 
 import net.vicp.lylab.utils.tq.Task;
 
 public abstract class ClientSocketFactory extends Task {
 	private static final long serialVersionUID = -2516954630546529661L;
 	
-	LongSocketClient longSocket;
+	LYSocket longSocket;
 	
-	public ClientSocketFactory(Socket socket)
+	public ClientSocketFactory(ServerSocket serverSocket)
 	{
-		this.longSocket = new LongSocketClient(socket);
+		this.longSocket = new TestSocket(serverSocket);
 	}
 
 }

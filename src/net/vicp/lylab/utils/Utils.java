@@ -46,15 +46,20 @@ public class Utils extends NonCloneableBaseObject {
 			return "bad getErrorInfoFromException";
 		}
 	}
+//	
+//	public static String toJson(Object obj)
+//	{
+//		return toJson(obj, new String[] { });
+//	}
 	
-	public String toJson(Object obj)
+	public static String toJson(Object obj, String ... excludeRule)
 	{
 		if(obj == null)
 			throw new LYException("Parameter obj is null");
-		return new JSONSerializer().exclude("*.class", "*.objectId").deepSerialize(obj);
+		return new JSONSerializer().exclude("*.class", "*.objectId").exclude(excludeRule).deepSerialize(obj);
 	}
 
-	public Object toObject(String json, String className)
+	public static Object toObject(String json, String className)
 	{
 		if(json == null)
 			throw new LYException("Parameter json is null");
