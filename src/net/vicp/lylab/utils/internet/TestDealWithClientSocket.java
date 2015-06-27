@@ -16,11 +16,14 @@ public class TestDealWithClientSocket extends ClientSocketFactory {
 	public void exec() {
 		try {
 			while (true) {
-				System.out.println("-收:" + longSocket.receive());
+				System.out.println("-收:" + Protocol.fromBytes(longSocket.receive()));
 				System.out.println("-发");
-				longSocket.send("来自Server:".getBytes("UTF-8"));
+				MyData m = new MyData();
+				m.setValue("来自Server:");
+				longSocket.send(m.encode().toBytes());
 				System.out.println("-发完");
 
+				System.out.println("-等");
 				Thread.sleep(3000L);
 			}
 		} catch (Exception e) {

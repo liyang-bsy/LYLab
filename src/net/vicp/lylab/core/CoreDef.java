@@ -51,6 +51,15 @@ public class CoreDef {
 	public static final long HOUR = SIX*TEN*MINUTE;
 	public static final long DAY = TWO*TWELVE*HOUR;
 	public static final long WEEK = SEVEN*DAY;
+
+	public static final int SIZEOF_BOOLEAN = ONE;
+	public static final int SIZEOF_BYTE = ONE;
+	public static final int SIZEOF_CHAR = ONE;
+	public static final int SIZEOF_SHORT = TWO;
+	public static final int SIZEOF_INTEGER = FOUR;
+	public static final int SIZEOF_FLOAT = FOUR;
+	public static final int SIZEOF_LONG = EIGHT;
+	public static final int SIZEOF_DOUBLE = EIGHT;
 	
 	public static final long WAITING = ONE*SECOND;
 	public static final long WAITING_SHORT = HUNDRED*MILLISECOND;

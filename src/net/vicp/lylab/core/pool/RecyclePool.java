@@ -18,16 +18,15 @@ import net.vicp.lylab.core.interfaces.Recyclable;
  * 抽象的分离池
  *
  */
-public class RecyclePool<T> extends AbstractPool<T> {
+public class RecyclePool<T> extends IndexedPool<T> {
 	protected Map<Long, T> busyContainer;
-	protected Set<Long> keyContainer = new HashSet<Long>();
 
 	public RecyclePool() {
 		this(CoreDef.DEFAULT_POOL_MAX_SIZE);
 	}
 	
 	public RecyclePool(Integer maxSize) {
-		super(maxSize);
+		super(new HashSet<Long>(), maxSize);
 		busyContainer = new ConcurrentHashMap<Long, T>();
 	}
 
@@ -98,24 +97,6 @@ public class RecyclePool<T> extends AbstractPool<T> {
 				return tmp;
 			}
 			return null;
-		}
-	}
-
-	@Override
-	public Long add(T t) {
-		return add(0, t);
-	}
-
-	public Long add(int index, T t) {
-		synchronized (lock) {
-			safeCheck();
-			if (keyContainer.size() >= maxSize)
-				return null;
-			Long id = null;
-			id = addToContainer(t);
-			if(id != null && id >= 0)
-				keyContainer.add(id);
-			return id;
 		}
 	}
 

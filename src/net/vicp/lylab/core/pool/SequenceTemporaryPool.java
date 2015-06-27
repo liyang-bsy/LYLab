@@ -2,6 +2,7 @@ package net.vicp.lylab.core.pool;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
@@ -30,7 +31,7 @@ public class SequenceTemporaryPool<T> extends SequencePool<T> {
 			if (keyContainer.isEmpty())
 				return null;
 			T tmp = null;
-			Long key = keyContainer.get(0);
+			Long key = ((LinkedList<Long>) keyContainer).get(0);
 			tmp = removeFromContainer(key);
 			keyContainer.remove(0);
 			return tmp;

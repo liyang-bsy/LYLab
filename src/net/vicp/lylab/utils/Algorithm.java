@@ -1,12 +1,6 @@
 package net.vicp.lylab.utils;
 
 public class Algorithm {
-	public static void main(String[] a)
-	{
-		byte[] splitSignal = "\361".getBytes();
-		System.out.println((int) splitSignal[0]);
-	}
-	
 	/**
 	 * KMP Search, O(n+m)
 	 * 

@@ -32,9 +32,7 @@ public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 	
 	@Override
 	public int size() {
-		synchronized (lock) {
-			return availableContainer.size();
-		}
+		return availableContainer.size();
 	}
 
 	@Override
@@ -88,41 +86,29 @@ public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 	}
 	
 	protected Long addToContainer(T t) {
-		Long savedId = null;
-		if(t instanceof BaseObject)
-		{
-			while (!isClosed()) {
-				Integer size = size();
-				if (size >= maxSize) {
-					try {
-						lock.wait(CoreDef.WAITING_SHORT);
-						continue;
-					} catch (InterruptedException e) {
-						throw new LYException("Wait interrupted", e);
-					}
+		synchronized (lock) {
+			if (isClosed() || size() >= maxSize)
+				return null;
+			Long savedId = null;
+			do {
+				if (idIndicator == Long.MAX_VALUE)
+					idIndicator = 1L;
+				idIndicator++;
+			} while(availableContainer.get(idIndicator) != null);
+			savedId = idIndicator;
+			if (t instanceof BaseObject) {
+				Long id = ((BaseObject) t).getObjectId();
+				if (id == null || id.longValue() <= 0L) {
+					((BaseObject) t).setObjectId(savedId.longValue());
+					availableContainer.put(savedId, t);
 				} else {
-					do {
-						if (idIndicator == Long.MAX_VALUE)
-							idIndicator = 1L;
-						idIndicator++;
-					} while(availableContainer.get(idIndicator) != null);
-					savedId = idIndicator;
-					if (t instanceof BaseObject) {
-						Long id = ((BaseObject) t).getObjectId();
-						if (id == null || id.longValue() <= 0L) {
-							((BaseObject) t).setObjectId(savedId.longValue());
-							availableContainer.put(savedId, t);
-						} else {
-							availableContainer.put(((BaseObject) t).getObjectId(), t);
-							savedId = ((BaseObject) t).getObjectId();
-						}
-					} else
-						availableContainer.put(savedId, t);
-					break;
+					availableContainer.put(((BaseObject) t).getObjectId(), t);
+					savedId = ((BaseObject) t).getObjectId();
 				}
-			}
+			} else
+				availableContainer.put(savedId, t);
+			return savedId;
 		}
-		return savedId;
 	}
 	
 	public Set<Long> availableKeySet()

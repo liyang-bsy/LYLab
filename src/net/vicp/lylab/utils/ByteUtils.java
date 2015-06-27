@@ -2,7 +2,7 @@
 
 import net.vicp.lylab.core.exception.LYException;
 
-public final class ByteFunction {
+public final class ByteUtils {
 	/**
 	 * 数字转byte
 	 * 

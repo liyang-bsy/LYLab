@@ -5,7 +5,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 
+import flexjson.JSONDeserializer;
+import flexjson.JSONSerializer;
 import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.exception.LYException;
 
 public class Utils extends NonCloneableBaseObject {
 	
@@ -42,6 +45,35 @@ public class Utils extends NonCloneableBaseObject {
 		} catch (Exception ex) {
 			return "bad getErrorInfoFromException";
 		}
+	}
+	
+	public String toJson(Object obj)
+	{
+		if(obj == null)
+			throw new LYException("Parameter obj is null");
+		return new JSONSerializer().exclude("*.class", "*.objectId").deepSerialize(obj);
+	}
+
+	public Object toObject(String json, String className)
+	{
+		if(json == null)
+			throw new LYException("Parameter json is null");
+		if(className == null)
+			throw new LYException("Parameter className is null");
+		try {
+			return new JSONDeserializer<Object>().use(null, Class.forName(className)).deserialize(json);
+		} catch (Exception e) {
+			throw new LYException("Can not found class name[" + className + "]", e);
+		}
+	}
+
+	public Object toObject(String json, Class<?> instanceClass)
+	{
+		if(json == null)
+			throw new LYException("Parameter json is null");
+		if(instanceClass == null)
+			throw new LYException("Parameter instanceClass is null");
+		return new JSONDeserializer<Object>().use(null, instanceClass).deserialize(json);
 	}
 	
 }

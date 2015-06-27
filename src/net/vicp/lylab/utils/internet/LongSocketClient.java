@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
@@ -57,10 +59,11 @@ public class LongSocketClient extends Task implements Recyclable, AutoCloseable 
 		while (true) {
 			try {
 				System.out.println("-发");
-				send("来自Client".getBytes("UTF-8"));
+				MyData m = new MyData();
+				m.setValue("来自Client");
+				send(m.encode().toBytes());
 				System.out.println("-发完");
-				System.out.println("-收:" + receive());
-
+				System.out.println("-收:" + Protocol.fromBytes(receive()));
 				System.out.println("-等");
 				Thread.sleep(1000 * 5);
 			} catch (InterruptedException e) {
@@ -77,31 +80,50 @@ public class LongSocketClient extends Task implements Recyclable, AutoCloseable 
 		return true;
 	}
 
-	public String receive() throws Exception {
-		StringBuilder sb = new StringBuilder();
+	public byte[] receive() throws Exception {
+		List<Byte> container = new ArrayList<Byte>();
 		if (in != null) {
 			byte[] rc = new byte[CoreDef.SOCKET_MAX_BUFFER];
-			int getLen = 0, len = 0;
-//			while((len = in.read(rc, getLen, CoreDef.SOCKET_MAX_BUFFER - getLen)) > 0)
-			do {
-				len = in.read(rc, getLen, CoreDef.SOCKET_MAX_BUFFER - getLen);
-				if(len < 0)
+			int totalRecv = 0, getLen = 0;
+			while (true) {
+				try {
+					getLen = in.read(rc, 0, CoreDef.SOCKET_MAX_BUFFER);
+				} catch (Exception e) {
+					throw new LYException("Lost connection");
+				}
+				if(getLen == -1)
 					break;
-				sb.append(rc);
-				if(getLen == CoreDef.SOCKET_MAX_BUFFER)
-					clearBytes(rc);
-				getLen += len;
-				String s = new String(rc, "UTF-8");
-				sb.append(s);
-			} while (false);
-			sb.append(rc);
+				if(getLen == 0)
+					throw new LYException("I don't know...");
+				totalRecv += getLen;
+				container.addAll(moveBytesToContainer(rc));
+				int result = Protocol.validate(copyBytesFromContainer(container), totalRecv);
+				if(result == -1)
+					throw new LYException("Bad data package");
+				if(result == 0)
+					break;
+				if(result == 1)
+					continue;
+			}
 		}
-		return sb.toString();
+		return copyBytesFromContainer(container);
+	}
+
+	private List<Byte> moveBytesToContainer(byte[] bytes) {
+		List<Byte> container = new ArrayList<Byte>();
+		for (int i = 0; i < bytes.length; i++) {
+			container.add(bytes[i]);
+			bytes[i] = 0;
+		}
+		return container;
 	}
 	
-	private void clearBytes(byte[] bytes)
+	private byte[] copyBytesFromContainer(List<Byte> container)
 	{
-		for(int i=0;i<bytes.length;i++) bytes[i] = 0;
+		byte[] bytes = new byte[container.size()];
+		for(int i=0;i<container.size();i++)
+			bytes[i] = container.get(i);
+		return bytes;
 	}
 
 	@Override
