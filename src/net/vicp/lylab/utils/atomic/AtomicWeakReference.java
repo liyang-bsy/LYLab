@@ -12,9 +12,10 @@ public final class AtomicWeakReference<T> extends AtomicReference<T> {
 		super(new WeakReference<T>(ref));
 	}
 
-	public T get(Class<T> instanceClass)
+	public T get(Class<T> instanceClass, Object... constructorParameters)
 	{
-		if(value == null) createInstance(instanceClass, WeakReference.class);
+		if(value == null)
+			createInstance(instanceClass, WeakReference.class, constructorParameters);
 		return value.get();
 	}
 

@@ -16,6 +16,6 @@ import net.vicp.lylab.core.exception.LYException;
 
 public interface AutoInitialize<T> {
 
-	public T get(Class<T> instanceClass) throws LYException;
+	public T get(Class<T> instanceClass, Object... constructorParameters) throws LYException;
 	
 }

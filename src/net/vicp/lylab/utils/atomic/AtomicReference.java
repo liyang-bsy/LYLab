@@ -2,6 +2,8 @@ package net.vicp.lylab.utils.atomic;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
@@ -18,13 +20,13 @@ public abstract class AtomicReference<T> extends AtomicObject<Reference<T>> impl
 			throw new LYException("Reference to nothing");
 	}
 
-	public T get(Class<T> instanceClass)
+	public T get(Class<T> instanceClass, Object... constructorParameters)
 	{
 		throw new LYException("refClass is null");
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected void createInstance(Class<T> instanceClass, Class<?> refClass) {
+	protected void createInstance(Class<T> instanceClass, Class<?> refClass, Object... constructorParameters) {
 		synchronized (lock) {
 			if (value != null && value.get() != null)
 				return;
@@ -34,10 +36,18 @@ public abstract class AtomicReference<T> extends AtomicObject<Reference<T>> impl
 				throw new LYException("refClass is null");
 			if (!Reference.class.isAssignableFrom(refClass))
 				throw new LYException("refClass is not java.lang.ref.Reference");
+			if (constructorParameters == null)
+				throw new LYException("ConstructorParameters is null");
 			try {
-				T tmp = (T) instanceClass.newInstance();
-				Constructor<?> con = refClass.getDeclaredConstructor(Object.class);
-				value = (Reference<T>) con.newInstance(tmp);
+				List<Class<?>> list = new ArrayList<Class<?>>();
+				for(Object param : constructorParameters)
+					list.add(param.getClass());
+				Class<?>[] classArray = new Class<?>[list.size()];
+				list.toArray(classArray);
+				Constructor<T> con = instanceClass.getDeclaredConstructor(classArray);
+				T tmp = con.newInstance(constructorParameters);
+				Constructor<?> conRef = refClass.getDeclaredConstructor(Object.class);
+				value = (Reference<T>) conRef.newInstance(tmp);
 			} catch (Exception e) {
 				throw new LYException("Can not create referenced object", e);
 			}

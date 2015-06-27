@@ -18,19 +18,63 @@ public final class Config extends BaseObject {
 	public Config(String fileName)
 	{
 		this.fileName = fileName;
-		reload();
+		load();
 	}
 
 	private volatile String fileName;
 	private volatile Map<String, String> dataMap;
-	
-	public String getProperty(String key)
-	{
-		if(dataMap == null) throw new LYException("Raw config, please reload");
+
+	public String getProperty(String key) {
+		if(key == null) throw new LYException("Key is null");
+		if (dataMap == null)
+			throw new LYException("Raw config, please reload");
+		String tmp = dataMap.get(key);
+		if (tmp == null)
+			throw new LYException("Follow entry[" + key + "] not such, check your config file[" + fileName + "]");
 		return dataMap.get(key);
 	}
+	
+	public String getString(String key) {
+		return getProperty(key);
+	}
 
-	public synchronized void reload() {
+	public Integer getInteger(String key) {
+		String value = getProperty(key);
+		try {
+			return Integer.valueOf(value);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value + "] failed");
+		}
+	}
+
+	public Double getDouble(String key) {
+		String value = getProperty(key);
+		try {
+			return Double.valueOf(value);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value + "] failed");
+		}
+	}
+
+	public Boolean getBoolean(String key) {
+		String value = getProperty(key);
+		try {
+			return Boolean.valueOf(value);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value + "] failed");
+		}
+	}
+
+	public Long getLong(String key) {
+		String value = getProperty(key);
+		try {
+			return Long.valueOf(value);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value + "] failed");
+		}
+	}
+
+	public synchronized void load() {
 		if(dataMap != null || fileName == null) return;
 		File file = new File(fileName);
 		Properties p = new Properties();
@@ -46,7 +90,7 @@ public final class Config extends BaseObject {
 		{
 			propertyName = propertyName.trim();
 			if(propertyName.startsWith("#")) continue;
-			tmp.put(propertyName, p.getProperty(propertyName));
+			tmp.put(propertyName, p.getProperty(propertyName).trim());
 		}
 		dataMap = tmp;
 		tmp = null;

@@ -12,9 +12,10 @@ public final class AtomicSoftReference<T> extends AtomicReference<T> {
 		super(new SoftReference<T>(ref));
 	}
 
-	public T get(Class<T> instanceClass)
+	public T get(Class<T> instanceClass, Object... constructorParameters)
 	{
-		if(value == null) createInstance(instanceClass, SoftReference.class);
+		if(value == null)
+			createInstance(instanceClass, SoftReference.class, constructorParameters);
 		return value.get();
 	}
 	

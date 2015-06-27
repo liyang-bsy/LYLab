@@ -1,5 +1,9 @@
 package net.vicp.lylab.utils.atomic;
 
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
+
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 
@@ -13,19 +17,27 @@ public final class AtomicStrongReference<T> extends AtomicObject<T> implements A
 		super(obj);
 	}
 	
-	public T get(Class<T> instanceClass)
+	public T get(Class<T> instanceClass, Object... constructorParameters)
 	{
-		if(value == null) createInstance(instanceClass);
+		if(value == null) createInstance(instanceClass, constructorParameters);
 		return value;
 	}
 	
-	protected void createInstance(Class<T> instanceClass) {
+	protected void createInstance(Class<T> instanceClass, Object... constructorParameters) {
 		synchronized (lock) {
 			if (instanceClass == null)
 				throw new LYException("instanceClass is null");
+			if (constructorParameters == null)
+				throw new LYException("ConstructorParameters is null");
 			if(value != null) return;
 			try {
-				value = (T) instanceClass.newInstance();
+				List<Class<?>> list = new ArrayList<Class<?>>();
+				for(Object param : constructorParameters)
+					list.add(param.getClass());
+				Class<?>[] classArray = new Class<?>[list.size()];
+				list.toArray(classArray);
+				Constructor<T> con = instanceClass.getDeclaredConstructor(classArray);
+				value = con.newInstance(constructorParameters);
 			} catch (Exception e) {
 				throw new LYException("Can not create referenced object", e);
 			}
