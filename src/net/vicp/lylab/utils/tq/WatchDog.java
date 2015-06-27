@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import net.vicp.lylab.core.BaseObject;
-import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
@@ -33,7 +33,7 @@ public final class WatchDog extends BaseObject implements Recyclable {
 
 	private static AutoInitialize<WatchDog> instance = new AtomicStrongReference<WatchDog>();
 
-	private Long tolerance = CoreDefine.WAITING_TOLERANCE;
+	private Long tolerance = CoreDef.WAITING_TOLERANCE;
 
 	/**
 	 * WatchDog is always recyclable unless LYTaskQueue call off it

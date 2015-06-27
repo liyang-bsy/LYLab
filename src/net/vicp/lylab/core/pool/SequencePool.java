@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
-import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.CoreDef;
 
 /**
  * 
@@ -19,7 +19,7 @@ public class SequencePool<T> extends AbstractPool<T> {
 	protected volatile LinkedList<Long> keyContainer = new LinkedList<Long>();
 
 	public SequencePool() {
-		this(CoreDefine.DEFAULT_MAX_SIZE);
+		this(CoreDef.DEFAULT_MAX_SIZE);
 	}
 
 	public SequencePool(int maxSize) {

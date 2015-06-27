@@ -9,7 +9,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.pool.Pool;
@@ -109,7 +109,7 @@ public final class LYTaskQueue extends Task {
 				}
 				try {
 					synchronized (lock) {
-						lock.wait(CoreDefine.WAITING_SHORT);
+						lock.wait(CoreDef.WAITING_SHORT);
 					}
 				} catch (Throwable e) {
 					log.error("Exception in LYTaskQueue#exec wait():\n"

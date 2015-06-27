@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.BaseObject;
-import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 
 /**
@@ -22,11 +22,11 @@ public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 	public Integer maxSize;
 
 	public AbstractPool() {
-		this(CoreDefine.DEFAULT_MAX_SIZE);
+		this(CoreDef.DEFAULT_MAX_SIZE);
 	}
 
 	public AbstractPool(int maxSize) {
-		this.maxSize = ((maxSize > 0)? maxSize : CoreDefine.DEFAULT_MAX_SIZE);
+		this.maxSize = ((maxSize > 0)? maxSize : CoreDef.DEFAULT_MAX_SIZE);
 		this.availableContainer = new ConcurrentHashMap<Long, T>();
 	}
 	
@@ -95,7 +95,7 @@ public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 				Integer size = size();
 				if (size >= maxSize) {
 					try {
-						lock.wait(CoreDefine.WAITING_SHORT);
+						lock.wait(CoreDef.WAITING_SHORT);
 						continue;
 					} catch (InterruptedException e) {
 						throw new LYException("Wait interrupted", e);

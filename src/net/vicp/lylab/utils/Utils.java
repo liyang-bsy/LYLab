@@ -20,10 +20,10 @@ public class Utils extends NonCloneableBaseObject {
 		return flag;
 	}
 	
-	@SuppressWarnings("rawtypes")
-	public static boolean inList(List list, Object item) {
+	public static boolean inList(@SuppressWarnings("rawtypes") List list, Object item) {
+		if(list == null || item == null) return false;
 		for(Object o:list)
-			if(o == item)
+			if(o.equals(item))
 				return true;
 		return false;
 	}

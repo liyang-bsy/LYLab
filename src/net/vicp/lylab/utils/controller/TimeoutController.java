@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.Recyclable;
@@ -64,7 +64,7 @@ public final class TimeoutController extends Task {
 			while (!getThread().isInterrupted()) {
 				if (isStopped())
 					break;
-				Thread.sleep(CoreDefine.WAITING_LONG);
+				Thread.sleep(CoreDef.WAITING_LONG);
 				getInstance().timeoutControl();
 			}
 		} catch (InterruptedException e) {

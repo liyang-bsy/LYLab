@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import net.vicp.lylab.core.CloneableBaseObject;
-import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Executor;
 import net.vicp.lylab.utils.Utils;
@@ -27,7 +27,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	/**
 	 * This value doesn't make any sense if you didn't use WatchDog
 	 */
-	protected long timeout = CoreDefine.DEFAULT_TASK_TTIMEOUT;
+	protected long timeout = CoreDef.DEFAULT_TASK_TTIMEOUT;
 	/**
 	 * How many time you want retry if this task was killed by WatchDog
 	 */
@@ -98,7 +98,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 * @throws InterruptedException
 	 */
 	public final void join() throws InterruptedException {
-		while (!join(CoreDefine.WAITING));
+		while (!join(CoreDef.WAITING));
 	}
 
 	/**

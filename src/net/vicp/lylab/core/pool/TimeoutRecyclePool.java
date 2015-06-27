@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.controller.TimeoutController;
@@ -25,17 +25,17 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 	 */
 	public TimeoutRecyclePool()
 	{
-		this(CoreDefine.TWO * CoreDefine.MINUTE, CoreDefine.DEFAULT_MAX_SIZE);
+		this(CoreDef.TWO * CoreDef.MINUTE, CoreDef.DEFAULT_MAX_SIZE);
 	}
 	
 	public TimeoutRecyclePool(long timeout)
 	{
-		this(timeout, CoreDefine.DEFAULT_MAX_SIZE);
+		this(timeout, CoreDef.DEFAULT_MAX_SIZE);
 	}
 	
 	public TimeoutRecyclePool(int maxSize)
 	{
-		this(2*CoreDefine.MINUTE, maxSize);
+		this(2*CoreDef.MINUTE, maxSize);
 	}
 	
 	public TimeoutRecyclePool(long timeout, int maxSize)

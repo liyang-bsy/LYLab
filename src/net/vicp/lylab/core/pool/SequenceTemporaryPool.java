@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import net.vicp.lylab.core.CoreDefine;
+import net.vicp.lylab.core.CoreDef;
 
 /**
  * 
@@ -16,7 +16,7 @@ import net.vicp.lylab.core.CoreDefine;
 public class SequenceTemporaryPool<T> extends SequencePool<T> {
 
 	public SequenceTemporaryPool() {
-		this(CoreDefine.DEFAULT_MAX_SIZE);
+		this(CoreDef.DEFAULT_MAX_SIZE);
 	}
 
 	public SequenceTemporaryPool(int maxSize) {
