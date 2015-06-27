@@ -14,29 +14,14 @@ public class CoreDef {
 	public static final String VERSION = "1.0.0";
 
 	public static Object[] dock = new Object[16];
-	
-	public static final long WAITING = 1000L;
-	public static final long WAITING_SHORT = 100L;
-	public static final long WAITING_LONG = 3000L;
 
-	public static final long INTERVAL = 2000L;					// 2 second
-	public static final long INTERVAL_SHORT = 500L;				// half second
-	public static final long INTERVAL_LONG = 5000L;				// 5 second
-	
-	public static final int DEFAULT_MAX_SIZE = 50;
-	
-	public static final long WAITING_TOLERANCE = 5*1000L;			// 5 min
-	public static final long DEFAULT_TTIMEOUT = 60*60*1000L; // 1 hour
-	public static final long DEFAULT_TASK_TTIMEOUT = 10*60*1000L; // 10 minutes
-	
-	public static final long ONE_TIME_TASK = 0L;
-	public static final long MILLISECOND = 1L;
-	public static final long SECOND = 1000L*MILLISECOND;
-	public static final long MINUTE = 60L*SECOND;
-	public static final long HOUR = 60L*MINUTE;
-	public static final long DAY = 24L*HOUR;
-	public static final long WEEK = 7L*DAY;
-	
+	public static final int B = 1;
+	public static final int KB = 1024*B;
+	public static final int MB = 1024*KB;
+	public static final int GB = 1024*MB;
+	public static final long TB = 1024*GB;
+
+	public static final int ZERO = 0;
 	public static final int ONE = 1;
 	public static final int TWO = 2;
 	public static final int THREE = 3;
@@ -57,5 +42,32 @@ public class CoreDef {
 	public static final int EIGHTEEN = 18;
 	public static final int NINETEEN = 19;
 	public static final int TWENTY = 20;
+	public static final int HUNDRED = TEN*TEN;
+	public static final int THOUSAND = TEN*HUNDRED;
+
+	public static final long MILLISECOND = ONE;
+	public static final long SECOND = THOUSAND*MILLISECOND;
+	public static final long MINUTE = SIX*TEN*SECOND;
+	public static final long HOUR = SIX*TEN*MINUTE;
+	public static final long DAY = TWO*TWELVE*HOUR;
+	public static final long WEEK = SEVEN*DAY;
+	
+	public static final long WAITING = ONE*SECOND;
+	public static final long WAITING_SHORT = HUNDRED*MILLISECOND;
+	public static final long WAITING_LONG = THREE*SECOND;
+
+	public static final long INTERVAL = TWO*SECOND;					// 2 second
+	public static final long INTERVAL_SHORT = SECOND/TWO;				// half second
+	public static final long INTERVAL_LONG = FIVE*SECOND;				// 5 second
+	
+	public static final int SOCKET_MAX_BUFFER = TWO * KB;
+	
+	public static final long WAITING_TOLERANCE = FIVE*MINUTE;			// 5 min
+	public static final long DEFAULT_TTIMEOUT = HOUR;					// 1 hour
+	public static final long DEFAULT_TASK_TTIMEOUT = TEN*MINUTE;		// 10 minutes
+	
+	public static final int DEFAULT_POOL_MAX_SIZE = FIVE*TEN;
+	
+	public static final long ONE_TIME_TASK = ZERO;
 	
 }

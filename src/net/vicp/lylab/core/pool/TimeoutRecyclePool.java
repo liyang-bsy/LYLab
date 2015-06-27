@@ -25,12 +25,12 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 	 */
 	public TimeoutRecyclePool()
 	{
-		this(CoreDef.TWO * CoreDef.MINUTE, CoreDef.DEFAULT_MAX_SIZE);
+		this(CoreDef.TWO * CoreDef.MINUTE, CoreDef.DEFAULT_POOL_MAX_SIZE);
 	}
 	
 	public TimeoutRecyclePool(long timeout)
 	{
-		this(timeout, CoreDef.DEFAULT_MAX_SIZE);
+		this(timeout, CoreDef.DEFAULT_POOL_MAX_SIZE);
 	}
 	
 	public TimeoutRecyclePool(int maxSize)
@@ -77,6 +77,10 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 				try {
 					T tmp = busyContainer.get(id);
 					if (tmp != null) {
+//						if (tmp instanceof Recyclable)
+//							if(((Recyclable) tmp).isRecyclable())
+//								((Recyclable) tmp).recycle();
+//							else continue;
 						if (tmp instanceof AutoCloseable)
 							((AutoCloseable) tmp).close();
 						busyContainer.remove(id);

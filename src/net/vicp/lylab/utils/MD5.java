@@ -3,7 +3,7 @@ package net.vicp.lylab.utils;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class MD5 {
+public final class MD5 {
 	public static String str;
 
 	public static String md5_32(String plainText) {

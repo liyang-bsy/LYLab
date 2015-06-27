@@ -23,7 +23,7 @@ public class RecyclePool<T> extends AbstractPool<T> {
 	protected Set<Long> keyContainer = new HashSet<Long>();
 
 	public RecyclePool() {
-		this(CoreDef.DEFAULT_MAX_SIZE);
+		this(CoreDef.DEFAULT_POOL_MAX_SIZE);
 	}
 	
 	public RecyclePool(Integer maxSize) {

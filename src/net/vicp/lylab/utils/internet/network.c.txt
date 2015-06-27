@@ -1,0 +1,411 @@
+//
+//  network.c
+//  EmbedDev
+//
+//  Created by Young Lee on 15/01/2014.
+//  Copyright (c) 2014 Young Lee's Lab. All rights reserved.
+//
+
+#include "network.h"
+#include "Param.h"
+#include "Main.h"
+#include <string.h>
+
+#define ByteEveryTime	KB
+#define Delay			50
+#define ToleranceLimit	30
+
+char PostDataPool[POST_MAX_SIZE];
+char DownloadCacheBuff[DOWNLOAD_CACHE_BUFF_SIZE];
+
+int closeGPRS()
+{
+	int ret = GPRS_Quectel_Close();
+	if(ret==OK) return ret;
+	else
+	{
+		printf("Try second close gprs\n");
+		Wait(Delay);
+		return GPRS_Quectel_Close();
+	}
+}
+int errorGPRS(char *reason)
+{
+#ifndef RELEASE
+	printf("[LYDEBUG] errorGPRS\n");
+#endif
+	printf("%s\n",reason);
+	closeGPRS();
+	FailBeep();
+	Clear();
+	disp_text(0,1,ALIGN_CENTER,reason);
+	return ERROR;
+}
+int connectGprs()
+{
+#ifndef RELEASE
+	printf("[LYDEBUG] connectGprs\n");
+	/*
+     printf("GPRS_Open:%x\n",GPRS_Open());
+     printf("GPRS_init:%x\n",GPRS_init());
+     GPRS_SetNet1(NULL,NULL,gGloble.tParam.szGprsApn,gGloble.tParam.szGprsServerIP,gGloble.tParam.szGprsServerPort);
+     printf("GPRS_ConfigNet1:%x\n",GPRS_ConfigNet1());*/
+	printf("[LYDEBUG] done!\n");
+#endif
+    if(GPRS_Quectel_ConnectNet1(gTerm.szGprsServerIP,gTerm.szGprsServerPort)!=OK)
+		return errorGPRS("GPRS connect failed!!\n");
+	return OK;
+}
+int sendToByGPRS(char *msgSend)
+{
+#ifndef RELEASE
+	printf("[LYDEBUG] sendToByGPRS\n");
+#endif
+    if(GPRS_Quectel_SendEx((UCHAR*)msgSend,strlen(msgSend))!=OK)
+        return errorGPRS("GPRS send failed!!\n");
+	return OK;
+}
+int recvFromByGPRS(char *msgReturn,int msgReturnLength)
+{
+	int cir,ret,nContent_Length,nHeadLength,nTotalLength,retLen,nTotalRecv=0;
+	int tolerance = 0;
+	char *pContent;
+#ifndef RELEASE
+	int i;
+#endif
+	retLen = ByteEveryTime<msgReturnLength?ByteEveryTime:msgReturnLength;
+	memset(msgReturn,0x00,msgReturnLength);
+	Wait(Delay*(tolerance+1));
+	ret = GPRS_Quectel_Recv(msgReturn,&retLen,20,1);	//和后面的差别是第四个参数flag
+#ifndef RELEASE
+	printf("--------------------------------------------------\nret:%d\nrecv cnt:%d\n[recvFromByGPRS]msgReturn:\n%s\n--------------------------------------------------\n",ret,retLen,msgReturn);
+	printf("\n");
+	for(i=0;i<retLen;i++)
+	{
+		if(!(i%20)) printf("\n");
+		printf("%x ",msgReturn[i]);//,msgReturn[i]);
+	}
+	printf("\n==========================\n");
+	for(i=0;i<retLen;i++)
+	{
+		if(!(i%20)) printf("\n");
+		printf("%d|%c ",msgReturn[i],msgReturn[i]);
+	}
+	printf("\n");
+#endif
+	if(ret != OK)
+		return errorGPRS("GPRS first revc failed!");
+	//分析信息
+	pContent = strstr(msgReturn,"Content-Length");
+	sscanf(pContent, "Content-Length:%d",&nContent_Length);
+	pContent = strstr(msgReturn,SplitSignal SplitSignal)+4;
+	nHeadLength = pContent - msgReturn;
+	nTotalLength = nHeadLength + nContent_Length;
+	if(retLen<0)
+		return errorGPRS("downloadFromByGPRS: GPRS recv failed!!\n");
+	else if(nTotalLength<ByteEveryTime)
+		return OK;
+	else
+	{
+		nTotalRecv += retLen;
+		if(nTotalLength > INF)
+			return errorGPRS("GPRS revc failed! Reason: too many data was received.\n");
+		cir = 1;
+		//while((nTotalLength - ByteEveryTime*cir) > 0 && retLen==ByteEveryTime)
+		while((nTotalLength - nTotalRecv) > 0)
+		{
+			retLen = ByteEveryTime<msgReturnLength?ByteEveryTime:msgReturnLength;
+			Wait(Delay*(tolerance+1));
+			if((ret = GPRS_Quectel_Recv(msgReturn + nTotalRecv,&retLen,20,0)) || retLen < 0)
+			{
+				if(tolerance<ToleranceLimit)
+				{
+					printf("Tolerance:%d\n",tolerance);
+					printf("ret:%d\n",ret);
+					printf("retLen:%d\n",retLen);
+					tolerance++;
+					continue;
+				}
+#ifndef RELEASE
+				printf("Debug ret=%d\tretLen=%d\n",ret,retLen);
+				ret=wait_limit_key("\x0F\x12",0);
+				if(ret!=KEY_CANCEL)
+				{
+					retLen = 0;
+					continue;
+				}
+#endif
+				return errorGPRS("downloadFromByGPRS: GPRS recv failed(loop)!!\n\n");
+			}
+			nTotalRecv += retLen;
+			tolerance = 0;
+			cir++;
+#ifndef RELEASE
+			for(i=0;i<retLen;i++)
+			{
+				if(i%20 == 0)
+					printf("\n");
+				printf("%x ", (unsigned char)msgReturn[i + ByteEveryTime*(cir-1)]);
+			}
+			printf("\n%s\n", msgReturn + ByteEveryTime*cir);
+			printf("\nretLen:%d\ncir:%d\ncalc:%d\n",retLen,cir,(nTotalLength - ByteEveryTime*cir));
+#endif
+		}
+	}
+	return OK;
+}
+int downloadFromByGPRS(char *msgReturn,int msgReturnLength)
+{
+	int cir,ret,nContent_Length,nHeadLength,nTotalLength,retLen,nTotalRecv=0;
+	int tolerance = 0;
+	char *pContent;
+#ifndef RELEASE
+	int i;
+#endif
+	retLen = ByteEveryTime<msgReturnLength?ByteEveryTime:msgReturnLength;
+	memset(msgReturn,0x00,msgReturnLength);
+	Wait(Delay*(tolerance+1));
+	ret = GPRS_Quectel_Recv(msgReturn,&retLen,20,1);	//和后面的差别是第四个参数flag
+#ifndef RELEASE
+	printf("--------------------------------------------------\nret:%d\nrecv cnt:%d\n[recvFromByGPRS]msgReturn:\n%s\n--------------------------------------------------\n",ret,retLen,msgReturn);
+	printf("\n");
+	for(i=0;i<retLen;i++)
+	{
+		if(!(i%20)) printf("\n");
+		printf("%x ",msgReturn[i]);//,msgReturn[i]);
+	}
+	printf("\n==========================\n");
+	for(i=0;i<retLen;i++)
+	{
+		if(!(i%20)) printf("\n");
+		printf("%d|%c ",msgReturn[i],msgReturn[i]);
+	}
+	printf("\n");
+#endif
+	//分析信息
+	pContent = strstr(msgReturn,"Content-Length");
+	sscanf(pContent, "Content-Length:%d",&nContent_Length);
+	pContent = strstr(msgReturn,SplitSignal SplitSignal)+4;
+	nHeadLength = pContent - msgReturn;
+	nTotalLength = nHeadLength + nContent_Length;
+	if(retLen<0)
+		return errorGPRS("downloadFromByGPRS: GPRS recv failed!!\n");
+	else if(nTotalLength<ByteEveryTime)
+		return OK;
+	else
+	{
+		nTotalRecv += retLen;
+		if(nTotalLength > INF)
+			return errorGPRS("GPRS revc failed! Reason: too many data was received.\n");
+		cir = 1;
+		//while((nTotalLength - ByteEveryTime*cir) > 0 && retLen==ByteEveryTime)
+		while((nTotalLength - nTotalRecv) > 0)
+		{
+			retLen = ByteEveryTime<msgReturnLength?ByteEveryTime:msgReturnLength;
+			Wait(Delay*(tolerance+1));
+			if((ret = GPRS_Quectel_Recv(msgReturn + nTotalRecv,&retLen,20,0)) || retLen < 0)
+			{
+				if(tolerance<ToleranceLimit)
+				{
+					printf("Tolerance:%d\n",tolerance);
+					printf("ret:%d\n",ret);
+					printf("retLen:%d\n",retLen);
+					tolerance++;
+					continue;
+				}
+#ifndef RELEASE
+				printf("Debug ret=%d\tretLen=%d\n",ret,retLen);
+				ret=wait_limit_key("\x0F\x12",0);
+				if(ret!=KEY_CANCEL)
+				{
+					retLen = 0;
+					continue;
+				}
+#endif
+				return errorGPRS("downloadFromByGPRS: GPRS recv failed(loop)!!\n\n");
+			}
+			nTotalRecv += retLen;
+			tolerance = 0;
+			cir++;
+#ifndef RELEASE
+			for(i=0;i<retLen;i++)
+			{
+				if(i%20 == 0)
+					printf("\n");
+				printf("%x ", (unsigned char)msgReturn[i + ByteEveryTime*(cir-1)]);
+			}
+			printf("\n%s\n", msgReturn + ByteEveryTime*cir);
+			printf("\nretLen:%d\ncir:%d\ncalc:%d\n",retLen,cir,(nTotalLength - ByteEveryTime*cir));
+#endif
+		}
+	}
+	return OK;
+}
+int _sendPostRequest(char *interface, char *msgSend, char *msgReturn, int msgReturnLength, char *textEncoding)
+{
+	char Argv[65],msgReturnConv[POST_MAX_SIZE],*pCharSet, msgSendConv[POST_MAX_SIZE];
+	int httpReturn;
+	if(!(interface && msgSend && msgReturn))
+		return ERROR;
+#ifndef RELEASE
+	printf("\n--------------------------------------------------\nGBKmsgSend:\n%s\n--------------------------------------------------\n",msgSend);
+#endif
+	memset(msgReturn,0x00,msgReturnLength);
+	memset(msgReturnConv,0x00,sizeof(msgReturnConv));
+	memset(msgSendConv,0x00,sizeof(msgSendConv));
+	// conver to utf-8
+#ifndef RELEASE
+	if(textEncoding && !strcasecmp(textEncoding,"UTF-8"))
+	{
+		printf("\n--------------------------------------------------\nraw:\n%s\n--------------------------------------------------\n",msgSend);
+		//gbk2utf8(msgSend, strlen(msgSend), msgSendConv, sizeof(msgSendConv));
+		gbk_to_utf8(msgSend, msgSendConv, sizeof(msgSendConv));
+		printf("\n--------------------------------------------------\nutf8:\n%s\n--------------------------------------------------\n",msgSendConv);
+		utf8_to_gbk(msgSendConv, msgReturnConv, sizeof(msgReturnConv));
+		printf("\n--------------------------------------------------\nutf8 go back to raw:\n%s\n--------------------------------------------------\n",msgReturnConv);
+	}
+	else
+		strcpy(msgSendConv,msgSend);
+#else
+	if(textEncoding && !strcasecmp(textEncoding,"UTF-8"))
+		gbk_to_utf8((unsigned char*)msgSend, (unsigned char*)msgSendConv, sizeof(msgSendConv));
+	else
+		strcpy(msgSendConv,msgSend);
+#endif
+	if(connectGprs()==OK)
+	{
+		memset(PostDataPool,0x00,sizeof(PostDataPool));
+		sprintf(Argv,"POST /%s HTTP/1.1\r\n",interface[0]!='/'?interface:interface+1);
+		strcat(PostDataPool,Argv);
+		sprintf(Argv,"Host: %s\r\n",gTerm.szGprsServerIP);
+		strcat(PostDataPool,Argv);
+		sprintf(Argv,"Content-Length: %d\r\n",strlen(msgSendConv));
+		strcat(PostDataPool,Argv);
+		strcat(PostDataPool,
+               "Accept: */*\r\n"
+               "Accept-Language: zh-CN,zh;q=0.8\r\n"
+               "Content-Type: application/x-www-form-urlencoded;charset=UTF-8\r\n"		//text/html
+               "Connection: keep-alive\r\n"
+               );
+		strcat(PostDataPool,"\r\n");
+		strcat(PostDataPool,msgSendConv);
+#ifndef RELEASE
+		printf("\n--------------------------------------------------\nmsgSend:\n%s\n--------------------------------------------------\n",PostDataPool);
+#endif
+		
+		if(sendToByGPRS(PostDataPool)==OK)
+		{
+			if(recvFromByGPRS(msgReturnConv, msgReturnLength)==OK)
+			{
+#ifndef RELEASE
+				printf("\n--------------------------------------------------\nmsgReturnConv raw:\n%s\n--------------------------------------------------\n",msgReturnConv);
+#endif
+				if(closeGPRS()==OK)
+				{
+					sscanf(msgReturnConv+9,"%d",&httpReturn);
+					if(httpReturn!=200)
+						return errorGPRS("服务器错误");
+					pCharSet = strstr(msgReturnConv,"charset=");
+					if(pCharSet!=NULL)
+					{
+						pCharSet = strstr(pCharSet,"=");
+						if(pCharSet[0]=='='&&pCharSet[1]=='U'&&pCharSet[2]=='T'&&pCharSet[3]=='F'&&pCharSet[4]=='-'&&pCharSet[5]=='8')
+							// it's string "=UTF-8", '=' is the last char from "charset="
+							utf8_to_gbk(strstr(msgReturnConv,SplitSignal SplitSignal)+4,(unsigned char*)msgReturn, msgReturnLength);
+						else
+							// it's not "=UTF-8", it means this string is not utf-8 encoding, thus neither encode nor decode it
+							strcpy(msgReturn,strstr(msgReturnConv,SplitSignal SplitSignal)+4);
+					}
+					else
+						// it's no "charset" tag, thus neither encode nor decode it
+						strcpy(msgReturn,strstr(msgReturnConv,SplitSignal SplitSignal)+4);
+#ifndef RELEASE
+					printf("\n--------------------------------------------------\nmsgReturn:\n%s\n--------------------------------------------------\n",msgReturn);
+#endif
+					return OK;
+				}
+			}
+		}
+		//closeGPRS();			//errorGPRS already closed gprs module
+	}
+	return ERROR;
+}
+//
+int sendUTF8PostRequest(char *interface, char *msgSend, char *msgReturn, int msgReturnLength)
+{
+	int ret;
+	EnableKbd(OFF);
+	ret = _sendPostRequest(interface, msgSend, msgReturn, msgReturnLength, "UTF-8");
+	EnableKbd(ON);
+	if(OK != ret)
+		WaitKey(0);
+	return ret;
+}
+char* _downloadWithPostRequest(char *interface, char *msgSend)//, char *msgReturn, int msgReturnLength)
+{
+	char Argv[65];//, *pLengthControl, *pContent;	// , *pCharSet;
+#ifndef RELEASE
+	char i;
+#endif
+	//int httpReturn;
+	if(!(interface && msgSend))// && msgReturn))
+		return NULL;
+	if(connectGprs()==OK)
+	{
+		memset(PostDataPool,0x00,sizeof(PostDataPool));
+		sprintf(Argv,"POST /%s HTTP/1.1\r\n",interface[0]!='/'?interface:interface+1);
+		strcat(PostDataPool,Argv);
+		sprintf(Argv,"Host: %s\r\n",gTerm.szGprsServerIP);
+		strcat(PostDataPool,Argv);
+		sprintf(Argv,"Content-Length: %d\r\n",strlen(msgSend));
+		strcat(PostDataPool,Argv);
+		strcat(PostDataPool,
+               "Accept: */*\r\n"
+               "Accept-Language: zh-CN,zh;q=0.8\r\n"
+               "Content-Type: application/x-www-form-urlencoded;charset=UTF-8\r\n"		//text/html
+               "Connection: keep-alive\r\n"
+               );
+		strcat(PostDataPool,"\r\n");
+		strcat(PostDataPool,msgSend);
+		if(sendToByGPRS(PostDataPool)==OK)
+		{
+			memset(DownloadCacheBuff,0x00,sizeof(DownloadCacheBuff));
+			if(downloadFromByGPRS(DownloadCacheBuff, DOWNLOAD_CACHE_BUFF_SIZE)==OK)
+			{
+				if(closeGPRS()==OK)
+				{
+					printf("Signal: Close failed?\n");
+				}
+				//closeGPRS();
+				{
+#ifndef RELEASE
+					printf("#successfully closed connection");
+#endif
+//					pLengthControl = strstr(DownloadCacheBuff,"Content-Length");
+//					sscanf(pLengthControl, "Content-Length:%d",totalRecv);
+//					pContent = strstr(DownloadCacheBuff,SplitSignal SplitSignal)+4;
+//					pContent[*totalRecv] = 0;
+					
+					return DownloadCacheBuff;
+				}
+#ifndef RELEASE
+				printf("Error track#2\n");
+#endif
+			}
+		}
+		//closeGPRS();			//errorGPRS already closed gprs module
+	}
+#ifndef RELEASE
+	printf("Error track#1\n");
+#endif
+	return NULL;
+}
+char* downloadWithPostRequest(char *interface, char *msgSend)
+{
+	char *ret;
+	EnableKbd(OFF);
+	ret = _downloadWithPostRequest(interface, msgSend);
+	EnableKbd(ON);
+	if(NULL == ret) WaitKey(0);
+	return ret;
+}

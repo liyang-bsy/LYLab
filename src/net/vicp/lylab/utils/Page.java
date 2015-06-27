@@ -1,6 +1,6 @@
 package net.vicp.lylab.utils;
 
-public class Page {
+public final class Page {
 	public static final int DEFAULT_PAGE_SIZE = 20;
 	private int totalProperty;
 	private int pageCount;
@@ -80,12 +80,5 @@ public class Page {
 
 		pageCount = totalProperty / pageSize
 				+ (totalProperty % pageSize == 0 ? 0 : 1);
-		if (totalProperty == 0) {
-			// if (pageIndex != 1)
-			// throw new IndexOutOfBoundsException("Page index out of range.");
-		} else {
-			// if (pageIndex > pageCount)
-			// throw new IndexOutOfBoundsException("Page index out of range.");
-		}
 	}
 }

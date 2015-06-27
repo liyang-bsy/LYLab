@@ -19,7 +19,7 @@ public class SequencePool<T> extends AbstractPool<T> {
 	protected volatile LinkedList<Long> keyContainer = new LinkedList<Long>();
 
 	public SequencePool() {
-		this(CoreDef.DEFAULT_MAX_SIZE);
+		this(CoreDef.DEFAULT_POOL_MAX_SIZE);
 	}
 
 	public SequencePool(int maxSize) {
