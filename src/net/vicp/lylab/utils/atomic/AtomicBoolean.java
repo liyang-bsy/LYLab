@@ -10,4 +10,15 @@ public final class AtomicBoolean extends AtomicObject<Boolean> {
 		super(t);
 	}
 	
+    /**
+     * Gets the current read-only value.
+     *
+     * @return the current value
+     */
+	@Override
+	public Boolean get()
+	{
+		return value.booleanValue();
+	}
+	
 }

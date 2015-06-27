@@ -16,6 +16,13 @@ import net.vicp.lylab.core.exception.LYException;
 
 public interface AutoInitialize<T> {
 
+	/**
+	 * Thread-safely get its instance
+	 * @param instanceClass Class of instance to be create
+	 * @param constructorParameters Constructor parameters of instance to be create
+	 * @return
+	 * @throws LYException Reason within the exception
+	 */
 	public T get(Class<T> instanceClass, Object... constructorParameters) throws LYException;
 	
 }

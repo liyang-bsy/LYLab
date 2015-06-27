@@ -9,6 +9,17 @@ public final class AtomicLong extends AtomicObject<Long> {
 	public AtomicLong(long t) {
 		super(t);
 	}
+	
+    /**
+     * Gets the current read-only value.
+     *
+     * @return the current value
+     */
+	@Override
+	public Long get()
+	{
+		return value.longValue();
+	}
 
     /**
      * Atomically adds the given value to the current value.

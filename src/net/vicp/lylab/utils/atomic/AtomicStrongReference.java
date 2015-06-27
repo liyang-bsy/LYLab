@@ -16,7 +16,20 @@ public final class AtomicStrongReference<T> extends AtomicObject<T> implements A
 	public AtomicStrongReference(T obj) {
 		super(obj);
 	}
-	
+
+    /**
+     * Gets the current value.
+     * A reference is read-only, but its referenced value can be modified.
+     *
+     * @return the current value
+     */
+	@Override
+	public T get()
+	{
+		return value;
+	}
+
+	@Override
 	public T get(Class<T> instanceClass, Object... constructorParameters)
 	{
 		if(value == null) createInstance(instanceClass, constructorParameters);

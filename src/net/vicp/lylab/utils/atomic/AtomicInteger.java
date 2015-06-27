@@ -9,6 +9,17 @@ public final class AtomicInteger extends AtomicObject<Integer> {
 	public AtomicInteger(int t) {
 		super(t);
 	}
+	
+    /**
+     * Gets the current read-only value.
+     *
+     * @return the current value
+     */
+	@Override
+	public Integer get()
+	{
+		return value.intValue();
+	}
 
     /**
      * Atomically adds the given value to the current value.

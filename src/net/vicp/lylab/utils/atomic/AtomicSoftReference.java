@@ -19,5 +19,4 @@ public final class AtomicSoftReference<T> extends AtomicReference<T> {
 		return value.get();
 	}
 	
-
 }

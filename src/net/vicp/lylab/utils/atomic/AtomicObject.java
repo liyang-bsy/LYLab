@@ -2,12 +2,20 @@ package net.vicp.lylab.utils.atomic;
 
 import net.vicp.lylab.core.CloneableBaseObject;
 
-public class AtomicObject<T> extends CloneableBaseObject {
+public abstract class AtomicObject<T> extends CloneableBaseObject {
 	protected volatile T value;
 
 	public AtomicObject(T initValue) {
 		value = initValue;
 	}
+	
+    /**
+     * Gets the current value.
+     * You should better not to modify this value!
+     *
+     * @return the current value
+     */
+	public abstract T get();
 
     /**
      * Atomically sets to the given value and returns the old value.
@@ -22,16 +30,6 @@ public class AtomicObject<T> extends CloneableBaseObject {
 			value = newValue;
 			return tmp;
 		}
-	}
-
-    /**
-     * Gets the current value.
-     *
-     * @return the current value
-     */
-	public T get()
-	{
-		return value;
 	}
 
     /**
