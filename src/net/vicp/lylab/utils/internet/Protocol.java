@@ -55,7 +55,7 @@ public class Protocol extends BaseObject {
 	protected byte[] info;
 	protected byte[] data;
 	
-	protected byte[] splitSignal = "\r\n".getBytes();
+	protected byte[] splitSignal = "\241".getBytes();
 
 	public byte[] getHead() {
 		return head;
