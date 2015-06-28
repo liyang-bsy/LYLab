@@ -1,6 +1,8 @@
-package net.vicp.lylab.utils.internet;
+package net.vicp.lylab.utils.internet.test;
 
 import java.net.ServerSocket;
+
+import net.vicp.lylab.utils.internet.LYSocket;
 
 public class TestSocket extends LYSocket {
 	private static final long serialVersionUID = 1600438374173859309L;

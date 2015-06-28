@@ -3,6 +3,7 @@ package net.vicp.lylab.utils.internet;
 import java.net.ServerSocket;
 
 import net.vicp.lylab.core.BaseObject;
+import net.vicp.lylab.utils.internet.test.TestDealWithClientSocket;
 import net.vicp.lylab.utils.tq.Task;
 
 public class LongSocketServer extends BaseObject {

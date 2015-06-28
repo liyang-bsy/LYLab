@@ -1,4 +1,4 @@
-package net.vicp.lylab.utils.internet;
+package net.vicp.lylab.utils.internet.test;
 
 import java.io.IOException;
 import java.io.InputStream;

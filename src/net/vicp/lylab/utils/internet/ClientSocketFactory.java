@@ -2,6 +2,7 @@ package net.vicp.lylab.utils.internet;
 
 import java.net.ServerSocket;
 
+import net.vicp.lylab.utils.internet.test.TestSocket;
 import net.vicp.lylab.utils.tq.Task;
 
 public abstract class ClientSocketFactory extends Task {

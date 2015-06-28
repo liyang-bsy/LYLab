@@ -111,14 +111,10 @@ public abstract class LongSocket extends LYSocket {
 		return ByteUtils.copyBytesFromContainer(container);
 	}
 
+	@Override
 	public boolean isClosed() {
 		return socket == null || socket.isClosed()
 				|| in == null || out == null;
-	}
-	
-	@Override
-	public boolean isRecyclable() {
-		return !isServer() && isClosed();
 	}
 
 	@Override
