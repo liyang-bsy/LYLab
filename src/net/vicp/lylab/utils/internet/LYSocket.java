@@ -18,7 +18,7 @@ import net.vicp.lylab.utils.ByteUtils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.tq.Task;
 
-public abstract class LYSocket extends Task implements Recyclable, AutoCloseable, Transmission {
+public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmission {
 	private static final long serialVersionUID = 883892527805494627L;
 	protected static Log log = LogFactory.getLog(LYSocket.class);
 	
@@ -199,11 +199,6 @@ public abstract class LYSocket extends Task implements Recyclable, AutoCloseable
 		synchronized (lock) {
 			lock.notifyAll();
 		}
-	}
-
-	@Override
-	protected boolean isDaemon() {
-		return true;
 	}
 
 	public void setSoTimeout(int timeout)

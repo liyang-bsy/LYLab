@@ -20,9 +20,9 @@ public class TestServer extends BaseObject {
 		while(true)
 		{
 			if(isLongConnection)
-				LYTaskQueue.addTask(new ToClientLongSocket<MyData>(server));
+				LYTaskQueue.addTask(new TestToClientLongSocket<MyData>(server));
 			else
-				LYTaskQueue.addTask(new ToClientSocket(server));
+				LYTaskQueue.addTask(new TestToClientSocket(server));
 		}
 	}
 

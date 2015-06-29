@@ -6,7 +6,7 @@ import net.vicp.lylab.core.TranscodeProtocol;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 
-public class LongSocket<T> extends TaskSocket implements HeartBeatSender {
+public class LongSocket<T> extends LYSocket implements HeartBeatSender {
 	private static final long serialVersionUID = -4542553667467771646L;
 	protected SequenceTemporaryPool<T> dataPool = new SequenceTemporaryPool<T>();
 
@@ -16,6 +16,11 @@ public class LongSocket<T> extends TaskSocket implements HeartBeatSender {
 
 	public LongSocket(String host, int port) {
 		super(host, port);
+	}
+
+	@Override
+	protected boolean isDaemon() {
+		return true;
 	}
 
 	@Override

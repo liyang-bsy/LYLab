@@ -3,14 +3,13 @@ package net.vicp.lylab.utils.internet.test;
 import java.net.ServerSocket;
 import java.util.Date;
 
-import net.vicp.lylab.utils.internet.LongSocket;
 import net.vicp.lylab.utils.internet.Protocol;
+import net.vicp.lylab.utils.internet.ToClientLongSocket;
 
-public class ToClientLongSocket<T> extends LongSocket<T> {
-	private static final long serialVersionUID = -2811199603276510531L;
+public class TestToClientLongSocket<T> extends ToClientLongSocket<T> {
+	private static final long serialVersionUID = 5845683298739007258L;
 
-	public ToClientLongSocket(ServerSocket serverSocket)
-	{
+	public TestToClientLongSocket(ServerSocket serverSocket) {
 		super(serverSocket);
 	}
 

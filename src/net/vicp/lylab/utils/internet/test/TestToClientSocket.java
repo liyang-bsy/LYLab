@@ -4,13 +4,12 @@ import java.net.ServerSocket;
 import java.util.Date;
 
 import net.vicp.lylab.utils.internet.Protocol;
-import net.vicp.lylab.utils.internet.TaskSocket;
+import net.vicp.lylab.utils.internet.ToClientSocket;
 
-public class ToClientSocket extends TaskSocket {
-	private static final long serialVersionUID = -2811199603276510531L;
+public class TestToClientSocket extends ToClientSocket {
+	private static final long serialVersionUID = 5845683298739007258L;
 
-	public ToClientSocket(ServerSocket serverSocket)
-	{
+	public TestToClientSocket(ServerSocket serverSocket) {
 		super(serverSocket);
 	}
 
