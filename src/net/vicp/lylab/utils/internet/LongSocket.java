@@ -1,148 +1,112 @@
 package net.vicp.lylab.utils.internet;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
-import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.TranscodeProtocol;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.utils.ByteUtils;
+import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 
-public abstract class LongSocket extends LYSocket {
-	private static final long serialVersionUID = 5660256830220815074L;
-	
-	protected InputStream in;
-	protected OutputStream out;
+public class LongSocket<T> extends TaskSocket implements HeartBeatSender {
+	private static final long serialVersionUID = -4542553667467771646L;
+	protected SequenceTemporaryPool<T> dataPool = new SequenceTemporaryPool<T>();
 
-//	public static void main(String[] args) throws Exception {
-//		System.out.println("这是Client");
-//		LongSocketClient client = new LongSocketClient("127.0.0.1", 52041);
-//		client.begin();
-//		System.out.println(client);
-//	}
-	
 	public LongSocket(ServerSocket serverSocket) {
 		super(serverSocket);
-		try {
-			in = socket.getInputStream();
-			out = socket.getOutputStream();
-		} catch (Exception e) {
-			throw new LYException("Can not establish connection to socket", e);
-		}
 	}
-	
-	public LongSocket(String ip, int port) {
-		super(ip, port);
-		recycle(ip, port);
+
+	public LongSocket(String host, int port) {
+		super(host, port);
 	}
 
 	@Override
 	public void exec() {
-		if(!isServer()) return;
+		connect();
 		try {
-			while(!response(receive()));
-			return;
+			if (isServer()) {
+				while (true)
+				{
+					byte[] bytes = receive();
+					if(bytes == null) return;
+					send(doResponse(bytes));
+				}
+			} else {
+				while (doRequest(null) != null);
+			}
 		} catch (Exception e) {
-			throw new LYException("Why?", e);
+			throw new LYException("Connect break", e);
+		} finally {
+			try {
+				close();
+			} catch (Exception e) {
+				throw new LYException("Why?", e);
+			}
 		}
 	}
 	
 	@Override
-	public boolean hasMoreResponse() {
-		return false;
-	}
+	protected void aftermath() {
+		log.info(isServer()?"Lost connection to client":"Lost connection to server");
+	};
 
 	@Override
 	public byte[] request(byte[] request) {
-		if(isServer()) return null;
-		while (true) {
-			try {
-				send(request);
-				return receive();
-			} catch (Exception e) {
-				recycle();
-			}
-		}
-	}
-
-	@Override
-	public boolean hasMoreRequest() {
-		return false;
-	}
-	
-	@Override
-	public boolean send(byte[] msg) throws IOException {
-		out.write(msg);
-		out.flush();
-		return true;
-	}
-
-	@Override
-	public byte[] receive() throws Exception {
-		List<Byte> container = new ArrayList<Byte>();
-		if (in != null) {
-			byte[] rc = new byte[CoreDef.SOCKET_MAX_BUFFER];
-			int totalRecv = 0, getLen = 0;
-			while (true) {
-				try {
-					getLen = in.read(rc, 0, CoreDef.SOCKET_MAX_BUFFER);
-				} catch (Exception e) {
-					throw new LYException("Lost connection");
-				}
-				if(getLen == -1)
-					break;
-				if(getLen == 0)
-					throw new LYException("I don't know...");
-				totalRecv += getLen;
-				container.addAll(ByteUtils.moveBytesToContainer(rc));
-				int result = Protocol.validate(ByteUtils.copyBytesFromContainer(container), totalRecv);
-				if(result == -1)
-					throw new LYException("Bad data package");
-				if(result == 0)
-					break;
-				if(result == 1)
-					continue;
-			}
-		}
-		return ByteUtils.copyBytesFromContainer(container);
-	}
-
-	@Override
-	public boolean isClosed() {
-		return socket == null || socket.isClosed()
-				|| in == null || out == null;
-	}
-
-	@Override
-	public void close() throws Exception {
-		if (in != null) {
-			in.close();
-			in = null;
-		}
-		if (out != null) {
-			out.close();
-			out = null;
-		}
-		if (socket != null) {
-			socket.close();
-			socket = null;
-		}
-	}
-
-	@Override
-	protected void recycle(String ip, int port) {
+		if (isServer())
+			return null;
+		byte[] ret = null;
 		try {
-			close();
-			socket = new Socket(ip, port);
-			in = socket.getInputStream();
-			out = socket.getOutputStream();
+			send(request);
+			ret = receive();
 		} catch (Exception e) {
-			throw new LYException("Can not establish connection to server", e);
+			try {
+				recycle();
+			} catch (Throwable t) {
+				return null;
+			}
 		}
+		return ret;
+	}
+
+	@Override
+	public byte[] doRequest(byte[] request) {
+		if (isServer())
+			throw new LYException("Do request is forbidden to a server socket");
+		byte[] result = null;
+		do {
+			T tmp = dataPool.accessOne();
+			if (tmp == null) {
+				waitCycle();
+				if(!sendHeartBeat(new HeartBeat())) return null;
+				continue;
+			}
+			result = request(((TranscodeProtocol) tmp).encode().toBytes());
+			if (result == null) dataPool.add(0, tmp);
+			System.out.println(Protocol.fromBytes(result));
+			break;
+		} while (true);
+		return result;
+	}
+
+	/**
+	 * Add to pool
+	 * 
+	 * @param data
+	 * @return ObjectId of data, null if add failed
+	 */
+	public Long addToPool(T data) {
+		Long objId = dataPool.add(data);
+		if (objId != null) {
+			interrupt();
+		}
+		return objId;
+	}
+
+	@Override
+	public boolean sendHeartBeat(HeartBeat heartBeat) {
+		try {
+			if(request(heartBeat.encode().toBytes()) != null)
+				return true;
+		} catch (Exception e) { }
+		return false;
 	}
 
 }

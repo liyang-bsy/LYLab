@@ -27,14 +27,6 @@ public interface Transmission {
 	 * @return
 	 * 		if success response to client
 	 */
-	public boolean response(byte[] request);
-	/**
-	 * If more request should be sent
-	 */
-	public boolean hasMoreRequest();
-	/**
-	 * If more response should be sent
-	 */
-	public boolean hasMoreResponse();
+	public byte[] response(byte[] request);
 	
 }

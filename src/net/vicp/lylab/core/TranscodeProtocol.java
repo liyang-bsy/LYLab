@@ -17,12 +17,17 @@ import flexjson.JSONDeserializer;
  */
 
 public class TranscodeProtocol extends BaseObject {
-	public Protocol encode(String ... excludeRule)
+	public Protocol encode()
 	{
 		try {
-			return new Protocol(this.getClass(), Utils.toJson(this, excludeRule).getBytes("UTF-8"));
+			return new Protocol(this.getClass(), Utils.toJson(this, exclude()).getBytes("UTF-8"));
 		} catch (Exception e) { }
 		return null;
+	}
+
+	public String[] exclude(String ... excludeRule)
+	{
+		return new String[] { };
 	}
 	
 	public static Object decode(Protocol protocol)
