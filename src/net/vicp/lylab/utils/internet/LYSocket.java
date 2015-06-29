@@ -128,9 +128,7 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 					throw new LYException("Impossible");
 				totalRecv += getLen;
 				container.addAll(ByteUtils.moveBytesToContainer(rc));
-				int result = Protocol.validate(
-						ByteUtils.copyBytesFromContainer(container),
-						totalRecv);
+				int result = Protocol.validate(ByteUtils.copyBytesFromContainer(container),totalRecv);
 				if (result == -1)
 					throw new LYException("Bad data package");
 				if (result == 0)
