@@ -7,17 +7,17 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.utils.ByteUtils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
-import net.vicp.lylab.utils.internet.protocol.Protocol;
+import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.Task;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmission {
 	private static final long serialVersionUID = 883892527805494627L;
@@ -129,7 +129,7 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 					throw new LYException("Impossible");
 				totalRecv += getLen;
 				container.addAll(ByteUtils.moveBytesToContainer(rc));
-				int result = Protocol.validate(ByteUtils.copyBytesFromContainer(container),totalRecv);
+				int result = ProtocolUtils.validate(ByteUtils.copyBytesFromContainer(container),totalRecv);
 				if (result == -1)
 					throw new LYException("Bad data package");
 				if (result == 0)

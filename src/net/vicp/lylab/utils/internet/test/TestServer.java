@@ -3,7 +3,7 @@ package net.vicp.lylab.utils.internet.test;
 import java.net.ServerSocket;
 
 import net.vicp.lylab.core.BaseObject;
-import net.vicp.lylab.utils.internet.protocol.Protocol;
+import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 
 public class TestServer extends BaseObject {
@@ -12,7 +12,7 @@ public class TestServer extends BaseObject {
 
 	public static void main(String[] args) throws Exception {
 		System.out.println("Server begin");
-		Protocol.setProtocolConfig(System.getProperty("user.dir") + "\\config\\protocol.txt");
+		ProtocolUtils.setProtocolConfig(System.getProperty("user.dir") + "\\config\\protocol.txt");
 		new TestServer(52041, true);
 		
 	}

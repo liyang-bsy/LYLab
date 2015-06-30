@@ -4,8 +4,9 @@ import java.net.ServerSocket;
 
 import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.HeartBeatSender;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
-import net.vicp.lylab.utils.internet.protocol.Protocol;
+import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
 public class LongSocket extends LYSocket implements HeartBeatSender {
 	private static final long serialVersionUID = -4542553667467771646L;
@@ -89,7 +90,7 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 			}
 			result = request(tmp.encode().toBytes());
 			if (result == null) dataPool.add(0, tmp);
-			System.out.println(Protocol.fromBytes(result));
+			System.out.println(ProtocolUtils.fromBytes(result));
 			break;
 		} while (true);
 		return result;

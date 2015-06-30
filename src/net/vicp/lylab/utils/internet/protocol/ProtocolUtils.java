@@ -6,27 +6,28 @@ import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
+import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.Algorithm;
 import net.vicp.lylab.utils.ByteUtils;
 import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 
-public abstract class Protocol extends BaseObject {
+public class ProtocolUtils extends BaseObject {
 
 	private static AutoInitialize<Config> config = new AtomicStrongReference<Config>();
 	private static String protocolConfig;
 
 	@SuppressWarnings("unchecked")
-	public static Class<AbstractProtocol> pairToProtocol(byte[] head)
+	public static Class<Protocol> pairToProtocol(byte[] head)
 	{
 		String sHead = new String(head);
-		Class<AbstractProtocol> protocolClass = null;
+		Class<Protocol> protocolClass = null;
 		for(String key: getProtocolConfig().keySet())
 		{
 			if(sHead.startsWith(key))
 			{
 				try {
-					protocolClass = (Class<AbstractProtocol>) Class.forName(getProtocolConfig().getString(key));
+					protocolClass = (Class<Protocol>) Class.forName(getProtocolConfig().getString(key));
 					break;
 				} catch (Exception e) { }
 			}
@@ -34,9 +35,9 @@ public abstract class Protocol extends BaseObject {
 		return protocolClass;
 	}
 	
-	public static AbstractProtocol rawProtocol(Class<AbstractProtocol> protocolClass)
+	public static Protocol rawProtocol(Class<Protocol> protocolClass)
 	{
-		AbstractProtocol protocol = null;
+		Protocol protocol = null;
 		try {
 			protocol = protocolClass.newInstance();
 		} catch (Exception e) {
@@ -51,39 +52,19 @@ public abstract class Protocol extends BaseObject {
 		return config.get(Config.class, protocolConfig);
 	}
 
-	public static byte[] toBytes(AbstractProtocol protocol) {
-		int size = protocol.getHead().length + protocol.getSplitSignal().length
-				+ protocol.getDataLength().length + protocol.getSplitSignal().length
-				+ protocol.getClassName().length + protocol.getSplitSignal().length
-				+ protocol.getData().length;
-		byte[] bytes = new byte[size];
-		int i = 0;
-		for (int j = 0; j < protocol.getHead().length; j++)
-			bytes[i++] = protocol.getHead()[j];
-		for (int j = 0; j < protocol.getSplitSignal().length; j++)
-			bytes[i++] = protocol.getSplitSignal()[j];
-		for (int j = 0; j < protocol.getDataLength().length; j++)
-			bytes[i++] = protocol.getDataLength()[j];
-		for (int j = 0; j < protocol.getSplitSignal().length; j++)
-			bytes[i++] = protocol.getSplitSignal()[j];
-		for (int j = 0; j < protocol.getClassName().length; j++)
-			bytes[i++] = protocol.getClassName()[j];
-		for (int j = 0; j < protocol.getSplitSignal().length; j++)
-			bytes[i++] = protocol.getSplitSignal()[j];
-		for (int j = 0; j < protocol.getData().length; j++)
-			bytes[i++] = protocol.getData()[j];
-		return bytes;
+	public static byte[] toBytes(Protocol protocol) {
+		return protocol.toBytes();
 	}
 
-	public static boolean checkHead(AbstractProtocol protocol, byte[] bytes)
+	public static boolean checkHead(Protocol protocol, byte[] bytes)
 	{
 		if (!Arrays.equals(bytes, protocol.getHead())) return false;
 		return true;
 	}
 
-	public static AbstractProtocol fromBytes(byte[] bytes) {
+	public static Protocol fromBytes(byte[] bytes) {
 		if (bytes == null) return null;
-		AbstractProtocol protocol = rawProtocol(pairToProtocol(bytes));
+		Protocol protocol = rawProtocol(pairToProtocol(bytes));
 		byte[] temp = Arrays.copyOfRange(bytes, 0, protocol.getHead().length);
 		if (!checkHead(protocol, temp)) return null;
 		
@@ -102,13 +83,13 @@ public abstract class Protocol extends BaseObject {
 
 		byte[] data = Arrays.copyOfRange(bytes, classNameEndPosition + protocol.getSplitSignal().length, classNameEndPosition + protocol.getSplitSignal().length + dataLength);
 
-		return new AtomicStrongReference<AbstractProtocol>().get(pairToProtocol(protocol.getHead()), className, data);
-		//return new AbstractProtocol(className, data);
+		return new AtomicStrongReference<Protocol>().get(pairToProtocol(protocol.getHead()), className, data);
+		//return new Protocol(className, data);
 	}
 
 	public static int validate(byte[] bytes, int len) {
 		if (bytes == null) return -1;
-		AbstractProtocol protocol = rawProtocol(pairToProtocol(bytes));
+		Protocol protocol = rawProtocol(pairToProtocol(bytes));
 		byte[] temp = Arrays.copyOfRange(bytes, 0, protocol.getHead().length);
 		if (!checkHead(protocol, temp))
 			return -1;
@@ -132,7 +113,7 @@ public abstract class Protocol extends BaseObject {
 	}
 	
 	public static void setProtocolConfig(String protocolConfig) {
-		Protocol.protocolConfig = protocolConfig;
+		ProtocolUtils.protocolConfig = protocolConfig;
 	}
 	
 }

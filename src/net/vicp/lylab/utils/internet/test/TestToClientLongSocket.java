@@ -6,7 +6,7 @@ import java.util.Date;
 import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.ToClientLongSocket;
-import net.vicp.lylab.utils.internet.protocol.Protocol;
+import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
 public class TestToClientLongSocket extends ToClientLongSocket {
 	private static final long serialVersionUID = 5845683298739007258L;
@@ -17,7 +17,7 @@ public class TestToClientLongSocket extends ToClientLongSocket {
 
 	@Override
 	public byte[] response(byte[] request) {
-		TranscodeObject t = Protocol.fromBytes(request).decodeJsonDataToObject();
+		TranscodeObject t = (TranscodeObject) ProtocolUtils.fromBytes(request).toObject();
 		System.out.println(t);
 		return new MyData("来自服务器:" + "\tTime:" + new Date().getTime()).encode().toBytes();
 	}
