@@ -6,12 +6,13 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.vicp.lylab.core.BaseObject;
+import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 
-public final class Config extends BaseObject {
+public final class Config extends NonCloneableBaseObject {
 
 	public Config() {
 	}
@@ -24,11 +25,18 @@ public final class Config extends BaseObject {
 	private volatile String fileName;
 	private volatile Map<String, String> dataMap;
 
+	public Set<String> keySet()
+	{
+		if (dataMap == null)
+			throw new LYException("Raw config, please load or reload");
+		return dataMap.keySet();
+	}
+	
 	public String getProperty(String key) {
 		if (key == null)
 			throw new LYException("Key is null");
 		if (dataMap == null)
-			throw new LYException("Raw config, please reload");
+			throw new LYException("Raw config, please load or reload");
 		String tmp = dataMap.get(key);
 		if (tmp == null)
 			throw new LYException("Follow entry[" + key

@@ -5,10 +5,9 @@ import java.util.LinkedList;
 import net.vicp.lylab.core.CoreDef;
 
 /**
+ * 顺序化数据池
  * 
  * @author liyang
- *
- * 顺序化数据池
  *
  */
 public class SequencePool<T> extends IndexedPool<T> {

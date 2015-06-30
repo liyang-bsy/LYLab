@@ -8,10 +8,9 @@ import java.util.List;
 import net.vicp.lylab.core.CoreDef;
 
 /**
+ * 随机读写临时池
  * 
  * @author liyang
- *
- * 顺序化数据池
  *
  */
 public class RandomTemporaryPool<T> extends SequencePool<T> {

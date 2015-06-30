@@ -2,10 +2,10 @@ package net.vicp.lylab.utils.internet.test;
 
 import java.io.UnsupportedEncodingException;
 
-import net.vicp.lylab.utils.internet.LYSocket;
 import net.vicp.lylab.utils.internet.ClientLongSocket;
-import net.vicp.lylab.utils.internet.Protocol;
 import net.vicp.lylab.utils.internet.ClientSocket;
+import net.vicp.lylab.utils.internet.LYSocket;
+import net.vicp.lylab.utils.internet.protocol.Protocol;
 
 public class TestClient extends ClientSocket {
 	private static final long serialVersionUID = 4660521465950864362L;
@@ -13,6 +13,7 @@ public class TestClient extends ClientSocket {
 	@SuppressWarnings("resource")
 	public static void main(String[] arg) throws UnsupportedEncodingException, Exception
 	{
+		Protocol.setProtocolConfig(System.getProperty("user.dir") + "\\config\\protocol.txt");
 		boolean isL = true;
 		if(!isL)
 		{
@@ -24,7 +25,7 @@ public class TestClient extends ClientSocket {
 		else
 		{
 			System.out.println("long socket");
-			ClientLongSocket<MyData> socket = new ClientLongSocket<MyData>("127.0.0.1",52041);
+			ClientLongSocket socket = new ClientLongSocket("127.0.0.1", 52041, new LYHeartBeat());
 			socket.begin();
 			for(int i=0;i<4;i++)
 				socket.addToPool(new MyData("MyData:"+i));
@@ -35,7 +36,6 @@ public class TestClient extends ClientSocket {
 
 	public TestClient(String host, int port) {
 		super(host, port);
-		// TODO Auto-generated constructor stub
 	}
 
 }

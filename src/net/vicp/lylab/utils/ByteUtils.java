@@ -3,9 +3,10 @@
 import java.util.ArrayList;
 import java.util.List;
 
+import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 
-public final class ByteUtils {
+public final class ByteUtils extends NonCloneableBaseObject {
 	/**
 	 * 数字转byte
 	 * 

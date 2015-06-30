@@ -6,8 +6,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
@@ -28,7 +28,7 @@ import org.apache.commons.logging.LogFactory;
  * @version 2.0.0
  * 
  */
-public final class WatchDog extends BaseObject implements Recyclable {
+public final class WatchDog extends NonCloneableBaseObject implements Recyclable {
 	protected Log log = LogFactory.getLog(getClass());
 
 	private static AutoInitialize<WatchDog> instance = new AtomicStrongReference<WatchDog>();

@@ -3,7 +3,9 @@ package net.vicp.lylab.utils;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public final class MD5 {
+import net.vicp.lylab.core.NonCloneableBaseObject;
+
+public final class MD5 extends NonCloneableBaseObject {
 	public static String str;
 
 	public static String md5_32(String plainText) {

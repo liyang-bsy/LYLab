@@ -12,10 +12,9 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.Recyclable;
 
 /**
+ * 抽象的分离池
  * 
  * @author liyang
- *
- * 抽象的分离池
  *
  */
 public class RecyclePool<T> extends IndexedPool<T> {

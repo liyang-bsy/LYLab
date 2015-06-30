@@ -9,10 +9,9 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 
 /**
+ * 抽象池
  * 
  * @author liyang
- *
- * 抽象池
  *
  */
 public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {

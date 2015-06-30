@@ -10,10 +10,9 @@ import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
 /**
+ * 超时控制回收池
  * 
  * @author liyang
- *
- * 回收池
  *
  */
 public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable {

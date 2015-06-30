@@ -14,6 +14,7 @@ public class CoreDef {
 	public static final String VERSION = "1.0.0";
 
 	public static Object[] dock = new Object[16];
+	public static final String CHARSET = "UTF-8";
 
 	public static final int B = 1;
 	public static final int KB = 1024*B;

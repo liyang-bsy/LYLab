@@ -1,8 +1,7 @@
 package net.vicp.lylab.core;
 
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.internet.Protocol;
+import net.vicp.lylab.utils.internet.protocol.AbstractProtocol;
 import flexjson.JSONDeserializer;
 
 /**
@@ -16,21 +15,15 @@ import flexjson.JSONDeserializer;
  * 
  */
 
-public class TranscodeProtocol extends BaseObject {
-	public Protocol encode()
-	{
-		try {
-			return new Protocol(this.getClass(), Utils.toJson(this, exclude()).getBytes("UTF-8"));
-		} catch (Exception e) { }
-		return null;
-	}
+public abstract class TranscodeObject extends BaseObject {
+	public abstract AbstractProtocol encode();
 
 	public String[] exclude(String ... excludeRule)
 	{
 		return new String[] { };
 	}
 	
-	public static Object decode(Protocol protocol)
+	public static Object decode(AbstractProtocol protocol)
 	{
 		if(protocol == null)
 			throw new LYException("Parameter protocol is null");

@@ -14,9 +14,6 @@ import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.tq.Task;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 /**
  * Manager class to recycle target in watch list.<br>
  * Will recycle if a target reports true by isRecyclable().<br>
@@ -32,8 +29,6 @@ import org.apache.commons.logging.LogFactory;
 public final class TimeoutController extends Task {
 	private static final long serialVersionUID = -4494667245957319328L;
 
-	protected Log log = LogFactory.getLog(getClass());
-	
 	private static AtomicBoolean init = new AtomicBoolean(false);
 	private static AutoInitialize<TimeoutController> instance = new AtomicStrongReference<TimeoutController>();
 

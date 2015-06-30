@@ -19,9 +19,6 @@ import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.atomic.AtomicSoftReference;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 /**
  * Manager class to execute all task.<br>
  * Finish tasks within certain threads.<br>
@@ -37,7 +34,6 @@ import org.apache.commons.logging.LogFactory;
 public final class LYTaskQueue extends Task {
 	private static final long serialVersionUID = 4935143671023467585L;
 
-	protected static Log log = LogFactory.getLog(LYTaskQueue.class);
 	private static String permanentFileName = "lytaskqueue.bin";
 	private static AutoInitialize<LYTaskQueue> instance = new AtomicSoftReference<LYTaskQueue>();
 

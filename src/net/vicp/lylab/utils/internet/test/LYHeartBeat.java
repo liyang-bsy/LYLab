@@ -1,33 +1,12 @@
 package net.vicp.lylab.utils.internet.test;
 
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.protocol.AbstractProtocol;
 import net.vicp.lylab.utils.internet.protocol.LYLabProtocol;
 
-public class MyData extends TranscodeObject {
-	String value;
-
-	public MyData() { }
-	
-	public MyData(String value) {
-		this.value = value;
-	}
-	
-	public String getValue() {
-		return value;
-	}
-
-	public void setValue(String value) {
-		this.value = value;
-	}
-	
-	@Override
-	public String toString() {
-		return "value=" + value;
-	}
-
+public class LYHeartBeat extends HeartBeat {
 	@Override
 	public AbstractProtocol encode()
 	{
@@ -36,5 +15,5 @@ public class MyData extends TranscodeObject {
 		} catch (Exception e) { }
 		return null;
 	}
-
+	
 }

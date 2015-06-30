@@ -2,20 +2,24 @@ package net.vicp.lylab.utils.internet;
 
 import java.net.ServerSocket;
 
-import net.vicp.lylab.core.TranscodeProtocol;
+import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
+import net.vicp.lylab.utils.internet.protocol.Protocol;
 
-public class LongSocket<T> extends LYSocket implements HeartBeatSender {
+public class LongSocket extends LYSocket implements HeartBeatSender {
 	private static final long serialVersionUID = -4542553667467771646L;
-	protected SequenceTemporaryPool<T> dataPool = new SequenceTemporaryPool<T>();
+	protected SequenceTemporaryPool<TranscodeObject> dataPool = new SequenceTemporaryPool<TranscodeObject>();
+	protected HeartBeat heartBeat;
 
-	public LongSocket(ServerSocket serverSocket) {
+	public LongSocket(ServerSocket serverSocket, HeartBeat heartBeat) {
 		super(serverSocket);
+		this.heartBeat = heartBeat;
 	}
 
-	public LongSocket(String host, int port) {
+	public LongSocket(String host, int port, HeartBeat heartBeat) {
 		super(host, port);
+		this.heartBeat = heartBeat;
 	}
 
 	@Override
@@ -77,13 +81,13 @@ public class LongSocket<T> extends LYSocket implements HeartBeatSender {
 			throw new LYException("Do request is forbidden to a server socket");
 		byte[] result = null;
 		do {
-			T tmp = dataPool.accessOne();
+			TranscodeObject tmp = dataPool.accessOne();
 			if (tmp == null) {
 				waitCycle();
-				if(!sendHeartBeat(new HeartBeat())) return null;
+				if(!sendHeartBeat(heartBeat)) return null;
 				continue;
 			}
-			result = request(((TranscodeProtocol) tmp).encode().toBytes());
+			result = request(tmp.encode().toBytes());
 			if (result == null) dataPool.add(0, tmp);
 			System.out.println(Protocol.fromBytes(result));
 			break;
@@ -97,7 +101,7 @@ public class LongSocket<T> extends LYSocket implements HeartBeatSender {
 	 * @param data
 	 * @return ObjectId of data, null if add failed
 	 */
-	public Long addToPool(T data) {
+	public Long addToPool(TranscodeObject data) {
 		Long objId = dataPool.add(data);
 		if (objId != null) {
 			interrupt();

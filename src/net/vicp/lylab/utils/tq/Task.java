@@ -3,6 +3,9 @@ package net.vicp.lylab.utils.tq;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
@@ -46,6 +49,11 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 */
 	protected Date startTime;
 
+	/**
+	 * Now every task may use this to log something
+	 */
+	protected static Log log = LogFactory.getLog(Task.class);
+
 	private volatile AtomicInteger state = new AtomicInteger(BEGAN);
 
 	static public final int STOPPED = -3;
@@ -72,7 +80,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			exec();
 			aftermath();
 		} catch (Throwable e) {
-			System.err.print(this.toString() + "\ncreated an error:\t" + Utils.getStringFromException(e));
+			log.error(this.toString() + "\ncreated an error:\t" + Utils.getStringFromException(e));
 			state.compareAndSet(STARTED, FAILED);
 		} finally {
 			state.compareAndSet(STARTED, COMPLETED);

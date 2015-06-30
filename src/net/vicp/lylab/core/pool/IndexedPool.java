@@ -10,11 +10,10 @@ import java.util.ListIterator;
 import net.vicp.lylab.core.CoreDef;
 
 /**
+ * 线索化数据池
  * 
  * @author liyang
- *
- * 顺序化数据池
- *
+ * 
  */
 public class IndexedPool<T> extends AbstractPool<T> {
 	protected volatile Collection<Long> keyContainer;

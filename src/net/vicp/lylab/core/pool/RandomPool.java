@@ -5,10 +5,9 @@ import java.util.HashSet;
 import net.vicp.lylab.core.CoreDef;
 
 /**
+ * 随机读写数据池
  * 
  * @author liyang
- *
- * 顺序化数据池
  *
  */
 public class RandomPool<T> extends IndexedPool<T> {

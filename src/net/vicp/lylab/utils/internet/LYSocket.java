@@ -16,6 +16,7 @@ import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.utils.ByteUtils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
+import net.vicp.lylab.utils.internet.protocol.Protocol;
 import net.vicp.lylab.utils.tq.Task;
 
 public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmission {
