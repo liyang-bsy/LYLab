@@ -119,6 +119,22 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 		return objId;
 	}
 
+	/**
+	 * Add to pool by force, keep wait until added
+	 * 
+	 * @param data
+	 * @return ObjectId of data, it won't return until data was added
+	 */
+	public Long addToPool_Force(TranscodeObject data) {
+		Long objId = null;
+		while (((objId = dataPool.add(data)) == null))
+			waitCycle();
+		if (objId != null) {
+			interrupt();
+		}
+		return objId;
+	}
+
 	@Override
 	public boolean sendHeartBeat(HeartBeat heartBeat) {
 		try {

@@ -37,7 +37,8 @@ public class ProtocolUtils extends BaseObject {
 			if(sHead.startsWith(key))
 			{
 				try {
-					protocolClass = (Class<Protocol>) Class.forName(getProtocolConfig().getString(key));
+					String className = getProtocolConfig().getString(key);
+					protocolClass = (Class<Protocol>) Class.forName(className);
 					break;
 				} catch (Exception e) { }
 			}

@@ -3,15 +3,15 @@ package net.vicp.lylab.utils.tq;
 import java.io.Serializable;
 import java.util.Date;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Executor;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Extends Task and reference to TaskQueue(manage class).<br>
