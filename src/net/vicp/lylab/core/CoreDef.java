@@ -1,5 +1,7 @@
 package net.vicp.lylab.core;
 
+import net.vicp.lylab.utils.Config;
+
 /**
  * LYLab - powered by Young Lee's Lab.
  * <br><br>
@@ -13,7 +15,7 @@ package net.vicp.lylab.core;
 public class CoreDef {
 	public static final String VERSION = "1.0.0";
 
-	public static Object[] dock = new Object[16];
+	public static Config config;
 	public static final String CHARSET = "UTF-8";
 
 	public static final double DOUBLE = 1.0;
@@ -77,6 +79,9 @@ public class CoreDef {
 	public static final long DEFAULT_TASK_TTIMEOUT = TEN*MINUTE;		// 10 minutes
 	
 	public static final int DEFAULT_POOL_MAX_SIZE = FIVE*TEN;
+
+	public static final int DEFAULT_PERMANENT_MAX_SIZE = HUNDRED*THOUSAND;
+	public static final int DEFAULT_PERMANENT_TICK = SIX*TEN;
 	
 	public static final long ONE_TIME_TASK = ZERO;
 	

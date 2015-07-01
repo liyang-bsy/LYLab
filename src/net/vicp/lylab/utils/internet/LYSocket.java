@@ -13,7 +13,7 @@ import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.core.interfaces.callback.AfterEnd;
 import net.vicp.lylab.core.interfaces.callback.BeforeStart;
 import net.vicp.lylab.core.interfaces.recycle.Recyclable;
-import net.vicp.lylab.utils.ByteUtils;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.Task;
@@ -140,8 +140,8 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 				if (getLen == 0)
 					throw new LYException("Impossible");
 				totalRecv += getLen;
-				container.addAll(ByteUtils.moveBytesToContainer(rc));
-				int result = ProtocolUtils.validate(ByteUtils.copyBytesFromContainer(container),totalRecv);
+				container.addAll(Utils.moveBytesToContainer(rc));
+				int result = ProtocolUtils.validate(Utils.copyBytesFromContainer(container),totalRecv);
 				if (result == -1)
 					throw new LYException("Bad data package");
 				if (result == 0)
@@ -150,7 +150,7 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 					continue;
 			}
 		}
-		return ByteUtils.copyBytesFromContainer(container);
+		return Utils.copyBytesFromContainer(container);
 	}
 
 	@Override

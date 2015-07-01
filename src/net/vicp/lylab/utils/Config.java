@@ -14,9 +14,6 @@ import net.vicp.lylab.core.exception.LYException;
 
 public final class Config extends NonCloneableBaseObject {
 
-	public Config() {
-	}
-
 	public Config(String fileName) {
 		this.fileName = fileName;
 		load();

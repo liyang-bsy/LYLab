@@ -30,7 +30,7 @@ import net.vicp.lylab.utils.atomic.AtomicSoftReference;
  * @version 2.0.0
  * 
  */
-public final class LYTaskQueue extends Task {
+public final class LYTaskQueue extends Task {// implements LifeCycle {
 	private static final long serialVersionUID = 4935143671023467585L;
 
 	private static String permanentFileName = "lytaskqueue.bin";

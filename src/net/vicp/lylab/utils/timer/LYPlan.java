@@ -26,13 +26,13 @@ public final class LYPlan extends NonCloneableBaseObject implements LifeCycle {
 	private static AtomicStrongReference<LYPlan> instance = new AtomicStrongReference<LYPlan>();
 
 	@Override
-	public void begin() {
+	public void init() {
 		System.out.println("LYPlan - Initialization started");
 		getInstance().BeginSchedule();
 	}
 
 	@Override
-	public void end() {
+	public void terminate() {
 		for (TimerJob tj : getInstance().getJobs())
 			tj.cancel();
 		Scheduled.set(false);

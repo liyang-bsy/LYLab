@@ -5,7 +5,8 @@ import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.utils.ByteUtils;
+import net.vicp.lylab.core.interfaces.Transcode;
+import net.vicp.lylab.utils.Utils;
 import flexjson.JSONDeserializer;
 
 /**
@@ -58,18 +59,18 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 	public LYLabProtocol(byte[] info, byte[] data) {
 		this.info = info;
 		this.data = data;
-		this.length = ByteUtils.IntToBytes4(data.length);
+		this.length = Utils.IntToBytes4(data.length);
 	}
 
 	@Override
-	public Object toObject()
+	public Transcode toObject()
 	{
 		if(getInfo() == null)
 			throw new LYException("Inner info is null");
 		if(getData() == null)
 			throw new LYException("Inner data is null");
 		try {
-			return new JSONDeserializer<Object>().use(null, Class.forName(new String(getInfo()))).deserialize(new String(getData(), CoreDef.CHARSET));
+			return new JSONDeserializer<Transcode>().use(null, Class.forName(new String(getInfo()))).deserialize(new String(getData(), CoreDef.CHARSET));
 		} catch (Exception e) {
 			throw new LYException("Failed to convert data into specific class:" + new String(getInfo()) + ". Maybe the data isn't json?", e);
 		}
@@ -104,7 +105,6 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 	public String toString() {
 		try {
 			String description = "{info=" + new String(getInfo()) + ",length="
-					+ ByteUtils.Bytes4ToInt(length) + ",data="
 					+ new String(getData(), CoreDef.CHARSET) + "}";
 			return description;
 		} catch (Exception e) {
