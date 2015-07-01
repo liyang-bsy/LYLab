@@ -49,6 +49,8 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 		if(serverSocket == null) throw new LYException("Parameter serverSocket is null");
 		try {
 			this.socket = serverSocket.accept();
+			this.host = socket.getInetAddress().getHostAddress();
+			this.port = socket.getPort();
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
 			isServer = true;

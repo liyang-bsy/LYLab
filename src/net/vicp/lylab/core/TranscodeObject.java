@@ -3,6 +3,8 @@ package net.vicp.lylab.core;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Transcode;
+import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
 import flexjson.JSONDeserializer;
 
 /**
@@ -16,8 +18,22 @@ import flexjson.JSONDeserializer;
  * 
  */
 public abstract class TranscodeObject extends CloneableBaseObject implements Transcode {
-	public abstract Protocol encode();
-	public abstract String[] exclude(String ... excludeRule);
+	@Override
+	public Protocol encode()
+	{
+		try {
+			return new LYLabProtocol(this.getClass(), Utils.toJson(this, exclude()).getBytes(CoreDef.CHARSET));
+		} catch (Exception e) { }
+		return null;
+	}
+
+	@Override
+	public String[] exclude(String ... excludeRule)
+	{
+		return new String[] { };
+	}
+
+	@Override
 	public Object decode(Protocol protocol)
 	{
 		if(protocol == null)
