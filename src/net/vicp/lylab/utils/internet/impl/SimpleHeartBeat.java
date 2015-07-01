@@ -1,12 +1,20 @@
-package net.vicp.lylab.utils.internet.test;
+package net.vicp.lylab.utils.internet.impl;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.HeartBeat;
-import net.vicp.lylab.utils.internet.protocol.LYLabProtocol;
 
-public class LYHeartBeat extends HeartBeat {
+/**
+ * A very simple heart beat structure.
+ * <br><br>
+ * Release Under GNU Lesser General Public License (LGPL).
+ * 
+ * @author Young
+ * @since 2015.07.01
+ * @version 1.0.0
+ */
+public class SimpleHeartBeat extends HeartBeat {
 	@Override
 	public Protocol encode()
 	{

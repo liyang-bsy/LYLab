@@ -12,6 +12,16 @@ import net.vicp.lylab.utils.ByteUtils;
 import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 
+/**
+ * Protocol Utils, offer a serial essential utilities function about
+ * {@link net.vicp.lylab.core.interfaces.Protocol}.
+ * <br><br>
+ * Release Under GNU Lesser General Public License (LGPL).
+ * 
+ * @author Young
+ * @since 2015.07.01
+ * @version 1.0.0
+ */
 public class ProtocolUtils extends BaseObject {
 
 	private static AutoInitialize<Config> config = new AtomicStrongReference<Config>();

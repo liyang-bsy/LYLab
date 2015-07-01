@@ -10,20 +10,30 @@ import java.util.List;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Transmission;
+import net.vicp.lylab.core.interfaces.callback.AfterEnd;
+import net.vicp.lylab.core.interfaces.callback.BeforeStart;
 import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 import net.vicp.lylab.utils.ByteUtils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.Task;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+/**
+ * A raw socket can be used for communicating with server, you need close socket after using it.
+ * <br><br>
+ * Release Under GNU Lesser General Public License (LGPL).
+ * 
+ * @author Young
+ * @since 2015.07.01
+ * @version 1.0.0
+ */
 public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmission {
 	private static final long serialVersionUID = 883892527805494627L;
-	protected static Log log = LogFactory.getLog(LYSocket.class);
 	
 	protected Socket socket;
+	
+	protected BeforeStart beforeStart = null;
+	protected AfterEnd afterEnd = null;
 	
 	protected InputStream in;
 	protected OutputStream out;
@@ -95,6 +105,8 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 	{
 		if(isServer()) return;
 		try {
+			if(beforeStart != null)
+				beforeStart.beforeStart();
 			socket = new Socket(host, port);
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
@@ -152,6 +164,8 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 			in = null;
 			out = null;
 		}
+		if(afterEnd != null)
+			afterEnd.afterEnd();
 	}
 
 	public boolean isClosed() {
@@ -241,6 +255,22 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 
 	public int getSocketRetry() {
 		return socketRetry.get();
+	}
+
+	public BeforeStart getBeforeStart() {
+		return beforeStart;
+	}
+
+	public void setBeforeStart(BeforeStart beforeStart) {
+		this.beforeStart = beforeStart;
+	}
+
+	public AfterEnd getAfterEnd() {
+		return afterEnd;
+	}
+
+	public void setAfterEnd(AfterEnd afterEnd) {
+		this.afterEnd = afterEnd;
 	}
 
 }

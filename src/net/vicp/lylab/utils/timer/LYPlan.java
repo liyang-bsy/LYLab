@@ -1,46 +1,46 @@
 package net.vicp.lylab.utils.timer;
 
 import java.util.Timer;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
-
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
+import net.vicp.lylab.core.interfaces.LifeCycle;
+import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 
 /**
- * 	LYPlan is a tiny schedule framework, could be apply to multitude purpose.<br>
- * 
- * 	<br>Release Under GNU Lesser General Public License (LGPL).
+ * 	LYPlan is a tiny schedule framework, could be apply to multitude purpose.
+ *  <br><br>
+ * 	Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee
  * @since 2014.5.21
  * @version 1.0.0
  * 
  */
-public class LYPlan extends NonCloneableBaseObject implements ApplicationListener {
+public final class LYPlan extends NonCloneableBaseObject implements LifeCycle {
 
 	private TimerJob[] jobs = null;
 	
-	private boolean Scheduled = false;
+	private AtomicBoolean Scheduled = new AtomicBoolean(false);
 	
-	private static LYPlan instance = null;
+	private static AtomicStrongReference<LYPlan> instance = new AtomicStrongReference<LYPlan>();
 
 	@Override
-	public void onApplicationEvent(ApplicationEvent arg) {
-		if(instance == null)
-		{
-			System.out.println("LYPlan - Initialization started");
-			
-			instance = this;
-			instance.BeginSchedule();
-		}
+	public void begin() {
+		System.out.println("LYPlan - Initialization started");
+		getInstance().BeginSchedule();
+	}
+
+	@Override
+	public void end() {
+		for (TimerJob tj : getInstance().getJobs())
+			tj.cancel();
+		Scheduled.set(false);
 	}
 	
 	public void BeginSchedule() {
-		if (Scheduled)
+		if (!Scheduled.compareAndSet(false, true))
 			return;
-		else
-			Scheduled = true;
 		Timer timer = new Timer();
 		for(TimerJob bj:this.getJobs())
 		{
@@ -84,11 +84,7 @@ public class LYPlan extends NonCloneableBaseObject implements ApplicationListene
 	}
 
 	public static LYPlan getInstance() {
-		return instance;
+		return instance.get(LYPlan.class);
 	}
 
-	public static void setInstance(LYPlan instance) {
-		LYPlan.instance = instance;
-	}
-	
 }

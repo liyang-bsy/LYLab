@@ -1,13 +1,23 @@
-package net.vicp.lylab.utils.internet.protocol;
+package net.vicp.lylab.utils.internet.impl;
 
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.ByteUtils;
 import flexjson.JSONDeserializer;
 
-public class LYLabProtocol implements Protocol {
+/**
+ * A self-defined protocol easy transfer Java Objects through socket.
+ * <br><br>
+ * Release Under GNU Lesser General Public License (LGPL).
+ * 
+ * @author Young
+ * @since 2015.07.01
+ * @version 1.0.0
+ */
+public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 
 	protected final byte[] head = "LYLab".getBytes();
 	protected final byte[] splitSignal = new byte[] { -15 };
@@ -26,6 +36,9 @@ public class LYLabProtocol implements Protocol {
 		return splitSignal;
 	}
 	
+	/**
+	 * Create a raw {@link net.vicp.lylab.core.interfaces.Protocol} object
+	 */
 	public LYLabProtocol() {
 		this(new byte[] { }, new byte[] { });
 	}

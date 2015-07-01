@@ -3,7 +3,7 @@ package net.vicp.lylab.utils.timer;
 import java.util.Date;
 
 /**
- * 	Extends InstantOneTimeJob and reference to Plan(manage class).<br>
+ * 	Extends InitializeJob and reference to Plan(manage class).<br>
  * 	Override run() to satisfy your needs.<br>
  * 
  * 	<br>Release Under GNU Lesser General Public License (LGPL).
@@ -13,7 +13,7 @@ import java.util.Date;
  * @version 1.0.0
  * 
  */
-public abstract class InstantOneTimeJob extends InstantJob {
+public abstract class InitializeJob extends InstantJob {
 
 	/**
 	 * As an instant job, return 'now' to tell manager start right now.

@@ -16,15 +16,13 @@ import net.vicp.lylab.utils.tq.Task;
 
 /**
  * Manager class to recycle target in watch list.<br>
- * Will recycle if a target reports true by isRecyclable().<br>
- * 
- * <br>
+ * Will recycle if a target reports true by isRecyclable().
+ * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee
  * @since 2015.06.26
  * @version 2.0.0
- * 
  */
 public final class TimeoutController extends Task {
 	private static final long serialVersionUID = -4494667245957319328L;
@@ -59,7 +57,7 @@ public final class TimeoutController extends Task {
 			while (!getThread().isInterrupted()) {
 				if (isStopped())
 					break;
-				Thread.sleep(CoreDef.WAITING_LONG);
+				Thread.sleep(CoreDef.TEN * CoreDef.MINUTE);
 				getInstance().timeoutControl();
 			}
 		} catch (InterruptedException e) {

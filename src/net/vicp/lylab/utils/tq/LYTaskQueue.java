@@ -21,9 +21,8 @@ import net.vicp.lylab.utils.atomic.AtomicSoftReference;
 
 /**
  * Manager class to execute all task.<br>
- * Finish tasks within certain threads.<br>
- * 
- * <br>
+ * Finish tasks within certain threads.
+ * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee

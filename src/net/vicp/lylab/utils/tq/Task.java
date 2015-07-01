@@ -15,9 +15,8 @@ import net.vicp.lylab.utils.atomic.AtomicInteger;
 
 /**
  * Extends Task and reference to TaskQueue(manage class).<br>
- * Override exec() to satisfy your needs.<br>
- * 
- * <br>
+ * Override exec() to satisfy your needs.
+ * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee

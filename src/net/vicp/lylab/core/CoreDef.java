@@ -16,6 +16,8 @@ public class CoreDef {
 	public static Object[] dock = new Object[16];
 	public static final String CHARSET = "UTF-8";
 
+	public static final double DOUBLE = 1.0;
+	
 	public static final int B = 1;
 	public static final int KB = 1024*B;
 	public static final int MB = 1024*KB;
@@ -80,5 +82,9 @@ public class CoreDef {
 	
 	public static final int SOCKET_MAX_BUFFER = TWO * KB;
 	public static final int DEFAULT_SOCKET_TTIMEOUT = (int) (TWENTY*SECOND);
+
+	public static final long DEFAULT_LYCACHE_EXPIRE_TIME = FIFTEEN*TWO*MINUTE;
+	public static final long DEFAULT_LYCACHE_MEMORY_LIMITATION = ONE * GB;
+	public static final double DEFAULT_LYCACHE_THRESHOLD = DOUBLE * EIGHT / TEN;
 	
 }

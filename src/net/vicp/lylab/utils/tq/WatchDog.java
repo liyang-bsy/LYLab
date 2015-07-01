@@ -18,9 +18,8 @@ import org.apache.commons.logging.LogFactory;
 
 /**
  * Manager class to recycle tasks in thread pool(Which should be in running).<br>
- * Kill & Restart tasks within certain timeout.<br>
- * 
- * <br>
+ * Kill & Restart tasks within certain timeout.
+ * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee

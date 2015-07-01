@@ -7,11 +7,14 @@ import net.vicp.lylab.core.interfaces.recycle.Refiller;
 import net.vicp.lylab.core.pool.TimeoutRecyclePool;
 
 /**
+ * A connection pool maintenance specific connections.
+ * You can access one or many by your needs, do not forget recycle socket after close.
+ * <br><br>
+ * Release Under GNU Lesser General Public License (LGPL).
  * 
- * @author liyang
- *
- * 抽象的回收池
- *
+ * @author Young
+ * @since 2015.07.01
+ * @version 1.0.0
  */
 public class ConnectionPool<T> extends TimeoutRecyclePool<T> {
 	protected String host;

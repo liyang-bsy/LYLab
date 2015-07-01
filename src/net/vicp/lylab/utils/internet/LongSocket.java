@@ -7,6 +7,15 @@ import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.HeartBeatSender;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 
+/**
+ * Long socket can communicate with server multiple times without close socket.
+ * <br><br>
+ * Release Under GNU Lesser General Public License (LGPL).
+ * 
+ * @author Young
+ * @since 2015.07.01
+ * @version 1.0.0
+ */
 public class LongSocket extends LYSocket implements HeartBeatSender {
 	private static final long serialVersionUID = -4542553667467771646L;
 	protected SequenceTemporaryPool<TranscodeObject> dataPool = new SequenceTemporaryPool<TranscodeObject>();

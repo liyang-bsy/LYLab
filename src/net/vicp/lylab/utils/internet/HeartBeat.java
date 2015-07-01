@@ -2,6 +2,15 @@ package net.vicp.lylab.utils.internet;
 
 import net.vicp.lylab.core.TranscodeObject;
 
+/**
+ * Heart beat for long socket, to keep alive.
+ * <br><br>
+ * Release Under GNU Lesser General Public License (LGPL).
+ * 
+ * @author Young
+ * @since 2015.07.01
+ * @version 1.0.0
+ */
 public abstract class HeartBeat extends TranscodeObject {
 	@Override
 	public String toString() {
