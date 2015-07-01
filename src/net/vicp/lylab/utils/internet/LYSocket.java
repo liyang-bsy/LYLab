@@ -9,8 +9,8 @@ import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
+import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 import net.vicp.lylab.utils.ByteUtils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
@@ -48,7 +48,7 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 		}
 	}
 	
-	public LYSocket(String host, int port) {
+	public LYSocket(String host, Integer port) {
 		this.host = host;
 		this.port = port;
 		isServer = false;

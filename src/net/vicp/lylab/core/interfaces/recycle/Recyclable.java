@@ -1,9 +1,9 @@
-package net.vicp.lylab.core.interfaces;
+package net.vicp.lylab.core.interfaces.recycle;
 
 /**
  * General Recyclable interface for all classes.<br>
  * Implement this means it could be recycled by<br>
- * {@link net.vicp.lylab.utils.controller.TimeoutController}
+ * {@link net.vicp.lylab.utils.controller.TimeoutController}.
  * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 

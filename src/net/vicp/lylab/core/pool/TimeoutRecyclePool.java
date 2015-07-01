@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.Recyclable;
+import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
 /**

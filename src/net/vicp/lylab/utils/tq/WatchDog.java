@@ -9,7 +9,7 @@ import java.util.List;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
-import net.vicp.lylab.core.interfaces.Recyclable;
+import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.controller.TimeoutController;
 

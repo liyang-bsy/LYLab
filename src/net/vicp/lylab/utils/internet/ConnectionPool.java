@@ -1,11 +1,10 @@
 package net.vicp.lylab.utils.internet;
 
 import java.util.Date;
-import java.util.Map;
 
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.recycle.Refiller;
 import net.vicp.lylab.core.pool.TimeoutRecyclePool;
-import net.vicp.lylab.utils.atomic.AtomicWeakReference;
 
 /**
  * 
@@ -14,25 +13,27 @@ import net.vicp.lylab.utils.atomic.AtomicWeakReference;
  * 抽象的回收池
  *
  */
-public class ConnectionPool extends TimeoutRecyclePool<AutoCloseable> {
-	protected Map<Long, Date> startTime;
-	protected Long timeout;
-	
+public class ConnectionPool<T> extends TimeoutRecyclePool<T> {
 	protected String host;
 	protected Integer port;
+	protected Refiller<T> user;
 
-	public ConnectionPool(String host, Integer port)
+	public ConnectionPool(Refiller<T> user, String host, Integer port)
 	{
 		super();
 		this.host = host;
 		this.port = port;
+		this.user = user;
+		recover();
 	}
 	
-	public ConnectionPool(String host, Integer port, long timeout, int maxSize)
+	public ConnectionPool(Refiller<T> user, String host, Integer port, long timeout, int maxSize)
 	{
 		super(timeout, maxSize);
 		this.host = host;
 		this.port = port;
+		this.user = user;
+		recover();
 	}
 	
 	@Override
@@ -41,13 +42,12 @@ public class ConnectionPool extends TimeoutRecyclePool<AutoCloseable> {
 			Date start = startTime.get(id);
 			if (new Date().getTime() - start.getTime() > timeout) {
 				try {
-					AutoCloseable tmp = busyContainer.get(id);
-					if (tmp != null) {
-						tmp.close();
-						busyContainer.remove(id);
-						keyContainer.remove(id);
-						startTime.remove(id);
-					}
+					T tmp = busyContainer.get(id);
+					if(tmp instanceof AutoCloseable)
+						((AutoCloseable) tmp).close();
+					busyContainer.remove(id);
+					keyContainer.remove(id);
+					startTime.remove(id);
 				} catch (Exception e) {
 					throw new LYException("Recycle failed", e);
 				}
@@ -62,15 +62,9 @@ public class ConnectionPool extends TimeoutRecyclePool<AutoCloseable> {
 		while (maxSize > size()) {
 			int count = maxSize - size();
 			for (int i = 0; i < count; i++) {
-				add(new AtomicWeakReference<LYSocket>().get(LYSocket.class, host, port));
+				add((T) user.refill());
 			}
 		}
-	}
-
-	@Override
-	public boolean isRecyclable() {
-		safeCheck();
-		return startTime.size() != 0;
 	}
 
 }

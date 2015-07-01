@@ -8,7 +8,7 @@ import java.util.List;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
-import net.vicp.lylab.core.interfaces.Recyclable;
+import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
@@ -37,7 +37,7 @@ public final class TimeoutController extends Task {
 	/**
 	 * Initialize procedure
 	 */
-	public static void init() {
+	public TimeoutController() {
 		if (init.compareAndSet(false, true))
 			getInstance().begin("TimeoutController");
 	}

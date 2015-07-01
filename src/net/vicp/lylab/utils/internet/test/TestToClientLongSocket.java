@@ -3,7 +3,6 @@ package net.vicp.lylab.utils.internet.test;
 import java.net.ServerSocket;
 import java.util.Date;
 
-import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.ToClientLongSocket;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
@@ -17,8 +16,7 @@ public class TestToClientLongSocket extends ToClientLongSocket {
 
 	@Override
 	public byte[] response(byte[] request) {
-		TranscodeObject t = (TranscodeObject) ProtocolUtils.fromBytes(request).toObject();
-		System.out.println(t);
+		ProtocolUtils.fromBytes(request).toObject();
 		return new MyData("来自服务器:" + "\tTime:" + new Date().getTime()).encode().toBytes();
 	}
 

@@ -1,8 +1,8 @@
 package net.vicp.lylab.utils.atomic;
 
-import net.vicp.lylab.core.CloneableBaseObject;
+import net.vicp.lylab.core.NonCloneableBaseObject;
 
-public abstract class AtomicObject<T> extends CloneableBaseObject {
+public abstract class AtomicObject<T> extends NonCloneableBaseObject {
 	protected volatile T value;
 
 	public AtomicObject(T initValue) {
