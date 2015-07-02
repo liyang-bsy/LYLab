@@ -39,10 +39,10 @@ public final class Config extends NonCloneableBaseObject {
 		if (key == null)
 			throw new LYException("Key is null");
 		Object tmp = dataMap.get(key);
-		if (tmp == null)
-			throw new LYException("Follow entry[" + key
-					+ "] not found, check your config file[" + fileName + "]");
-		return dataMap.get(key);
+//		if (tmp == null)
+//			throw new LYException("Follow entry[" + key
+//					+ "] not found, check your config file[" + fileName + "]");
+		return tmp;
 	}
 
 	public String getString(String key) {
