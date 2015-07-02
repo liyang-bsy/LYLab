@@ -32,16 +32,12 @@ public final class Config extends NonCloneableBaseObject {
 
 	public Set<String> keySet()
 	{
-		if (dataMap == null)
-			throw new LYException("Raw config, please load or reload");
 		return dataMap.keySet();
 	}
 	
 	public Object getProperty(String key) {
 		if (key == null)
 			throw new LYException("Key is null");
-		if (dataMap == null)
-			throw new LYException("Raw config, please load or reload");
 		Object tmp = dataMap.get(key);
 		if (tmp == null)
 			throw new LYException("Follow entry[" + key

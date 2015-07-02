@@ -78,8 +78,8 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			setStartTime(new Date());
 			exec();
 			aftermath();
-		} catch (Throwable e) {
-			log.error(this.toString() + "\ncreated an error:\t" + Utils.getStringFromException(e));
+		} catch (Throwable t) {
+			log.error(this.toString() + "\ncreated an error:\t" + Utils.getStringFromThrowable(t));
 			state.compareAndSet(STARTED, FAILED);
 		} finally {
 			state.compareAndSet(STARTED, COMPLETED);

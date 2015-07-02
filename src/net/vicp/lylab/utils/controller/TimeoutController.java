@@ -79,8 +79,8 @@ public final class TimeoutController extends Task {
 			}
 			try {
 				if (rec.isRecyclable()) rec.recycle();
-			} catch (Throwable e) {
-				log.error(Utils.getStringFromException(e));
+			} catch (Throwable t) {
+				log.error(Utils.getStringFromThrowable(t));
 			}
 		}
 	}

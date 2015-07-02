@@ -47,8 +47,8 @@ public final class TimerTimeoutController extends InstantJob {
 			}
 			try {
 				if (rec.isRecyclable()) rec.recycle();
-			} catch (Throwable e) {
-				log.error(Utils.getStringFromException(e));
+			} catch (Throwable t) {
+				log.error(Utils.getStringFromThrowable(t));
 			}
 		}
 	}

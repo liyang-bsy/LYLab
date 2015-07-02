@@ -170,15 +170,35 @@ public class Utils extends NonCloneableBaseObject {
 	}
 
 	/**
+	 * 获取异常的字符串内容
+	 * @param t
+	 * @return
+	 */
+	public static String getStringFromException(Exception e) {
+		return getStringFromThrowable(e);
+	}
+
+
+	/**
+	 * 获取错误的字符串内容
+	 * @param t
+	 * @return
+	 */
+	public static String getStringFromError(Error e) {
+		return getStringFromThrowable(e);
+	}
+
+
+	/**
 	 * 获取异常/错误的字符串内容
 	 * @param t
 	 * @return
 	 */
-	public static String getStringFromException(Throwable e) {
+	public static String getStringFromThrowable(Throwable t) {
 		try {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
-			e.printStackTrace(pw);
+			t.printStackTrace(pw);
 			return "\r\n" + sw.toString() + "\r\n";
 		} catch (Exception ex) {
 			return "bad getErrorInfoFromException";

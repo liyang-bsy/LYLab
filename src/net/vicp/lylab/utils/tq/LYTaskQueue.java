@@ -106,9 +106,9 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 					synchronized (lock) {
 						lock.wait(CoreDef.WAITING_SHORT);
 					}
-				} catch (Throwable e) {
+				} catch (Throwable t) {
 					log.error("Exception in LYTaskQueue#exec wait():\n"
-							+ Utils.getStringFromException(e));
+							+ Utils.getStringFromThrowable(t));
 				}
 			}
 		} catch (Throwable e) {
