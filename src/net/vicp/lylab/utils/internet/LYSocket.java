@@ -197,24 +197,6 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 			throw new LYException("Recycle connection failed");
 		}
 	}
-	
-	protected void waitCycle()
-	{
-		synchronized (lock) {
-			try {
-				lock.wait(CoreDef.WAITING_LONG);
-			} catch (Exception e) {
-				throw new LYException("Waiting Interrupted");
-			};
-		}
-	}
-	
-	protected void interrupt()
-	{
-		synchronized (lock) {
-			lock.notifyAll();
-		}
-	}
 
 	public void setSoTimeout(int timeout)
 	{

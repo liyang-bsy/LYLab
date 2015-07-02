@@ -2,6 +2,7 @@ package net.vicp.lylab.utils.internet;
 
 import java.net.ServerSocket;
 
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.HeartBeatSender;
@@ -93,11 +94,11 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 		do {
 			TranscodeObject tmp = dataPool.accessOne();
 			if (tmp == null) {
-				waitCycle();
+				await(CoreDef.WAITING_LONG);
 				if(!sendHeartBeat(heartBeat)) return null;
 				continue;
 			}
-			interrupt();
+			signal();
 			result = request(tmp.encode().toBytes());
 			if (result == null)
 				dataPool.add(0, tmp);
@@ -116,7 +117,7 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 	public Long addToPool(TranscodeObject data) {
 		Long objId = dataPool.add(data);
 		if (objId != null) {
-			interrupt();
+			signal();
 		}
 		return objId;
 	}
@@ -130,9 +131,9 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 	public Long addToPool_Force(TranscodeObject data) {
 		Long objId = null;
 		while (((objId = dataPool.add(data)) == null))
-			waitCycle();
+			await(CoreDef.WAITING_LONG);
 		if (objId != null) {
-			interrupt();
+			signal();
 		}
 		return objId;
 	}
