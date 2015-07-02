@@ -98,7 +98,7 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 				if(!sendHeartBeat(heartBeat)) return null;
 				continue;
 			}
-			signal();
+			signalAll();
 			result = request(tmp.encode().toBytes());
 			if (result == null)
 				dataPool.add(0, tmp);
@@ -117,7 +117,7 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 	public Long addToPool(TranscodeObject data) {
 		Long objId = dataPool.add(data);
 		if (objId != null) {
-			signal();
+			signalAll();
 		}
 		return objId;
 	}
@@ -133,7 +133,7 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 		while (((objId = dataPool.add(data)) == null))
 			await(CoreDef.WAITING_LONG);
 		if (objId != null) {
-			signal();
+			signalAll();
 		}
 		return objId;
 	}

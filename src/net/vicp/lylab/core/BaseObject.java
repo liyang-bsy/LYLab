@@ -43,6 +43,13 @@ public class BaseObject {
 	protected void signal()
 	{
 		synchronized (lock) {
+			lock.notify();
+		}
+	}
+	
+	protected void signalAll()
+	{
+		synchronized (lock) {
 			lock.notifyAll();
 		}
 	}
