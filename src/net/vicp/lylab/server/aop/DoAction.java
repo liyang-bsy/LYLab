@@ -59,8 +59,7 @@ public class DoAction extends ToClientLongSocket {
 				}
 				// get action related to key
 				try {
-					action.get((Class<BaseAction>) Class.forName(getConfig()
-							.getProperty(key + "Action")));
+					action.get((Class<BaseAction>) Class.forName(getConfig().getString(key + "Action")));
 				} catch (Exception e) { }
 				if (action.get() == null) {
 					response.setCode(0x00004);

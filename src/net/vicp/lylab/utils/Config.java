@@ -16,11 +16,11 @@ public final class Config extends NonCloneableBaseObject {
 
 	public Config(String fileName) {
 		this.fileName = fileName;
-		load();
+		reload();
 	}
 
 	private volatile String fileName;
-	private volatile Map<String, String> dataMap;
+	private volatile Map<String, Object> dataMap;
 
 	public Set<String> keySet()
 	{
@@ -29,26 +29,26 @@ public final class Config extends NonCloneableBaseObject {
 		return dataMap.keySet();
 	}
 	
-	public String getProperty(String key) {
+	public Object getProperty(String key) {
 		if (key == null)
 			throw new LYException("Key is null");
 		if (dataMap == null)
 			throw new LYException("Raw config, please load or reload");
-		String tmp = dataMap.get(key);
+		Object tmp = dataMap.get(key);
 		if (tmp == null)
 			throw new LYException("Follow entry[" + key
-					+ "] not such, check your config file[" + fileName + "]");
+					+ "] not found, check your config file[" + fileName + "]");
 		return dataMap.get(key);
 	}
 
 	public String getString(String key) {
-		return getProperty(key);
+		return getProperty(key).toString();
 	}
 
 	public Integer getInteger(String key) {
-		String value = getProperty(key);
+		Object value = getProperty(key);
 		try {
-			return Integer.valueOf(value);
+			return (Integer) value;
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed");
@@ -56,9 +56,9 @@ public final class Config extends NonCloneableBaseObject {
 	}
 
 	public Double getDouble(String key) {
-		String value = getProperty(key);
+		Object value = getProperty(key);
 		try {
-			return Double.valueOf(value);
+			return (Double) value;
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed");
@@ -66,9 +66,9 @@ public final class Config extends NonCloneableBaseObject {
 	}
 
 	public Boolean getBoolean(String key) {
-		String value = getProperty(key);
+		Object value = getProperty(key);
 		try {
-			return Boolean.valueOf(value);
+			return (Boolean) value;
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed");
@@ -76,18 +76,27 @@ public final class Config extends NonCloneableBaseObject {
 	}
 
 	public Long getLong(String key) {
-		String value = getProperty(key);
+		Object value = getProperty(key);
 		try {
-			return Long.valueOf(value);
+			return (Long) value;
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed");
 		}
 	}
 
-	public synchronized void load() {
-		if (dataMap != null || fileName == null)
+	public Config getConfig(String key) {
+		try {
+			return (Config) getProperty(key);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] into Config");
+		}
+	}
+
+	public synchronized void reload() {
+		if (fileName == null)
 			return;
+		int line = 0;
 		File file = new File(fileName);
 		Properties p = new Properties();
 		try {
@@ -96,14 +105,35 @@ public final class Config extends NonCloneableBaseObject {
 			InputStream inputStream = new FileInputStream(file);
 			p.load(inputStream);
 		} catch (Exception e) {
-			throw new LYException("Failed to load file with below path:\n" + fileName, e);
+			throw new LYException("Failed to load config file with below path:\n" + fileName, e);
 		}
-		Map<String, String> tmp = new ConcurrentHashMap<String, String>();
+		Map<String, Object> tmp = new ConcurrentHashMap<String, Object>();
 		for (String propertyName : p.stringPropertyNames()) {
-			propertyName = propertyName.trim();
-			if (propertyName.startsWith("#"))
-				continue;
-			tmp.put(propertyName, p.getProperty(propertyName).trim());
+			try {
+				propertyName = propertyName.trim();
+				if (propertyName.equals(""))
+					continue;
+				if (propertyName.startsWith("#"))
+					continue;
+				String propertyValue = p.getProperty(propertyName).trim();
+				if (propertyName.startsWith("$")) {
+					String propertyRealName = propertyName.substring(1);
+					Config config = null;
+					if(propertyValue.contains(File.separator))
+						config = new Config(propertyValue);
+					else
+					{
+						int index = fileName.lastIndexOf(File.separator);
+						String realFileName = fileName.substring(0, index + 1) + propertyValue;
+						config = new Config(realFileName);
+					}
+					tmp.put(propertyRealName, config);
+				} else
+					tmp.put(propertyName, propertyValue);
+			} catch (Exception e) {
+				throw new LYException("Failed to load config file at line "
+						+ line, e);
+			}
 		}
 		dataMap = tmp;
 		tmp = null;
