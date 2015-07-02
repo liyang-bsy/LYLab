@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
@@ -14,8 +15,15 @@ import net.vicp.lylab.core.exception.LYException;
 
 public final class Config extends NonCloneableBaseObject {
 
+	Stack<String> fileNameStack;
+	
 	public Config(String fileName) {
+		this(fileName, new Stack<String>());
+	}
+
+	public Config(String fileName, Stack<String> fileNameStack) {
 		this.fileName = fileName;
+		this.fileNameStack = fileNameStack;
 		reload();
 	}
 
@@ -46,9 +54,9 @@ public final class Config extends NonCloneableBaseObject {
 	}
 
 	public Integer getInteger(String key) {
-		Object value = getProperty(key);
+		String value = getString(key);
 		try {
-			return (Integer) value;
+			return Integer.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed");
@@ -56,9 +64,9 @@ public final class Config extends NonCloneableBaseObject {
 	}
 
 	public Double getDouble(String key) {
-		Object value = getProperty(key);
+		String value = getString(key);
 		try {
-			return (Double) value;
+			return Double.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed");
@@ -66,9 +74,9 @@ public final class Config extends NonCloneableBaseObject {
 	}
 
 	public Boolean getBoolean(String key) {
-		Object value = getProperty(key);
+		String value = getString(key);
 		try {
-			return (Boolean) value;
+			return Boolean.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed");
@@ -76,9 +84,9 @@ public final class Config extends NonCloneableBaseObject {
 	}
 
 	public Long getLong(String key) {
-		Object value = getProperty(key);
+		String value = getString(key);
 		try {
-			return (Long) value;
+			return Long.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed");
@@ -96,6 +104,7 @@ public final class Config extends NonCloneableBaseObject {
 	public synchronized void reload() {
 		if (fileName == null)
 			return;
+		fileNameStack.push(fileName);
 		int line = 0;
 		File file = new File(fileName);
 		Properties p = new Properties();
@@ -111,32 +120,32 @@ public final class Config extends NonCloneableBaseObject {
 		for (String propertyName : p.stringPropertyNames()) {
 			try {
 				propertyName = propertyName.trim();
-				if (propertyName.equals(""))
-					continue;
-				if (propertyName.startsWith("#"))
+				if (propertyName.equals("") || propertyName.startsWith("#"))
 					continue;
 				String propertyValue = p.getProperty(propertyName).trim();
 				if (propertyName.startsWith("$")) {
 					String propertyRealName = propertyName.substring(1);
+					String realFileName = propertyValue;
 					Config config = null;
-					if(propertyValue.contains(File.separator))
-						config = new Config(propertyValue);
-					else
-					{
+					if(!realFileName.contains(File.separator)) {
 						int index = fileName.lastIndexOf(File.separator);
-						String realFileName = fileName.substring(0, index + 1) + propertyValue;
-						config = new Config(realFileName);
+						String filePath = fileName.substring(0, index + 1);
+						realFileName = filePath + realFileName;
 					}
+					if(fileNameStack.contains(realFileName))
+						throw new LYException("It looks like there was a reference circle in config file[" + realFileName + "]");
+					config = new Config(realFileName, fileNameStack);
 					tmp.put(propertyRealName, config);
 				} else
 					tmp.put(propertyName, propertyValue);
 			} catch (Exception e) {
-				throw new LYException("Failed to load config file at line "
-						+ line, e);
+				throw new LYException("Failed to load config file[" + fileName + "] at line " + line, e);
 			}
+			line++;
 		}
 		dataMap = tmp;
 		tmp = null;
+		fileNameStack.pop();
 	}
 
 	public String getFileName() {
