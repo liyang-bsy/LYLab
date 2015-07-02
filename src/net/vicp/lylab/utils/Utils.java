@@ -43,7 +43,7 @@ public class Utils extends NonCloneableBaseObject {
 	 * @param path
 	 * @return
 	 */
-	public static boolean exists(String path) {
+	public static boolean existsFolder(String path) {
 		try {
 			File file = new File(path);
 			if (file.exists() && file.isDirectory()) {
@@ -93,7 +93,7 @@ public class Utils extends NonCloneableBaseObject {
 	 */
 	public static boolean createDirectory(String path) {
 		try {
-			if (exists(path))
+			if (existsFolder(path))
 				return true;
 			File file = new File(path);
 			return file.mkdirs();
