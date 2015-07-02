@@ -36,7 +36,7 @@ public final class TimerTimeoutController extends InstantJob {
 	 * Major cycle to check timoutControl()
 	 */
 	@Override
-	public void run() {
+	public void exec() {
 		System.gc();
 		Iterator<WeakReference<Recyclable>> iterator = watchList.iterator();
 		while (iterator.hasNext()) {

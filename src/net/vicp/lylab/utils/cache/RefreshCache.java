@@ -17,7 +17,7 @@ public class RefreshCache extends InstantJob {
 	}
 
 	@Override
-	public void run() {
+	public void exec() {
 		LYCache.flush();
 	}
 	
