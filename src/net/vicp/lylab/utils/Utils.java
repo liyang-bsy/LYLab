@@ -55,7 +55,50 @@ public class Utils extends NonCloneableBaseObject {
 			return false;
 		}
 	}
-	
+
+	/**
+	 * 识别字符串是否全是中文编码 or ASCII code
+	 * 
+	 * @param strName
+	 * @return
+	 */
+	public static boolean isAllChinese(String strName) {
+		char[] ch = strName.toCharArray();
+		for (int i = 0; i < ch.length; i++)
+			if (!isChinese(ch[i]) && !isAscii(ch[i]))
+				return false;
+		return true;
+	}
+
+	/**
+	 * Test a char is ASCII code
+	 * @param c
+	 * @return
+	 */
+	private static boolean isAscii(char c) {
+		if (c < 128 && c > 0)
+			return true;
+		return false;
+	}
+	/**
+	 * 识别字符是否是中文编码
+	 * 
+	 * @param c
+	 * @return
+	 */
+	private static boolean isChinese(char c) {
+		Character.UnicodeBlock ub = Character.UnicodeBlock.of(c);
+		if (ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS
+				|| ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS
+				|| ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A
+				|| ub == Character.UnicodeBlock.GENERAL_PUNCTUATION
+				|| ub == Character.UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION
+				|| ub == Character.UnicodeBlock.HALFWIDTH_AND_FULLWIDTH_FORMS) {
+			return true;
+		}
+		return false;
+	}
+
 	/**
 	 * 格式化数字
 	 * @param value

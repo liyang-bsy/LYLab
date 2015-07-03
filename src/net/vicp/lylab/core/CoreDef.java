@@ -1,6 +1,6 @@
 package net.vicp.lylab.core;
 
-import net.vicp.lylab.utils.Config;
+import net.vicp.lylab.utils.config.Config;
 
 /**
  * LYLab - powered by Young Lee's Lab.

@@ -7,7 +7,8 @@ import org.apache.commons.logging.LogFactory;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.utils.Config;
+import net.vicp.lylab.utils.config.Config;
+import net.vicp.lylab.utils.config.TreeConfig;
 import net.vicp.lylab.utils.Utils;
 
 public class Initializer extends NonCloneableBaseObject implements LifeCycle {
@@ -18,7 +19,7 @@ public class Initializer extends NonCloneableBaseObject implements LifeCycle {
 	
 	public Initializer(String configFile)
 	{
-		this.config = new Config(configFile);
+		this.config = new TreeConfig(configFile);
 	}
 	
 	@Override

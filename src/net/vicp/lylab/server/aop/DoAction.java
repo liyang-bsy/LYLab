@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.server.filter.Filter;
-import net.vicp.lylab.utils.Config;
+import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.internet.HeartBeat;
