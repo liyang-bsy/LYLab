@@ -42,16 +42,16 @@ public final class FileLineWriter extends NonCloneableBaseObject {
 	public void writeLine(List<Transcode> lines) {
 		synchronized (lock) {
 			try {
-				if(isOpenFile() == false)
-					open();
-				for (Transcode tmp : lines) {
+				for (Transcode tmp : lines)
+				{
+					if(isOpenFile() == false)
+						open();
 					fileOut.write(tmp.encode().toBytes());
 					fileOut.write("\r\n".getBytes());
 					outCount++;
 					if (maxLine <= outCount)
 						close();
 				}
-
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

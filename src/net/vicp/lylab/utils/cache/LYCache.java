@@ -5,8 +5,8 @@ import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.utils.MD5;
-import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 
 /**
  * Local cache system.
@@ -15,24 +15,42 @@ import net.vicp.lylab.utils.atomic.AtomicStrongReference;
  * @since 2015.07.01
  * @version 1.0.2
  */
-public final class LYCache extends NonCloneableBaseObject {
+public final class LYCache extends NonCloneableBaseObject implements LifeCycle {
 	private List<CacheContainer> bundles = null;
 	private long expireTime = CoreDef.DEFAULT_LYCACHE_EXPIRE_TIME;
 	private long memoryLimitation = CoreDef.DEFAULT_LYCACHE_MEMORY_LIMITATION;
 	public double threshold = CoreDef.DEFAULT_LYCACHE_THRESHOLD;
 
-	private static AtomicStrongReference<LYCache> instance = new AtomicStrongReference<LYCache>();
+	private static LYCache instance;
 
-	public LYCache() {
+	@Override
+	public synchronized void initialize() {
+		if (instance != null)
+			return;
+		instance = new LYCache();
+		ArrayList<CacheContainer> list = new ArrayList<CacheContainer>();
+		for (int i = 0; i < 16; i++)
+			list.add(new CacheContainer());
+		getInstance().bundles = list;
 		setExpireTime(expireTime); // 30min = 60s*30min
 		LYCache.setMemoryControl(memoryLimitation, threshold); // 1GB
-		getBundles();
 	}
 
-	public LYCache(long expire, long memLimit, double threshold) {
-		setExpireTime(expire);
-		LYCache.setMemoryControl(memLimit, threshold);
-		getBundles();
+	@Override
+	public synchronized void terminate() {
+	}
+
+	public static void setMemoryControl(long memoryLimitation, double threshold) {
+		if (threshold > 1.0D)
+			threshold = 1.0D;
+		setThreshold(threshold);
+		setMemoryLimitation(memoryLimitation);
+		List<CacheContainer> list = getBundles();
+		for (CacheContainer item : list) {
+			item.setMemoryLimitation(memoryLimitation / 16);
+			item.setThreshold(threshold);
+		}
+		LYCache.flush();
 	}
 
 	private static CacheContainer getContainer(Integer seq) {
@@ -47,22 +65,11 @@ public final class LYCache extends NonCloneableBaseObject {
 	}
 
 	public static List<CacheContainer> getBundles() {
-		if (getInstance().bundles == null)
-			initBundles();
 		return getInstance().bundles;
 	}
 
-	public synchronized static void initBundles() {
-		if (getInstance().bundles != null)
-			return;
-		ArrayList<CacheContainer> list = new ArrayList<CacheContainer>();
-		for (int i = 0; i < 16; i++)
-			getInstance().bundles.add(new CacheContainer());
-		getInstance().bundles = list;
-	}
-
 	public static LYCache getInstance() {
-		return instance.get(LYCache.class);
+		return instance;
 	}
 
 	public static long getEntrySize() {
@@ -161,19 +168,6 @@ public final class LYCache extends NonCloneableBaseObject {
 
 	public static void setThreshold(double threshold) {
 		getInstance().threshold = threshold;
-	}
-
-	public static void setMemoryControl(long memoryLimitation, double threshold) {
-		if (threshold > 1.0D)
-			threshold = 1.0D;
-		setThreshold(threshold);
-		setMemoryLimitation(memoryLimitation);
-		List<CacheContainer> list = getBundles();
-		for (CacheContainer item : list) {
-			item.setMemoryLimitation(memoryLimitation / 16);
-			item.setThreshold(threshold);
-		}
-		LYCache.flush();
 	}
 
 }

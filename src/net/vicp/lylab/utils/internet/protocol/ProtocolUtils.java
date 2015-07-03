@@ -5,13 +5,11 @@ import java.util.Arrays;
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.Algorithm;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.config.Config;
-import net.vicp.lylab.utils.config.PlainConfig;
 
 /**
  * Protocol Utils, offer a serial essential utilities function about
@@ -25,20 +23,19 @@ import net.vicp.lylab.utils.config.PlainConfig;
  * @version 1.0.0
  */
 public final class ProtocolUtils extends BaseObject {
-	private static AutoInitialize<PlainConfig> config = new AtomicStrongReference<PlainConfig>();
-	private static String protocolConfig;
+	private static Config config;
 
 	@SuppressWarnings("unchecked")
 	public static Class<Protocol> pairToProtocol(byte[] head)
 	{
 		String sHead = new String(head);
 		Class<Protocol> protocolClass = null;
-		for(String key: getProtocolConfig().keySet())
+		for(String key: getConfig().keySet())
 		{
 			if(sHead.startsWith(key))
 			{
 				try {
-					String className = getProtocolConfig().getString(key);
+					String className = getConfig().getString(key);
 					protocolClass = (Class<Protocol>) Class.forName(className);
 					break;
 				} catch (Exception e) { }
@@ -117,15 +114,14 @@ public final class ProtocolUtils extends BaseObject {
 			return 1;
 		return 0;
 	}
-	
-	public static Config getProtocolConfig()
-	{
-		if(protocolConfig == null) throw new LYException("Protocol config file not set");
-		return config.get(PlainConfig.class, protocolConfig);
+
+	public static Config getConfig() {
+		if(config == null) throw new LYException("Protocol config is null");
+		return config;
 	}
-	
-	public static void setProtocolConfig(String protocolConfig) {
-		ProtocolUtils.protocolConfig = protocolConfig;
+
+	public static void setConfig(Config config) {
+		ProtocolUtils.config = config;
 	}
 	
 }

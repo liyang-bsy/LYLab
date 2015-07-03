@@ -6,20 +6,21 @@ import java.util.Arrays;
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.server.filter.Filter;
+import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
-import net.vicp.lylab.utils.config.Config;
-import net.vicp.lylab.utils.internet.ToClientSocket;
+import net.vicp.lylab.utils.internet.HeartBeat;
+import net.vicp.lylab.utils.internet.ToClientLongSocket;
 import net.vicp.lylab.utils.internet.impl.Message;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class DoAction extends ToClientSocket {
+public class DoActionLong extends ToClientLongSocket {
 	private static final long serialVersionUID = -8400721992403701180L;
 
-	public DoAction(ServerSocket serverSocket) {
-		super(serverSocket);
+	public DoActionLong(ServerSocket serverSocket, HeartBeat heartBeat) {
+		super(serverSocket, heartBeat);
 	}
 
 	protected static Config config;
@@ -105,7 +106,7 @@ public class DoAction extends ToClientSocket {
 	}
 
 	public static void setConfig(Config config) {
-		DoAction.config = config;
+		DoActionLong.config = config;
 	}
 
 }
