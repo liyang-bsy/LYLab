@@ -4,6 +4,7 @@ import java.net.ServerSocket;
 import java.util.Arrays;
 
 import net.vicp.lylab.core.BaseAction;
+import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.Utils;
@@ -30,6 +31,7 @@ public class DoAction extends ToClientLongSocket {
 	@Override
 	public byte[] response(byte[] request) {
 		byte[] tmp = null;
+		// do start filter
 		if (startChain != null && startChain.length != 0)
 			for (Filter filter : startChain)
 				if ((tmp = filter.doFilter(this, request)) != null)
@@ -43,27 +45,35 @@ public class DoAction extends ToClientLongSocket {
 		AtomicStrongReference<BaseAction> action = new AtomicStrongReference<BaseAction>();
 		try {
 			do {
+				Protocol protocol = null;
 				try {
-					msg = (Message) ProtocolUtils.fromBytes(request).toObject();
+					protocol = ProtocolUtils.fromBytes(request);
 				} catch (Exception e) {
 					response.setCode(1);
-					response.setMessage(Utils.getStringFromException(e));
+					response.setMessage("Protocol not found");
+				}
+				try {
+					msg = (Message) protocol.toObject();
+				} catch (Exception e) {
+					response.setCode(2);
+					response.setMessage("Message not found");
+					log.debug(Utils.getStringFromException(e));
 					break;
 				}
 				// gain key from request
 				key = msg.getKey();
 				if (StringUtils.isBlank(key)) {
 					response.setCode(0x00003);
-					response.setMessage("JSON部分缺省");
+					response.setMessage("Key not found");
 					break;
 				}
 				// get action related to key
 				try {
 					action.get((Class<BaseAction>) Class.forName(getConfig().getString(key + "Action")));
 				} catch (Exception e) { }
-				if (action.get() == null) {
+				if (action == null || action.get() == null) {
 					response.setCode(0x00004);
-					response.setMessage("协议未定义");
+					response.setMessage("Action not found");
 					break;
 				}
 				// Initialize action
@@ -81,11 +91,12 @@ public class DoAction extends ToClientLongSocket {
 		byte[] result = response.encode().toBytes();
 		after = Arrays.copyOf(result, result.length);
 
-		// save result
+		// do finish filter
 		if (afterChain != null && afterChain.length != 0)
 			for (Filter filter : afterChain)
 				if ((tmp = filter.doFilter(this, request)) != null)
 					return tmp;
+		// to logger
 		log.debug("Access key:" + key  + "\nBefore:" + ProtocolUtils.fromBytes(before) + "\nAfter:" + ProtocolUtils.fromBytes(after));
 		return after;
 	}

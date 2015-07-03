@@ -1,6 +1,10 @@
 package net.vicp.lylab.core;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.utils.tq.Task;
 
 public class BaseObject {
 
@@ -14,6 +18,11 @@ public class BaseObject {
 		this.objectId = objectId;
 		return this;
 	}
+	
+	/**
+	 * Now every BaseObject may use this to log something
+	 */
+	protected static Log log = LogFactory.getLog(Task.class);
 
 	protected static class Lock { };
 	protected Lock lock = new Lock();

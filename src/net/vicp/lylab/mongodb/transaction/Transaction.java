@@ -4,15 +4,11 @@ import java.io.Serializable;
 
 import net.vicp.lylab.utils.tq.Task;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.mongodb.morphia.dao.BasicDAO;
 
 public abstract class Transaction<T,K> extends Task implements Serializable {
 	private static final long serialVersionUID = -1136872919552926090L;
 
-	protected Log log = LogFactory.getLog(getClass());
-	
 	private BasicDAO<T,K> basicDao;
 	private volatile Boolean reverted;
 	

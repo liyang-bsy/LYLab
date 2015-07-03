@@ -10,9 +10,6 @@ import net.vicp.lylab.core.interfaces.Executor;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 /**
  * Extends Task and reference to TaskQueue(manage class).<br>
  * Override exec() to satisfy your needs.
@@ -47,11 +44,6 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 * Indicate when this task start run()
 	 */
 	protected Date startTime;
-
-	/**
-	 * Now every task may use this to log something
-	 */
-	protected static Log log = LogFactory.getLog(Task.class);
 
 	private volatile AtomicInteger state = new AtomicInteger(BEGAN);
 

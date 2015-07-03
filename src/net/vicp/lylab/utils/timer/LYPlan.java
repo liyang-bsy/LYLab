@@ -25,7 +25,7 @@ public final class LYPlan extends NonCloneableBaseObject implements LifeCycle {
 	private static LYPlan instance;
 
 	@Override
-	public void init() {
+	public void initialize() {
 		System.out.println("LYPlan - Initialization started");
 		instance = this;
 		getInstance().BeginSchedule();

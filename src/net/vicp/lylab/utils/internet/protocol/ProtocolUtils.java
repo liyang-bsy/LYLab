@@ -8,13 +8,15 @@ import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.Algorithm;
-import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
+import net.vicp.lylab.utils.config.Config;
+import net.vicp.lylab.utils.config.PlainConfig;
 
 /**
  * Protocol Utils, offer a serial essential utilities function about
- * {@link net.vicp.lylab.core.interfaces.Protocol}.
+ * {@link net.vicp.lylab.core.interfaces.Protocol}.<br>
+ * Before use it, you need offer a protocol config which register all protocol you will use.
  * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
@@ -22,9 +24,8 @@ import net.vicp.lylab.utils.atomic.AtomicStrongReference;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class ProtocolUtils extends BaseObject {
-
-	private static AutoInitialize<Config> config = new AtomicStrongReference<Config>();
+public final class ProtocolUtils extends BaseObject {
+	private static AutoInitialize<PlainConfig> config = new AtomicStrongReference<PlainConfig>();
 	private static String protocolConfig;
 
 	@SuppressWarnings("unchecked")
@@ -55,12 +56,6 @@ public class ProtocolUtils extends BaseObject {
 			throw new LYException("Can not create a raw protocol to validate", e);
 		}
 		return protocol;
-	}
-	
-	public static Config getProtocolConfig()
-	{
-		if(protocolConfig == null) throw new LYException("Protocol config file path not set");
-		return config.get(Config.class, protocolConfig);
 	}
 
 	public static byte[] toBytes(Protocol protocol) {
@@ -121,6 +116,12 @@ public class ProtocolUtils extends BaseObject {
 		if(len < dataLength + classNameEndPosition + protocol.getSplitSignal().length)
 			return 1;
 		return 0;
+	}
+	
+	public static Config getProtocolConfig()
+	{
+		if(protocolConfig == null) throw new LYException("Protocol config file not set");
+		return config.get(PlainConfig.class, protocolConfig);
 	}
 	
 	public static void setProtocolConfig(String protocolConfig) {

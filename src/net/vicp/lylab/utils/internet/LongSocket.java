@@ -66,7 +66,7 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 	@Override
 	protected void aftermath() {
 		log.info(isServer()?"Lost connection to client":"Lost connection to server");
-	};
+	}
 
 	@Override
 	public byte[] request(byte[] request) {

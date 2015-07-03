@@ -13,9 +13,6 @@ import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 /**
  * Manager class to recycle tasks in thread pool(Which should be in running).<br>
  * Kill & Restart tasks within certain timeout.
@@ -28,8 +25,6 @@ import org.apache.commons.logging.LogFactory;
  * 
  */
 public final class WatchDog extends NonCloneableBaseObject implements Recyclable {
-	protected Log log = LogFactory.getLog(getClass());
-
 	private static AutoInitialize<WatchDog> instance = new AtomicStrongReference<WatchDog>();
 
 	private Long tolerance = CoreDef.WAITING_TOLERANCE;
