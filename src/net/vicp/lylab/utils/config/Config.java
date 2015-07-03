@@ -101,4 +101,12 @@ public abstract class Config extends NonCloneableBaseObject {
 		this.fileName = fileName;
 	}
 
+	public Config getParent() {
+		return parent;
+	}
+
+	public void setParent(Config parent) {
+		this.parent = parent;
+	}
+
 }
