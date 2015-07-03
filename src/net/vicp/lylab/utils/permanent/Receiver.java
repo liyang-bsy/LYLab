@@ -17,7 +17,7 @@ import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
-import net.vicp.lylab.utils.atomic.AtomicStrongReference;
+import net.vicp.lylab.utils.internet.impl.SimpleHeartBeat;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.LoneWolf;
 import flexjson.JSONSerializer;
@@ -38,10 +38,14 @@ public class Receiver extends LoneWolf implements AutoLifeCycle, DataSource<Tran
 	protected String host;
 	protected Integer port;
 
-	protected Class<Dispatcher> dispatcherClass;
-	protected Class<Permanent> permanentClass;
-	
 	protected boolean savePastLogs;
+	
+	public Receiver(String host, Integer port, String postfix, String savePath) {
+		this.host = host;
+		this.port = port;
+		this.postfix = postfix;
+		this.savePath = savePath;
+	}
 	
 	@Override
 	public boolean running() {
@@ -139,13 +143,13 @@ public class Receiver extends LoneWolf implements AutoLifeCycle, DataSource<Tran
 			Utils.deleteFile(savedFileName);
 		}
 //		new AtomicStrongReference().get().begin();
-		AtomicStrongReference<Permanent> perm = new AtomicStrongReference<Permanent>();
-		try {
-			perm.get(permanentClass, host, port);
-		} catch (Exception e) {
-			log.error("Can not create dispatcher:\n" + Utils.getStringFromException(e));
-		}
-		perm.get().begin("Permanent-" + threadCount);
+		Permanent perm = new Permanent(this, postfix, savePath);
+//		try {
+//			perm.get(permanentClass, this, postfix, savePath);
+//		} catch (Exception e) {
+//			log.error("Can not create dispatcher:\n" + Utils.getStringFromException(e));
+//		}
+		perm.begin("Permanent-" + threadCount);
 	}
 	
 	@Override
@@ -164,13 +168,14 @@ public class Receiver extends LoneWolf implements AutoLifeCycle, DataSource<Tran
 			if(threadCount.get() < CoreDef.THREE)
 			{
 				threadCount.incrementAndGet();
-				AtomicStrongReference<Dispatcher> disp = new AtomicStrongReference<Dispatcher>();
-				try {
-					disp.get(dispatcherClass, host, port);
-				} catch (Exception e) {
-					log.error("Can not create dispatcher:\n" + Utils.getStringFromException(e));
-				}
-				disp.get().begin("Dispatcher-" + threadCount);
+				@SuppressWarnings("resource")
+				Dispatcher disp = new Dispatcher(this, host, port, new SimpleHeartBeat());
+//				try {
+//					disp.get(dispatcherClass, this, host, port, new SimpleHeartBeat());
+//				} catch (Exception e) {
+//					log.error("Can not create dispatcher:\n" + Utils.getStringFromException(e));
+//				}
+				disp.begin("Dispatcher-" + threadCount);
 			}
 			else {
 				try {
@@ -204,22 +209,6 @@ public class Receiver extends LoneWolf implements AutoLifeCycle, DataSource<Tran
 		} catch (Exception e) {
 			log.error("Terminate failed:\t" + Utils.getStringFromException(e));
 		}
-	}
-
-	public Class<Dispatcher> getDispatcherClass() {
-		return dispatcherClass;
-	}
-
-	public void setDispatcherClass(Class<Dispatcher> dispatcherClass) {
-		this.dispatcherClass = dispatcherClass;
-	}
-
-	public Class<Permanent> getPermanentClass() {
-		return permanentClass;
-	}
-
-	public void setPermanentClass(Class<Permanent> permanentClass) {
-		this.permanentClass = permanentClass;
 	}
 
 	public String getHost() {

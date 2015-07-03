@@ -10,7 +10,7 @@ import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.impl.Message;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
-public abstract class Dispatcher extends ClientLongSocket {
+public class Dispatcher extends ClientLongSocket {
 	private static final long serialVersionUID = -5015422983388601708L;
 	
 	protected DataSource<Transcode> controller;
