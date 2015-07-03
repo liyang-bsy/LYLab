@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 
 /**
  * 	LYPlan is a tiny schedule framework, could be apply to multitude purpose.
@@ -23,18 +22,21 @@ public final class LYPlan extends NonCloneableBaseObject implements LifeCycle {
 	
 	private AtomicBoolean Scheduled = new AtomicBoolean(false);
 	
-	private static AtomicStrongReference<LYPlan> instance = new AtomicStrongReference<LYPlan>();
+	private static LYPlan instance;
 
 	@Override
 	public void init() {
 		System.out.println("LYPlan - Initialization started");
+		instance = this;
 		getInstance().BeginSchedule();
 	}
 
 	@Override
 	public void terminate() {
-		for (TimerJob tj : getInstance().getJobs())
+		for (TimerJob tj : getInstance().getJobs()) {
 			tj.cancel();
+			System.out.println("LYPlan - Cancel scheduled job: " + tj.getClass().getName());
+		}
 		Scheduled.set(false);
 	}
 	
@@ -84,7 +86,7 @@ public final class LYPlan extends NonCloneableBaseObject implements LifeCycle {
 	}
 
 	public static LYPlan getInstance() {
-		return instance.get(LYPlan.class);
+		return instance;
 	}
 
 }
