@@ -10,8 +10,7 @@ import java.util.List;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Transmission;
-import net.vicp.lylab.core.interfaces.callback.AfterEnd;
-import net.vicp.lylab.core.interfaces.callback.BeforeStart;
+import net.vicp.lylab.core.interfaces.Callback;
 import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
@@ -31,9 +30,11 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 	private static final long serialVersionUID = 883892527805494627L;
 	
 	protected Socket socket;
-	
-	protected BeforeStart beforeStart = null;
-	protected AfterEnd afterEnd = null;
+
+	protected Callback beforeConnect = null;
+	protected Callback afterClose = null;
+	protected Callback beforeTransmission = null;
+	protected Callback afterTransmission = null;
 	
 	protected InputStream in;
 	protected OutputStream out;
@@ -94,12 +95,20 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 	}
 	
 	public byte[] doRequest(byte[] request) {
+		if(beforeTransmission != null)
+			beforeTransmission.callback();
 		if(isServer()) throw new LYException("Do request is forbidden to a server socket");
+		if(afterTransmission != null)
+			afterTransmission.callback();
 		return request(request);
 	}
 
 	public byte[] doResponse(byte[] request) {
+		if(beforeTransmission != null)
+			beforeTransmission.callback();
 		if(!isServer()) throw new LYException("Do response is forbidden to a client socket");
+		if(afterTransmission != null)
+			afterTransmission.callback();
 		return response(request);
 	}
 	
@@ -107,8 +116,8 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 	{
 		if(isServer()) return;
 		try {
-			if(beforeStart != null)
-				beforeStart.beforeStart();
+			if(beforeConnect != null)
+				beforeConnect.callback();
 			socket = new Socket(host, port);
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
@@ -166,8 +175,8 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 			in = null;
 			out = null;
 		}
-		if(afterEnd != null)
-			afterEnd.afterEnd();
+		if(afterClose != null)
+			afterClose.callback();
 	}
 
 	public boolean isClosed() {
@@ -241,20 +250,36 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 		return socketRetry.get();
 	}
 
-	public BeforeStart getBeforeStart() {
-		return beforeStart;
+	public Callback getBeforeConnect() {
+		return beforeConnect;
 	}
 
-	public void setBeforeStart(BeforeStart beforeStart) {
-		this.beforeStart = beforeStart;
+	public void setBeforeConnect(Callback beforeConnect) {
+		this.beforeConnect = beforeConnect;
 	}
 
-	public AfterEnd getAfterEnd() {
-		return afterEnd;
+	public Callback getAfterClose() {
+		return afterClose;
 	}
 
-	public void setAfterEnd(AfterEnd afterEnd) {
-		this.afterEnd = afterEnd;
+	public void setAfterClose(Callback afterClose) {
+		this.afterClose = afterClose;
+	}
+
+	public Callback getBeforeTransmission() {
+		return beforeTransmission;
+	}
+
+	public void setBeforeTransmission(Callback beforeTransmission) {
+		this.beforeTransmission = beforeTransmission;
+	}
+
+	public Callback getAfterTransmission() {
+		return afterTransmission;
+	}
+
+	public void setAfterTransmission(Callback afterTransmission) {
+		this.afterTransmission = afterTransmission;
 	}
 
 }

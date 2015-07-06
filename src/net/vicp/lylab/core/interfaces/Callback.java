@@ -1,4 +1,4 @@
-package net.vicp.lylab.core.interfaces.callback;
+package net.vicp.lylab.core.interfaces;
 
 /**
  * Implement this means this object has callback function.
@@ -9,4 +9,6 @@ package net.vicp.lylab.core.interfaces.callback;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public interface Callback { }
+public interface Callback {
+	public void callback(Object... params);
+}

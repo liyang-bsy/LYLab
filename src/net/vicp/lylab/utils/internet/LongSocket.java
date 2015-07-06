@@ -7,6 +7,7 @@ import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.HeartBeatSender;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
+import net.vicp.lylab.utils.Utils;
 
 /**
  * Long socket can communicate with server multiple times without close socket.
@@ -44,12 +45,25 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 			if (isServer()) {
 				while (true)
 				{
+					if(beforeTransmission != null)
+						beforeTransmission.callback();
 					byte[] bytes = receive();
 					if(bytes == null) return;
 					send(doResponse(bytes));
+					if(afterTransmission != null)
+						afterTransmission.callback();
 				}
 			} else {
-				while (doRequest(null) != null);
+				while (true)
+				{
+					if(beforeTransmission != null)
+						beforeTransmission.callback();
+					byte[] ret = doRequest(null);
+					if(afterTransmission != null)
+						afterTransmission.callback(ret);
+					if(ret == null)
+						break;
+				}
 			}
 		} catch (Exception e) {
 			throw new LYException("Connect break", e);
@@ -76,10 +90,11 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 			send(request);
 			ret = receive();
 		} catch (Exception e) {
+			log.error(Utils.getStringFromException(e));
 			try {
 				recycle();
 			} catch (Throwable t) {
-				return null;
+				log.error(Utils.getStringFromException(e));
 			}
 		}
 		return ret;

@@ -41,11 +41,15 @@ public final class ProtocolUtils extends BaseObject {
 				} catch (Exception e) { }
 			}
 		}
+		if(protocolClass == null)
+			throw new LYException("Can not pair sHead[" + sHead + "] to any protocol");
 		return protocolClass;
 	}
 	
 	public static Protocol rawProtocol(Class<Protocol> protocolClass)
 	{
+		if(protocolClass == null)
+			throw new LYException("Can not create a raw protocol with null");
 		Protocol protocol = null;
 		try {
 			protocol = protocolClass.newInstance();

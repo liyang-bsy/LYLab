@@ -42,5 +42,5 @@ public class Initializer extends NonCloneableBaseObject implements LifeCycle {
 			if(obj instanceof LifeCycle)
 				((LifeCycle) obj).terminate();
 	}
-	
+
 }
