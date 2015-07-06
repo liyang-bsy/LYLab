@@ -30,6 +30,7 @@ public final class PlainConfig extends Config {
 		try {
 			InputStream inputStream = new FileInputStream(file);
 			p.load(inputStream);
+			inputStream.close();
 		} catch (Exception e) {
 			throw new LYException("Failed to load config file with below path:\n" + fileName, e);
 		}
