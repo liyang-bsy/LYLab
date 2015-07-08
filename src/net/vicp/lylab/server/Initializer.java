@@ -17,6 +17,11 @@ public class Initializer extends NonCloneableBaseObject implements LifeCycle {
 		this.config = new TreeConfig(configFile);
 	}
 	
+	public Initializer(Config config)
+	{
+		this.config = config;
+	}
+	
 	@Override
 	public void initialize() {
 		Set<String> keySet = config.keySet();

@@ -63,15 +63,26 @@ public final class ProtocolUtils extends BaseObject {
 		return protocol.toBytes();
 	}
 
+	public static boolean bytesContinueWith(byte[] e1, int e1Offset, byte[] e2, int e2Offset, int cmpLength)
+	{
+//		if(e1.length - e1Offset != e2.length - e2Offset) return false;
+		if(e1.length - e1Offset < e2.length - e2Offset || e1.length - e1Offset < cmpLength || e2.length - e2Offset < cmpLength) return false;
+		for(int i=0; i<cmpLength;i++)
+			if(e1[i] != e2[e2Offset + i])
+				return false;
+		return true;
+	}
+	
 	public static boolean checkHead(Protocol protocol, byte[] bytes)
 	{
-		if (!Arrays.equals(bytes, protocol.getHead())) return false;
+		if (!bytesContinueWith(bytes, 0, protocol.getHead(), 0, protocol.getHead().length)) return false;
 		return true;
 	}
 
 	public static Protocol fromBytes(byte[] bytes) {
 		if (bytes == null) return null;
 		Protocol protocol = rawProtocol(pairToProtocol(bytes));
+		if (protocol == null) return null;
 		byte[] temp = Arrays.copyOfRange(bytes, 0, protocol.getHead().length);
 		if (!checkHead(protocol, temp)) return null;
 		
@@ -94,22 +105,20 @@ public final class ProtocolUtils extends BaseObject {
 		//return new Protocol(className, data);
 	}
 
-	public static int validate(byte[] bytes, int len) {
-		if (bytes == null) return -1;
-		Protocol protocol = rawProtocol(pairToProtocol(bytes));
-		byte[] temp = Arrays.copyOfRange(bytes, 0, protocol.getHead().length);
-		if (!checkHead(protocol, temp))
+	public static int validate(Protocol protocol, byte[] bytes, int len) {
+		if (protocol == null || bytes == null) return -1;
+//		Protocol protocol = rawProtocol(pairToProtocol(bytes));
+//		byte[] temp = Arrays.copyOfRange(bytes, 0, protocol.getHead().length);
+		if (!checkHead(protocol, bytes))
 			return -1;
 		
 		int headEndPosition = Algorithm.KMPSearch(bytes, protocol.getSplitSignal());
 		if (headEndPosition != protocol.getHead().length) return -1;
 		
-		temp = Arrays.copyOfRange(bytes, headEndPosition + protocol.getSplitSignal().length, bytes.length);
 		int dataLengthEndPosition = protocol.getHead().length + protocol.getSplitSignal().length + CoreDef.SIZEOF_INTEGER;
-		int dataLength = Utils.Bytes4ToInt(Arrays.copyOfRange(bytes, protocol.getHead().length + protocol.getSplitSignal().length, dataLengthEndPosition));
+		int dataLength = Utils.Bytes4ToInt(bytes, protocol.getHead().length + protocol.getSplitSignal().length);
 		
-		temp = Arrays.copyOfRange(bytes, dataLengthEndPosition + protocol.getSplitSignal().length, bytes.length);
-		int classNameEndPosition = dataLengthEndPosition + protocol.getSplitSignal().length + Algorithm.KMPSearch(temp, protocol.getSplitSignal());
+		int classNameEndPosition = dataLengthEndPosition + protocol.getSplitSignal().length + Algorithm.KMPSearch(bytes, protocol.getSplitSignal(), dataLengthEndPosition + protocol.getSplitSignal().length);
 		if (classNameEndPosition <= 0) return -1;
 
 		if(len > dataLength + classNameEndPosition + protocol.getSplitSignal().length)

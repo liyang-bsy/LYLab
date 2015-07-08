@@ -31,6 +31,32 @@ public class Algorithm {
 	 * 
 	 * @param source
 	 * @param compare
+	 * @param offset
+	 * @return return index or -1 means not found
+	 */
+	public static int KMPSearch(byte[] source, byte[] compare, int srcOffset) {
+		int[] next = _KMPNext(compare);
+		int i = srcOffset;
+		int j = 0;
+		while (i <= source.length - 1 && j <= compare.length - 1) {
+			if (j == -1 || source[i] == compare[j]) {
+				i++;
+				j++;
+			} else {
+				j = next[j];
+			}
+		}
+		if (j < compare.length) {
+			return -1;
+		} else
+			return i - compare.length - srcOffset; // 返回模式串在主串中的头下标
+	}
+
+	/**
+	 * KMP Search, O(n+m)
+	 * 
+	 * @param source
+	 * @param compare
 	 * @return return index or -1 means not found
 	 */
 	public static int KMPSearch(byte[] source, byte[] compare) {

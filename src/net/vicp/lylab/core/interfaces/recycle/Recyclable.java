@@ -13,7 +13,7 @@ package net.vicp.lylab.core.interfaces.recycle;
  * 
  */
 
-public interface Recyclable {
+public interface Recyclable extends AutoCloseable {
 	/**
 	 * Check if need to recycle
 	 */

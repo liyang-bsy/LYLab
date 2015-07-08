@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 
 /**
  * 抽象的分离池
@@ -89,11 +88,15 @@ public class RecyclePool<T> extends IndexedPool<T> {
 			T tmp = busyContainer.remove(objId);
 			if(tmp != null)
 			{
-				if (tmp instanceof Recyclable) {
-					((Recyclable) tmp).recycle();
+				try {
+					if (tmp instanceof AutoCloseable) {
+						((AutoCloseable) tmp).close();
+					}
+					addToContainer(tmp);
+					return tmp;
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-				addToContainer(tmp);
-				return tmp;
 			}
 			return null;
 		}

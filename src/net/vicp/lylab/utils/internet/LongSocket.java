@@ -45,25 +45,12 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 			if (isServer()) {
 				while (true)
 				{
-					if(beforeTransmission != null)
-						beforeTransmission.callback();
 					byte[] bytes = receive();
 					if(bytes == null) return;
 					send(doResponse(bytes));
-					if(afterTransmission != null)
-						afterTransmission.callback();
 				}
 			} else {
-				while (true)
-				{
-					if(beforeTransmission != null)
-						beforeTransmission.callback();
-					byte[] ret = doRequest(null);
-					if(afterTransmission != null)
-						afterTransmission.callback(ret);
-					if(ret == null)
-						break;
-				}
+				while (doRequest(null) != null);
 			}
 		} catch (Exception e) {
 			throw new LYException("Connect break", e);
@@ -91,11 +78,6 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 			ret = receive();
 		} catch (Exception e) {
 			log.error(Utils.getStringFromException(e));
-			try {
-				recycle();
-			} catch (Throwable t) {
-				log.error(Utils.getStringFromException(e));
-			}
 		}
 		return ret;
 	}
@@ -104,20 +86,29 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 	public byte[] doRequest(byte[] request) {
 		if (isServer())
 			throw new LYException("Do request is forbidden to a server socket");
+		if(beforeTransmission != null)
+			beforeTransmission.callback();
 		byte[] result = null;
-		do {
-			TranscodeObject tmp = dataPool.accessOne();
-			if (tmp == null) {
-				await(CoreDef.WAITING_LONG);
-				if(!sendHeartBeat(heartBeat)) return null;
-				continue;
-			}
-			signalAll();
-			result = request(tmp.encode().toBytes());
-			if (result == null)
-				dataPool.add(0, tmp);
-			break;
-		} while (true);
+		try {
+			do {
+				TranscodeObject tmp = dataPool.accessOne();
+				if (tmp == null) {
+					await(CoreDef.WAITING_LONG);
+					if(!sendHeartBeat(heartBeat)) return null;
+					continue;
+				}
+				signalAll();
+				result = request(tmp.encode().toBytes());
+				if (result == null)
+					dataPool.add(0, tmp);
+				break;
+			} while (true);
+			if(afterTransmission != null)
+				afterTransmission.callback(result);
+		} catch (Exception e) {
+			//TODO
+			e.printStackTrace();
+		}
 		return result;
 	}
 

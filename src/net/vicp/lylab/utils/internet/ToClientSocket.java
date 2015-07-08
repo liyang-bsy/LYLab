@@ -15,8 +15,7 @@ import java.net.ServerSocket;
 public abstract class ToClientSocket extends LYSocket {
 	private static final long serialVersionUID = -5356816913222343651L;
 
-	public ToClientSocket(ServerSocket serverSocket)
-	{
+	public ToClientSocket(ServerSocket serverSocket) {
 		super(serverSocket);
 	}
 

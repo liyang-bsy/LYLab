@@ -4,15 +4,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.core.interfaces.Callback;
+import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.core.interfaces.recycle.Recyclable;
-import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.Task;
@@ -26,7 +25,7 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmission {
+public class LYSocket extends Task implements Recyclable, Transmission {
 	private static final long serialVersionUID = 883892527805494627L;
 	
 	protected Socket socket;
@@ -45,6 +44,8 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 	protected int socketMaxRetry = Integer.MAX_VALUE;
 	protected String host;
 	protected int port;
+
+	private byte[] readBuffer = new byte[CoreDef.SOCKET_MAX_BUFFER];
 	
 	public LYSocket(ServerSocket serverSocket) {
 		if(serverSocket == null) throw new LYException("Parameter serverSocket is null");
@@ -74,6 +75,7 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 				byte[] bytes = receive();
 				if(bytes == null) return;
 				send(doResponse(bytes));
+				close();
 			} else {
 				doRequest(null);
 			}
@@ -98,9 +100,10 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 		if(beforeTransmission != null)
 			beforeTransmission.callback();
 		if(isServer()) throw new LYException("Do request is forbidden to a server socket");
+		byte[] ret = request(request);
 		if(afterTransmission != null)
-			afterTransmission.callback();
-		return request(request);
+			afterTransmission.callback(ret);
+		return ret;
 	}
 
 	public byte[] doResponse(byte[] request) {
@@ -109,7 +112,10 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 		if(!isServer()) throw new LYException("Do response is forbidden to a client socket");
 		if(afterTransmission != null)
 			afterTransmission.callback();
-		return response(request);
+		byte[] ret = response(request);
+		if(afterTransmission != null)
+			afterTransmission.callback(ret);
+		return ret;
 	}
 	
 	public void connect()
@@ -133,16 +139,17 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 		out.flush();
 		return true;
 	}
-
+	
 	public byte[] receive() throws Exception {
 		if(isClosed()) throw new LYException("Connection closed");
-		List<Byte> container = new ArrayList<Byte>();
+		Protocol rawProtocol = null;
 		if (in != null) {
-			byte[] rc = new byte[CoreDef.SOCKET_MAX_BUFFER];
 			int totalRecv = 0, getLen = 0;
 			while (true) {
 				try {
-					getLen = in.read(rc, 0, CoreDef.SOCKET_MAX_BUFFER);
+					if(getLen == readBuffer.length)
+						readBuffer = Arrays.copyOf(readBuffer, readBuffer.length*10);
+					getLen = in.read(readBuffer, getLen, CoreDef.SOCKET_MAX_BUFFER - getLen);
 				} catch (Exception e) {
 					throw new LYException(e);
 				}
@@ -151,8 +158,9 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 				if (getLen == 0)
 					throw new LYException("Impossible");
 				totalRecv += getLen;
-				container.addAll(Utils.moveBytesToContainer(rc));
-				int result = ProtocolUtils.validate(Utils.copyBytesFromContainer(container),totalRecv);
+				if(rawProtocol == null)
+					rawProtocol = ProtocolUtils.rawProtocol(ProtocolUtils.pairToProtocol(readBuffer));
+				int result = ProtocolUtils.validate(rawProtocol, readBuffer, totalRecv);
 				if (result == -1)
 					throw new LYException("Bad data package");
 				if (result == 0)
@@ -161,7 +169,7 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 					continue;
 			}
 		}
-		return Utils.copyBytesFromContainer(container);
+		return readBuffer;
 	}
 
 	@Override
@@ -186,7 +194,7 @@ public class LYSocket extends Task implements Recyclable, AutoCloseable, Transmi
 
 	@Override
 	public boolean isRecyclable() {
-		return !isServer() && isClosed();
+		return (socketRetry.get() < socketMaxRetry) && !isServer() && isClosed();
 	}
 
 	@Override

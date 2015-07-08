@@ -76,10 +76,6 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 				try {
 					T tmp = busyContainer.get(id);
 					if (tmp != null) {
-//						if (tmp instanceof Recyclable)
-//							if(((Recyclable) tmp).isRecyclable())
-//								((Recyclable) tmp).recycle();
-//							else continue;
 						if (tmp instanceof AutoCloseable)
 							((AutoCloseable) tmp).close();
 						busyContainer.remove(id);

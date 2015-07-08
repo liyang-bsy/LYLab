@@ -122,5 +122,10 @@ public final class WatchDog extends NonCloneableBaseObject implements Recyclable
 	public void setTolerance(Long tolerance) {
 		this.tolerance = tolerance;
 	}
+
+	@Override
+	public void close() throws Exception {
+		stopWatchDog();
+	}
 	
 }
