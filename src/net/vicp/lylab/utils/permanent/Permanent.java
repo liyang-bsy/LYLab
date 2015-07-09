@@ -9,7 +9,11 @@ import net.vicp.lylab.core.interfaces.Transcode;
 import net.vicp.lylab.utils.FileLineWriter;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.tq.LoneWolf;
-
+/**
+ * Failed
+ * @author Young
+ *
+ */
 public class Permanent extends LoneWolf {
 	private static final long serialVersionUID = -3988291118484641950L;
 	

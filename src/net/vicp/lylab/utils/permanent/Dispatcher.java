@@ -9,7 +9,11 @@ import net.vicp.lylab.utils.internet.ClientLongSocket;
 import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.impl.Message;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
-
+/**
+ * Failed
+ * @author Young
+ *
+ */
 public class Dispatcher extends ClientLongSocket {
 	private static final long serialVersionUID = -5015422983388601708L;
 	

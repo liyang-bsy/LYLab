@@ -21,7 +21,11 @@ import net.vicp.lylab.utils.internet.impl.SimpleHeartBeat;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.LoneWolf;
 //import flexjson.JSONSerializer;
-
+/**
+ * Failed
+ * @author Young
+ *
+ */
 public class Receiver extends LoneWolf implements AutoLifeCycle, DataSource<Transcode> {
 	private static final long serialVersionUID = 6899867945909316326L;
 
