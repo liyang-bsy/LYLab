@@ -4,7 +4,9 @@ import java.util.Timer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.LifeCycle;
+import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 
 /**
  * 	LYPlan is a tiny schedule framework, could be apply to multitude purpose.
@@ -22,12 +24,11 @@ public final class LYPlan extends NonCloneableBaseObject implements LifeCycle {
 	
 	private AtomicBoolean Scheduled = new AtomicBoolean(false);
 	
-	private static LYPlan instance;
+	private static AutoInitialize<LYPlan> instance = new AtomicStrongReference<LYPlan>();
 
 	@Override
 	public void initialize() {
-		System.out.println("LYPlan - Initialization started");
-		instance = this;
+		log.info("LYPlan - Initialization started");
 		getInstance().BeginSchedule();
 	}
 
@@ -35,7 +36,7 @@ public final class LYPlan extends NonCloneableBaseObject implements LifeCycle {
 	public void terminate() {
 		for (TimerJob tj : getInstance().getJobs()) {
 			tj.cancel();
-			System.out.println("LYPlan - Cancel scheduled job: " + tj.getClass().getName());
+			log.info("LYPlan - Cancel scheduled job: " + tj.getClass().getName());
 		}
 		Scheduled.set(false);
 	}
@@ -44,13 +45,12 @@ public final class LYPlan extends NonCloneableBaseObject implements LifeCycle {
 		if (!Scheduled.compareAndSet(false, true))
 			return;
 		Timer timer = new Timer();
-		for(TimerJob bj:this.getJobs())
-		{
-			if(bj.getInterval()!=0)
+		for (TimerJob bj : this.getJobs()) {
+			if (bj.getInterval() != 0)
 				timer.schedule(bj, bj.getStartTime(), bj.getInterval());
 			else
 				timer.schedule(bj, bj.getStartTime());
-			System.out.println("LYPlan - Load scheduled job: " + bj.getClass().getName());
+			log.info("LYPlan - Load scheduled job: " + bj.getClass().getName());
 		}
 	}
 
@@ -59,18 +59,17 @@ public final class LYPlan extends NonCloneableBaseObject implements LifeCycle {
 	 * @param bj	TimeJob you want to start
 	 * @return
 	 */
-	public boolean NewTimeJob(TimerJob bj)
-	{
-		try{
+	public boolean NewTimeJob(TimerJob bj) {
+		try {
 			bj.cancel();
 			Timer timer = new Timer();
-			if(bj.getInterval()!=0)
+			if (bj.getInterval() != 0)
 				timer.schedule(bj, bj.getStartTime(), bj.getInterval());
 			else
 				timer.schedule(bj, bj.getStartTime());
-			System.out.println("LYPlan - Load new schedule job: " + bj.getClass().getName());
-		}
-		catch(Exception e){
+			log.info("LYPlan - Load new schedule job: "
+					+ bj.getClass().getName());
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -86,7 +85,7 @@ public final class LYPlan extends NonCloneableBaseObject implements LifeCycle {
 	}
 
 	public static LYPlan getInstance() {
-		return instance;
+		return instance.get(LYPlan.class);
 	}
 
 }

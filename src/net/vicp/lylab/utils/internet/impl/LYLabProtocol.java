@@ -9,7 +9,8 @@ import net.vicp.lylab.core.interfaces.Transcode;
 import net.vicp.lylab.utils.Utils;
 
 /**
- * A self-defined protocol easy transfer Java Objects through socket.
+ * A self-defined protocol easy transfer Objects through socket.<br>
+ * Data will be transfered as JSON string.
  * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 

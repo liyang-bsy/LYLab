@@ -79,8 +79,6 @@ public class DoActionLong extends ToClientLongSocket {
 				action.setResponse(response);
 				// execute action
 				action.exec();
-				// extract response from action
-//				response = action.getResponse();
 			} while (false);
 		} catch (Exception e) {
 			log.error(Utils.getStringFromException(e));

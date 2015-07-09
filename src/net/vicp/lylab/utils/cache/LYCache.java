@@ -5,8 +5,10 @@ import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.utils.MD5;
+import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 
 /**
  * Local cache system.
@@ -21,13 +23,10 @@ public final class LYCache extends NonCloneableBaseObject implements LifeCycle {
 	private long memoryLimitation = CoreDef.DEFAULT_LYCACHE_MEMORY_LIMITATION;
 	public double threshold = CoreDef.DEFAULT_LYCACHE_THRESHOLD;
 
-	private static LYCache instance;
+	private static AutoInitialize<LYCache> instance = new AtomicStrongReference<LYCache>();
 
 	@Override
 	public synchronized void initialize() {
-		if (instance != null)
-			return;
-		instance = new LYCache();
 		ArrayList<CacheContainer> list = new ArrayList<CacheContainer>();
 		for (int i = 0; i < 16; i++)
 			list.add(new CacheContainer());
@@ -69,7 +68,7 @@ public final class LYCache extends NonCloneableBaseObject implements LifeCycle {
 	}
 
 	public static LYCache getInstance() {
-		return instance;
+		return instance.get(LYCache.class);
 	}
 
 	public static long getEntrySize() {

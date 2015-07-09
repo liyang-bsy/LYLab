@@ -60,6 +60,9 @@ public class ConnectionPool<T> extends TimeoutRecyclePool<T> {
 		safeCheck();
 	}
 
+	/**
+	 * Refill destroyed sockets
+	 */
 	public void recover()
 	{
 		while (maxSize > size()) {

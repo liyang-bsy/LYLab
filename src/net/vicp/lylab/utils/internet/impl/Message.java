@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Generic Message Template
+ * Generic message template
  * 
  * @author Young Lee
  * 

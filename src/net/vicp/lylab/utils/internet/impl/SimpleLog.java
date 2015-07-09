@@ -3,7 +3,7 @@ package net.vicp.lylab.utils.internet.impl;
 import net.vicp.lylab.core.TranscodeObject;
 
 /**
- * Generic Message Template
+ * Simple log data structure
  * 
  * @author Young Lee
  * 

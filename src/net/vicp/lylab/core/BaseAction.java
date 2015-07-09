@@ -3,6 +3,11 @@ package net.vicp.lylab.core;
 import net.vicp.lylab.core.interfaces.Executor;
 import net.vicp.lylab.utils.internet.impl.Message;
 
+/**
+ * BaseAction is a abstract Action, Override exec() to do your service
+ * @author Young
+ *
+ */
 public abstract class BaseAction extends CloneableBaseObject implements Executor {
 	
 	protected Message request;

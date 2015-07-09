@@ -6,8 +6,17 @@ import org.apache.commons.logging.LogFactory;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.utils.tq.Task;
 
+/**
+ * Every thing from BaseObject
+ * 
+ * @author Young
+ *
+ */
 public class BaseObject {
 
+	/**
+	 * Every object has an id
+	 */
 	protected transient long objectId = 0L;
 
 	public long getObjectId() {
@@ -24,6 +33,9 @@ public class BaseObject {
 	 */
 	protected static Log log = LogFactory.getLog(Task.class);
 
+	/**
+	 * Inner lock
+	 */
 	protected static class Lock { };
 	protected Lock lock = new Lock();
 
