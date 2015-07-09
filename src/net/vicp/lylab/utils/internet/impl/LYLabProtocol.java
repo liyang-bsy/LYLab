@@ -1,13 +1,12 @@
 package net.vicp.lylab.utils.internet.impl;
 
-import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.CloneableBaseObject;
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Transcode;
 import net.vicp.lylab.utils.Utils;
-import flexjson.JSONDeserializer;
 
 /**
  * A self-defined protocol easy transfer Java Objects through socket.
@@ -41,7 +40,7 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 	 * Create a raw {@link net.vicp.lylab.core.interfaces.Protocol} object
 	 */
 	public LYLabProtocol() {
-		this(new byte[] { }, new byte[] { });
+//		this(new byte[] { }, new byte[] { });
 	}
 	
 	public LYLabProtocol(TranscodeObject tp) {
@@ -70,7 +69,7 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 		if(getData() == null)
 			throw new LYException("Inner data is null");
 		try {
-			return new JSONDeserializer<Transcode>().use(null, Class.forName(new String(getInfo()))).deserialize(new String(getData(), CoreDef.CHARSET));
+			return (Transcode) Utils.deserialize(Class.forName(new String(getInfo())), new String(getData(), CoreDef.CHARSET));
 		} catch (Exception e) {
 			throw new LYException("Failed to convert data into specific class:" + new String(getInfo()) + ". Maybe the data isn't json?", e);
 		}
@@ -104,8 +103,8 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 	@Override
 	public String toString() {
 		try {
-			String description = "{info=" + new String(getInfo()) + ",length="
-					+ new String(getData(), CoreDef.CHARSET) + "}";
+			String description = "{info=" + new String(getInfo()) + ",length=" + Utils.Bytes4ToInt(length)
+					+ ",data=" + new String(getData(), CoreDef.CHARSET) + "}";
 			return description;
 		} catch (Exception e) {
 			throw new LYException("Can not encode data into " + CoreDef.CHARSET + " string");
@@ -115,10 +114,6 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 	@Override
 	public byte[] getLength() {
 		return length;
-	}
-
-	public void setLength(byte[] length) {
-		this.length = length;
 	}
 
 	@Override
@@ -137,6 +132,7 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 
 	public void setData(byte[] data) {
 		this.data = data;
+		this.length = Utils.IntToBytes4(data.length);
 	}
 	
 }

@@ -10,6 +10,8 @@ import net.vicp.lylab.core.TranscodeObject;
  */
 public class SimpleConfirm extends TranscodeObject {
 	private int code;
+	
+	public SimpleConfirm() {}
 
 	public SimpleConfirm(int code) {
 		this.code = code;

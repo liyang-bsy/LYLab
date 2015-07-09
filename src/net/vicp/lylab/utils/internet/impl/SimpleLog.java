@@ -14,13 +14,14 @@ public class SimpleLog extends TranscodeObject {
 	private String before;
 	private String after;
 
+	public SimpleLog() { }
+	
 	public SimpleLog(String ip, String server, String before, String after)
 	{
 		this.ip = ip;
 		this.server = server;
 		this.before = before;
 		this.after = after;
-
 	}
 
 	public String getIp() {

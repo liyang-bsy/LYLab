@@ -1,14 +1,13 @@
 package net.vicp.lylab.server.aop;
 
 import java.net.ServerSocket;
-import java.util.Arrays;
 
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.server.filter.Filter;
-import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
+import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.ToClientLongSocket;
 import net.vicp.lylab.utils.internet.impl.Message;
@@ -37,15 +36,13 @@ public class DoActionLong extends ToClientLongSocket {
 				if ((tmp = filter.doFilter(this, request)) != null)
 					return tmp;
 		
-		byte[] before = Arrays.copyOf(request, request.length);
-		byte[] after = null;
 		Message msg = null;
 		Message response = new Message();
 		String key = null;
-		AtomicStrongReference<BaseAction> action = new AtomicStrongReference<BaseAction>();
+		BaseAction action = null;
+		Protocol protocol = null;
 		try {
 			do {
-				Protocol protocol = null;
 				try {
 					protocol = ProtocolUtils.fromBytes(request);
 				} catch (Exception e) {
@@ -67,38 +64,30 @@ public class DoActionLong extends ToClientLongSocket {
 					response.setMessage("Key not found");
 					break;
 				}
+				response.setKey(key);
 				// get action related to key
 				try {
-					action.get((Class<BaseAction>) Class.forName(getConfig().getString(key + "Action")));
+					action = new AtomicStrongReference<BaseAction>().get((Class<BaseAction>) Class.forName(getConfig().getString(key + "Action")));
 				} catch (Exception e) { }
-				if (action == null || action.get() == null) {
+				if (action == null) {
 					response.setCode(0x00004);
 					response.setMessage("Action not found");
 					break;
 				}
 				// Initialize action
-				action.get().setRequest(msg);
-				action.get().setResponse(response);
+				action.setRequest(msg);
+				action.setResponse(response);
 				// execute action
-				action.get().exec();
+				action.exec();
 				// extract response from action
-				response = action.get().getResponse();
+//				response = action.getResponse();
 			} while (false);
 		} catch (Exception e) {
 			log.error(Utils.getStringFromException(e));
 		}
-		// save result
-		byte[] result = response.encode().toBytes();
-		after = Arrays.copyOf(result, result.length);
-
-		// do finish filter
-		if (afterChain != null && afterChain.length != 0)
-			for (Filter filter : afterChain)
-				if ((tmp = filter.doFilter(this, request)) != null)
-					return tmp;
 		// to logger
-		log.debug("Access key:" + key  + "\nBefore:" + ProtocolUtils.fromBytes(before) + "\nAfter:" + ProtocolUtils.fromBytes(after));
-		return after;
+		log.debug("Access key:" + key  + "\nBefore:" + msg + "\nAfter:" + response);
+		return response.encode().toBytes();
 	}
 
 	public static Config getConfig() {

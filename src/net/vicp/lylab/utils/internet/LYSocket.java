@@ -98,7 +98,7 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 	
 	public byte[] doRequest(byte[] request) {
 		if(beforeTransmission != null)
-			beforeTransmission.callback();
+			beforeTransmission.callback(request);
 		if(isServer()) throw new LYException("Do request is forbidden to a server socket");
 		byte[] ret = request(request);
 		if(afterTransmission != null)
@@ -108,10 +108,8 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 
 	public byte[] doResponse(byte[] request) {
 		if(beforeTransmission != null)
-			beforeTransmission.callback();
+			beforeTransmission.callback(request);
 		if(!isServer()) throw new LYException("Do response is forbidden to a client socket");
-		if(afterTransmission != null)
-			afterTransmission.callback();
 		byte[] ret = response(request);
 		if(afterTransmission != null)
 			afterTransmission.callback(ret);
@@ -164,10 +162,10 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 				int result = ProtocolUtils.validate(rawProtocol, readBuffer, totalRecv);
 				if (result == -1)
 					throw new LYException("Bad data package");
-				if (result == 0)
-					break;
 				if (result == 1)
 					continue;
+				if (result == 0)
+					break;
 			}
 		}
 		return readBuffer;

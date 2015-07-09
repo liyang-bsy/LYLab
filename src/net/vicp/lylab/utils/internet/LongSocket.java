@@ -87,14 +87,14 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 		if (isServer())
 			throw new LYException("Do request is forbidden to a server socket");
 		if(beforeTransmission != null)
-			beforeTransmission.callback();
+			beforeTransmission.callback(request);
 		byte[] result = null;
 		try {
 			do {
 				TranscodeObject tmp = dataPool.accessOne();
 				if (tmp == null) {
-					await(CoreDef.WAITING_LONG);
 					if(!sendHeartBeat(heartBeat)) return null;
+					await(CoreDef.WAITING_LONG);
 					continue;
 				}
 				signalAll();
@@ -105,10 +105,7 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 			} while (true);
 			if(afterTransmission != null)
 				afterTransmission.callback(result);
-		} catch (Exception e) {
-			//TODO
-			e.printStackTrace();
-		}
+		} catch (Exception e) { }
 		return result;
 	}
 

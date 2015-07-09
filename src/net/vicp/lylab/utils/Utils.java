@@ -11,13 +11,17 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.lang3.time.DateFormatUtils;
-
-import flexjson.JSONDeserializer;
-import flexjson.JSONSerializer;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.AutoInitialize;
+import net.vicp.lylab.utils.atomic.AtomicStrongReference;
+
+import org.apache.commons.lang3.time.DateFormatUtils;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Utils extends NonCloneableBaseObject {
 
@@ -247,35 +251,80 @@ public class Utils extends NonCloneableBaseObject {
 			return "bad getErrorInfoFromException";
 		}
 	}
-	
-	public static String toJson(Object obj, String ... excludeRule)
+
+	private static AutoInitialize<JsonFactory> jsonFactory = new AtomicStrongReference<JsonFactory>();
+	private static AutoInitialize<ObjectMapper> mapper = new AtomicStrongReference<ObjectMapper>();
+
+	public static String serialize(Object obj)
 	{
 		if(obj == null)
 			throw new LYException("Parameter obj is null");
-		return new JSONSerializer().exclude("*.class", "*.objectId").exclude(excludeRule).deepSerialize(obj);
+		String str = null;
+		try {
+			StringWriter sw = new StringWriter();
+			JsonGenerator generator = jsonFactory.get(JsonFactory.class).createGenerator(sw);
+			mapper.get(ObjectMapper.class).writeValue(generator, obj);
+			str = sw.toString();
+			generator.close();
+		} catch (Exception e) { throw new LYException("Serialize failed", e); }
+	    
+		return str;
 	}
-
-	public static Object toObject(String json, String className)
+	
+	public static Object deserialize(Class<?> instanceClass, String json)
+	{
+		if(json == null)
+			throw new LYException("Parameter json is null");
+		if(instanceClass == null)
+			throw new LYException("Parameter instanceClass is null");
+		try {
+			return mapper.get(ObjectMapper.class).readValue(json, instanceClass);  
+		} catch (Exception e) {
+			throw new LYException("Can not deserialize follow json into " + instanceClass.getName() + "\n" + json, e);
+		}
+	}
+	
+	public static Object deserialize(String className, String json)
 	{
 		if(json == null)
 			throw new LYException("Parameter json is null");
 		if(className == null)
 			throw new LYException("Parameter className is null");
 		try {
-			return new JSONDeserializer<Object>().use(null, Class.forName(className)).deserialize(json);
+			return mapper.get(ObjectMapper.class).readValue(json, Class.forName(className));  
 		} catch (Exception e) {
-			throw new LYException("Can not found class name[" + className + "]", e);
+			throw new LYException("Can not deserialize follow json into " + className + "\n" + json, e);
 		}
 	}
 
-	public Object toObject(String json, Class<?> instanceClass)
-	{
-		if(json == null)
-			throw new LYException("Parameter json is null");
-		if(instanceClass == null)
-			throw new LYException("Parameter instanceClass is null");
-		return new JSONDeserializer<Object>().use(null, instanceClass).deserialize(json);
-	}
+//	public static String toJson(Object obj, String ... excludeRule)
+//	{
+//		if(obj == null)
+//			throw new LYException("Parameter obj is null");
+//		return new JSONSerializer().exclude("*.class", "*.objectId").exclude(excludeRule).deepSerialize(obj);
+//	}
+//
+//	public static Object toObject(String json, String className)
+//	{
+//		if(json == null)
+//			throw new LYException("Parameter json is null");
+//		if(className == null)
+//			throw new LYException("Parameter className is null");
+//		try {
+//			return new JSONDeserializer<Object>().use(null, Class.forName(className)).deserialize(json);
+//		} catch (Exception e) {
+//			throw new LYException("Can not found class name[" + className + "]", e);
+//		}
+//	}
+//
+//	public Object toObject(String json, Class<?> instanceClass)
+//	{
+//		if(json == null)
+//			throw new LYException("Parameter json is null");
+//		if(instanceClass == null)
+//			throw new LYException("Parameter instanceClass is null");
+//		return new JSONDeserializer<Object>().use(null, instanceClass).deserialize(json);
+//	}
 
 	/**
 	 * 数字转byte

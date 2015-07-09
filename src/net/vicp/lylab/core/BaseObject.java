@@ -8,7 +8,7 @@ import net.vicp.lylab.utils.tq.Task;
 
 public class BaseObject {
 
-	protected long objectId = 0L;
+	protected transient long objectId = 0L;
 
 	public long getObjectId() {
 		return objectId;

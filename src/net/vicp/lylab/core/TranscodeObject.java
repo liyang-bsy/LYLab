@@ -5,7 +5,6 @@ import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Transcode;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
-import flexjson.JSONDeserializer;
 
 /**
  * Extends TranscodeProtocol means it could be encoding into protocol.
@@ -22,16 +21,15 @@ public abstract class TranscodeObject extends CloneableBaseObject implements Tra
 	public Protocol encode()
 	{
 		try {
-			return new LYLabProtocol(this.getClass(), Utils.toJson(this, exclude()).getBytes(CoreDef.CHARSET));
-		} catch (Exception e) { }
-		return null;
+			return new LYLabProtocol(this.getClass(), Utils.serialize(this).getBytes(CoreDef.CHARSET));
+		} catch (Exception e) { throw new LYException("Encode failed", e); }
 	}
 
-	@Override
-	public String[] exclude(String ... excludeRule)
-	{
-		return new String[] { };
-	}
+//	@Override
+//	public String[] exclude(String ... excludeRule)
+//	{
+//		return new String[] { };
+//	}
 
 	@Override
 	public Object decode(Protocol protocol)
@@ -43,7 +41,9 @@ public abstract class TranscodeObject extends CloneableBaseObject implements Tra
 		if(protocol.getData() == null)
 			throw new LYException("Inner data is null");
 		try {
-			return new JSONDeserializer<Object>().use(null, Class.forName(new String(protocol.getInfo()))).deserialize(new String(protocol.getData(), CoreDef.CHARSET));
+			return Utils.deserialize(Class.forName(new String(protocol.getInfo()))
+					, new String(protocol.getData(), CoreDef.CHARSET));  
+//			return new JSONDeserializer<Object>().use(null, Class.forName(new String(protocol.getInfo()))).deserialize(new String(protocol.getData(), CoreDef.CHARSET));
 		} catch (Exception e) {
 			throw new LYException("Failed to convert data into specific class:" + new String(protocol.getInfo()) + ". Maybe the data isn't json?", e);
 		}

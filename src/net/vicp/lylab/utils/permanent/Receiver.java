@@ -20,7 +20,7 @@ import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.internet.impl.SimpleHeartBeat;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.LoneWolf;
-import flexjson.JSONSerializer;
+//import flexjson.JSONSerializer;
 
 public class Receiver extends LoneWolf implements AutoLifeCycle, DataSource<Transcode> {
 	private static final long serialVersionUID = 6899867945909316326L;
@@ -97,14 +97,15 @@ public class Receiver extends LoneWolf implements AutoLifeCycle, DataSource<Tran
 		if(!file.exists()) return;
 		List<String> rawDataList = Utils.readFileByLines(fileName);
 		if(rawDataList.isEmpty()) return;
-		for (String item : rawDataList) {
-			Protocol protocol = null;
+		for (String rawData : rawDataList) {
 			try {
-				protocol = ProtocolUtils.fromBytes(item.getBytes(CoreDef.CHARSET));
+				//TODO
+//				item = 
+				Utils.serialize(rawData);
+//				container.add(protocol.toObject());
 			} catch (Exception e) {
 				throw new LYException("Unable to decode data");
 			}
-			container.add(protocol.toObject());
 		}
 
 		if(savePastLogs)
@@ -203,7 +204,7 @@ public class Receiver extends LoneWolf implements AutoLifeCycle, DataSource<Tran
 				FileOutputStream fos = new FileOutputStream(p);
 				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos, CoreDef.CHARSET));
 				for(Transcode item:container)
-					writer.append(new JSONSerializer().serialize(item));
+					writer.append(Utils.serialize(item));
 				fos.close();
 			}
 		} catch (Exception e) {
