@@ -146,10 +146,11 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 		if (in != null) {
 			int totalRecv = 0, getLen = 0;
 			while (true) {
+				getLen = 0;
 				try {
-					if(getLen == readBuffer.length)
+					if(totalRecv == readBuffer.length)
 						readBuffer = Arrays.copyOf(readBuffer, readBuffer.length*10);
-					getLen = in.read(readBuffer, getLen, CoreDef.SOCKET_MAX_BUFFER - getLen);
+					getLen = in.read(readBuffer, totalRecv, readBuffer.length - totalRecv);
 				} catch (Exception e) {
 					throw new LYException(e);
 				}
