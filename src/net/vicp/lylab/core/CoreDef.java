@@ -75,7 +75,7 @@ public class CoreDef {
 	public static final long INTERVAL_SHORT = SECOND/TWO;				// half second
 	public static final long INTERVAL_LONG = FIVE*SECOND;				// 5 second
 	
-	public static final long WAITING_TOLERANCE = FIVE*SECOND;			// 5 min
+	public static final long WAITING_TOLERANCE = TWO*MINUTE;			// 5 min
 	public static final long DEFAULT_TTIMEOUT = HOUR;					// 1 hour
 	public static final long DEFAULT_TASK_TTIMEOUT = TEN*MINUTE;		// 10 minutes
 	
@@ -83,8 +83,8 @@ public class CoreDef {
 
 	public static final int DEFAULT_PERMANENT_MAX_SIZE = HUNDRED*THOUSAND;
 	public static final int DEFAULT_PERMANENT_TICK = SIX*TEN;
-	public static final long DEFAULT_TERMINATE_TIMEOUT = FIVE*SIX*TEN*SECOND;
-	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = THREE*SECOND;
+	public static final long DEFAULT_TERMINATE_TIMEOUT = FIVE*MINUTE;
+	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = ONE*MINUTE;
 	
 	public static final long ONE_TIME_TASK = ZERO;
 	

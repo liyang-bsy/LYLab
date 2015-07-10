@@ -44,7 +44,7 @@ public class DoActionLong extends ToClientLongSocket {
 		try {
 			do {
 				try {
-					protocol = ProtocolUtils.fromBytes(request);
+					protocol = ProtocolUtils.fromBytes(bufferProtocol, request);
 				} catch (Exception e) {
 					response.setCode(1);
 					response.setMessage("Protocol not found");

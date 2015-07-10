@@ -138,7 +138,10 @@ public final class ProtocolUtils extends BaseObject {
 	 */
 	public static Protocol fromBytes(Protocol protocol, byte[] bytes) {
 		if (bytes == null) return null;
-		if (protocol == null) return null;
+		if (protocol == null) {
+			Class<Protocol> protocolClass = pairToProtocol(bytes);
+			protocol = rawProtocol(protocolClass);
+		}
 //		byte[] temp = Arrays.copyOfRange(bytes, 0, protocol.getHead().length);
 		if (!checkHead(protocol, bytes))
 			return null;
