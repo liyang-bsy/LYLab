@@ -8,7 +8,7 @@ public interface Protocol extends Transcode {
 	public byte[] getSplitSignal();
 
 	public byte[] toBytes();
-	public Transcode toObject();
+	public Object toObject();
 
 	public byte[] getLength();
 	public byte[] getInfo();

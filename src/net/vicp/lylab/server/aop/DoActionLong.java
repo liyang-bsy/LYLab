@@ -3,11 +3,13 @@ package net.vicp.lylab.server.aop;
 import java.net.ServerSocket;
 
 import net.vicp.lylab.core.BaseAction;
+import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.config.Config;
+import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.ToClientLongSocket;
 import net.vicp.lylab.utils.internet.impl.Message;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
@@ -28,6 +30,7 @@ public class DoActionLong extends ToClientLongSocket {
 	@SuppressWarnings("unchecked")
 	@Override
 	public byte[] response(byte[] request) {
+		if(getConfig() == null) throw new LYException("Parameter config is null");
 		byte[] tmp = null;
 		// do start filter
 		if (startChain != null && startChain.length != 0)
@@ -40,17 +43,22 @@ public class DoActionLong extends ToClientLongSocket {
 		String key = null;
 		BaseAction action = null;
 		Protocol protocol = null;
+		Object obj = null;
 		try {
 			do {
 				try {
 					protocol = ProtocolUtils.fromBytes(bufferProtocol, request);
 				} catch (Exception e) {
+					protocol = null;
 					break;
 				}
 				try {
-					msg = (Message) protocol.toObject();
+					obj = protocol.toObject();
+					if(obj instanceof HeartBeat)
+						return protocol.toBytes();
+					msg = (Message) obj;
 				} catch (Exception e) {
-					response.setCode(0x00002);
+					response.setCode(0x00001);
 					response.setMessage("Message not found");
 					log.debug(Utils.getStringFromException(e));
 					break;
@@ -58,7 +66,7 @@ public class DoActionLong extends ToClientLongSocket {
 				// gain key from request
 				key = msg.getKey();
 				if (StringUtils.isBlank(key)) {
-					response.setCode(0x00003);
+					response.setCode(0x00002);
 					response.setMessage("Key not found");
 					break;
 				}
@@ -68,11 +76,12 @@ public class DoActionLong extends ToClientLongSocket {
 					action = new AtomicStrongReference<BaseAction>().get((Class<BaseAction>) Class.forName(getConfig().getString(key + "Action")));
 				} catch (Exception e) { }
 				if (action == null) {
-					response.setCode(0x00004);
+					response.setCode(0x00003);
 					response.setMessage("Action not found");
 					break;
 				}
 				// Initialize action
+				action.setSocket(this);
 				action.setRequest(msg);
 				action.setResponse(response);
 				// execute action

@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
+import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
@@ -22,7 +23,7 @@ import net.vicp.lylab.utils.config.Config;
  * @version 1.0.0
  * 
  */
-public final class LYTimer extends NonCloneableBaseObject implements LifeCycle {
+public final class LYTimer extends NonCloneableBaseObject implements LifeCycle, InitializeConfig {
 	
 	private static Config config;
 	private static List<TimerJob> jobs = new ArrayList<TimerJob>();
@@ -36,12 +37,13 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle {
 		synchronized (lock) {
 			if (!Scheduled.compareAndSet(false, true))
 				return;
-			for(String key:config.keySet())
-			{
+			for (String key : config.keySet()) {
 				try {
-					jobs.add((TimerJob) Class.forName(config.getString(key)).newInstance());
+					jobs.add((TimerJob) Class.forName(config.getString(key))
+							.newInstance());
 				} catch (Exception e) {
-					log.error("Failed to create timejob for key[" + key + "]" + Utils.getStringFromException(e));
+					log.error("Failed to create timejob for key[" + key + "]"
+							+ Utils.getStringFromException(e));
 				}
 			}
 			for (TimerJob bj : getJobs()) {
@@ -66,6 +68,11 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle {
 		}
 	}
 
+	@Override
+	public void obtainConfig(Config config) {
+		setConfig(config);
+	}
+	
 	/**
 	 * TimeJob will be cancelled before start(if possible).
 	 * @param bj	TimeJob you want to start

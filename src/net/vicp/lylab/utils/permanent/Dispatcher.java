@@ -6,7 +6,6 @@ import net.vicp.lylab.core.interfaces.DataSource;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Transcode;
 import net.vicp.lylab.utils.internet.ClientLongSocket;
-import net.vicp.lylab.utils.internet.impl.Message;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 /**
  * Failed
@@ -55,13 +54,13 @@ public class Dispatcher extends ClientLongSocket {
 			Protocol p = ProtocolUtils.fromBytes(ret);
 			if(p != null)
 			{
-				Transcode item = p.toObject();
-				if(item instanceof Message)
-				{
-					if(((Message) item).getCode() == 0)
-						// finally it succeed...
-						return ret;
-				}
+//				Transcode item = p.toObject();
+//				if(item instanceof Message)
+//				{
+//					if(((Message) item).getCode() == 0)
+//						// finally it succeed...
+//						return ret;
+//				}
 			}
 		}
 		return null;

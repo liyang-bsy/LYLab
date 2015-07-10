@@ -36,8 +36,7 @@ public final class LYCache extends NonCloneableBaseObject implements LifeCycle {
 	}
 
 	@Override
-	public synchronized void terminate() {
-	}
+	public synchronized void terminate() { }
 
 	public static void setMemoryControl(long memoryLimitation, double threshold) {
 		if (threshold > 1.0D)

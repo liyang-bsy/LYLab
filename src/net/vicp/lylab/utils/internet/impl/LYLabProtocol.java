@@ -4,7 +4,6 @@ import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.interfaces.Transcode;
 import net.vicp.lylab.utils.Utils;
 
 /**
@@ -88,14 +87,14 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 	}
 
 	@Override
-	public Transcode toObject()
+	public Object toObject()
 	{
 		if(getInfo() == null)
 			throw new LYException("Inner info is null");
 		if(getData() == null)
 			throw new LYException("Inner data is null");
 		try {
-			return (Transcode) Utils.deserialize(Class.forName(new String(getInfo())), new String(getData(), CoreDef.CHARSET));
+			return Utils.deserialize(Class.forName(new String(getInfo())), new String(getData(), CoreDef.CHARSET));
 		} catch (Exception e) {
 			throw new LYException("Failed to convert data into specific class:" + new String(getInfo()) + ". Maybe the data isn't json?", e);
 		}

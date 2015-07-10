@@ -16,7 +16,7 @@ public class Message extends SimpleConfirm {
 	private Integer total;
 
 	public Message() {
-		super(1);
+		super(-1);
 		key = "Invalid";
 		message = "Unknow";
 		body = new HashMap<String, Object>();
@@ -53,6 +53,12 @@ public class Message extends SimpleConfirm {
 
 	public void setTotal(Integer total) {
 		this.total = total;
+	}
+	
+	public void success()
+	{
+		this.setCode(0);
+		this.setMessage("ok");
 	}
 	
 }

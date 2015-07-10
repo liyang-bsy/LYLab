@@ -43,7 +43,7 @@ public final class TimeoutController extends LoneWolf implements LifeCycle {
 	public void terminate() {
 		this.callStop();
 	}
-
+	
 	/**
 	 * TimeoutController is always a daemon
 	 */

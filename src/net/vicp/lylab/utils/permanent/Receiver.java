@@ -11,13 +11,11 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.AutoLifeCycle;
 import net.vicp.lylab.core.interfaces.DataSource;
-import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Transcode;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
-import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.LoneWolf;
 //import flexjson.JSONSerializer;
 /**
@@ -135,14 +133,14 @@ public class Receiver extends LoneWolf implements AutoLifeCycle, DataSource<Tran
 		File file = new File(savedFileName);
 		if(file.exists())
 		{
-			List<String> list = Utils.readFileByLines(savedFileName);
-			for(String item:list)
-				try {
-					Protocol protocol = ProtocolUtils.fromBytes(item.getBytes(CoreDef.CHARSET));
-					container.add(protocol.toObject());
-				} catch (Exception e) {
-					log.error("Unable to decode data:\n" + Utils.getStringFromException(e));
-				}
+//			List<String> list = Utils.readFileByLines(savedFileName);
+//			for(String item:list)
+//				try {
+//					Protocol protocol = ProtocolUtils.fromBytes(item.getBytes(CoreDef.CHARSET));
+//					container.add(protocol.toObject());
+//				} catch (Exception e) {
+//					log.error("Unable to decode data:\n" + Utils.getStringFromException(e));
+//				}
 			// 一次读完后立刻删掉，确保这组数据不会被再次使用
 			Utils.deleteFile(savedFileName);
 		}

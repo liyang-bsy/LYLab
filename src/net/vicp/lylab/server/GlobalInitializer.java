@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
@@ -18,17 +19,14 @@ import net.vicp.lylab.utils.config.TreeConfig;
  */
 public final class GlobalInitializer extends NonCloneableBaseObject implements LifeCycle {
 	private static Config config;
+	private static TreeConfig rootConfig;
 	private static Map<String, Object> singletonManager;
 	private static AtomicBoolean inited = new AtomicBoolean(false);
 	private static GlobalInitializer instance = null;
 
-	private GlobalInitializer(String configFile) {
-		config = new TreeConfig(configFile);
-		initialize();
-	}
-
-	private GlobalInitializer(Config config) {
+	private GlobalInitializer(Config config, TreeConfig rootConfig) {
 		GlobalInitializer.config = config;
+		GlobalInitializer.rootConfig = rootConfig;
 		initialize();
 	}
 
@@ -44,6 +42,9 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 			try {
 				Class<?> instanceClass = Class.forName(config.getString(key));
 				tmp = instanceClass.newInstance();
+				if (rootConfig != null && tmp instanceof InitializeConfig) {
+					((InitializeConfig) tmp).obtainConfig(rootConfig.getConfig(key));
+				}
 				if (tmp instanceof LifeCycle) {
 					log.info(tmp.getClass().getSimpleName() + " - Initialized");
 					((LifeCycle) tmp).initialize();
@@ -68,33 +69,28 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 			}
 		}
 	}
-	
-	private Object _get(String key) {
-		return singletonManager.get(key);
-	}
 
 	public static Object get(String key) {
-		return getInstance()._get(key);
+		return singletonManager.get(key);
 	}
 	
-	public static GlobalInitializer getInstance() {
+	public synchronized static void createInstance(Config config, TreeConfig rootConfig) {
 		if(instance == null)
-			createInstance(config);
-		return instance;
+			instance = new GlobalInitializer(config, rootConfig);
 	}
-
-	public synchronized static void createInstance(Config config) {
-		if(instance == null)
-			instance = new GlobalInitializer(config);
-	}
-
-	public synchronized static void createInstance(String configFile) {
-		if(instance == null)
-			instance = new GlobalInitializer(configFile);
+	
+	public synchronized static void destroyInstance() {
+		if(instance != null)
+			instance.terminate();
+		instance = null;
 	}
 
 	public static void setConfig(Config config) {
 		GlobalInitializer.config = config;
+	}
+
+	public static void setRootConfig(TreeConfig rootConfig) {
+		GlobalInitializer.rootConfig = rootConfig;
 	}
 
 }

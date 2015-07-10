@@ -5,14 +5,14 @@ import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
-
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
+
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 
 /**
  * 	LYPlan is a tiny schedule framework, could be apply to multitude purpose.
@@ -55,7 +55,7 @@ public final class LYPlan extends NonCloneableBaseObject implements ApplicationL
 	}
 	
 	public void BeginSchedule() {
-		synchronized (lock) {
+		synchronized (lock) {	
 			if (!Scheduled.compareAndSet(false, true))
 				return;
 			for (TimerJob bj : this.getJobs()) {

@@ -1,6 +1,7 @@
 package net.vicp.lylab.core;
 
 import net.vicp.lylab.core.interfaces.Executor;
+import net.vicp.lylab.utils.internet.LYSocket;
 import net.vicp.lylab.utils.internet.impl.Message;
 
 /**
@@ -10,6 +11,7 @@ import net.vicp.lylab.utils.internet.impl.Message;
  */
 public abstract class BaseAction extends CloneableBaseObject implements Executor {
 	
+	protected LYSocket socket;
 	protected Message request;
 	protected Message response;
 
@@ -40,6 +42,10 @@ public abstract class BaseAction extends CloneableBaseObject implements Executor
 
 	public void setResponse(Message response) {
 		this.response = response;
+	}
+
+	public void setSocket(LYSocket socket) {
+		this.socket = socket;
 	}
 
 }

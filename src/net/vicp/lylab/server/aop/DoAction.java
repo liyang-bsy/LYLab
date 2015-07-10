@@ -45,12 +45,13 @@ public class DoAction extends ToClientSocket {
 				try {
 					protocol = ProtocolUtils.fromBytes(bufferProtocol, request);
 				} catch (Exception e) {
+					protocol = null;
 					break;
 				}
 				try {
 					msg = (Message) protocol.toObject();
 				} catch (Exception e) {
-					response.setCode(0x00002);
+					response.setCode(0x00001);
 					response.setMessage("Message not found");
 					log.debug(Utils.getStringFromException(e));
 					break;
@@ -58,7 +59,7 @@ public class DoAction extends ToClientSocket {
 				// gain key from request
 				key = msg.getKey();
 				if (StringUtils.isBlank(key)) {
-					response.setCode(0x00003);
+					response.setCode(0x00002);
 					response.setMessage("Key not found");
 					break;
 				}
@@ -68,11 +69,12 @@ public class DoAction extends ToClientSocket {
 					action = new AtomicStrongReference<BaseAction>().get((Class<BaseAction>) Class.forName(getConfig().getString(key + "Action")));
 				} catch (Exception e) { }
 				if (action == null) {
-					response.setCode(0x00004);
+					response.setCode(0x00003);
 					response.setMessage("Action not found");
 					break;
 				}
 				// Initialize action
+				action.setSocket(this);
 				action.setRequest(msg);
 				action.setResponse(response);
 				// execute action
