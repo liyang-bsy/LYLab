@@ -46,6 +46,7 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 	protected int port;
 
 	private byte[] readBuffer = new byte[CoreDef.SOCKET_MAX_BUFFER];
+	private int totalRecv = 0;
 	
 	public LYSocket(ServerSocket serverSocket) {
 		if(serverSocket == null) throw new LYException("Parameter serverSocket is null");
@@ -142,7 +143,7 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 		if(isClosed()) throw new LYException("Connection closed");
 		Protocol rawProtocol = null;
 		if (in != null) {
-			int totalRecv = 0, getLen = 0;
+			int getLen = 0;
 			while (true) {
 				getLen = 0;
 				try {
@@ -287,6 +288,14 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 
 	public void setAfterTransmission(Callback afterTransmission) {
 		this.afterTransmission = afterTransmission;
+	}
+
+	public byte[] getReadBuffer() {
+		return readBuffer;
+	}
+
+	public int getTotalRecv() {
+		return totalRecv;
 	}
 
 }

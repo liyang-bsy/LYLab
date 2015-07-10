@@ -2,6 +2,8 @@ package net.vicp.lylab.core.interfaces;
 
 public interface Protocol {
 
+	public void setAll(byte[] info, byte[] data);
+	
 	public byte[] getHead();
 	public byte[] getSplitSignal();
 

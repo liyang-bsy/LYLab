@@ -63,6 +63,13 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 	}
 
 	@Override
+	public void setAll(byte[] info, byte[] data) {
+		this.info = info;
+		this.data = data;
+		this.length = Utils.IntToBytes4(data.length);
+	}
+
+	@Override
 	public Transcode toObject()
 	{
 		if(getInfo() == null)
