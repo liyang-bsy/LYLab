@@ -1,5 +1,7 @@
 package net.vicp.lylab.core;
 
+import java.io.File;
+
 import net.vicp.lylab.utils.config.Config;
 
 /**
@@ -18,6 +20,12 @@ public class CoreDef {
 	public static Config config;
 	public static Object[] dock = new Object[16];
 	public static String CHARSET = "UTF-8";
+	
+	public static final String rootPath;
+	static {
+		File file = new File("");
+		rootPath = file.getAbsolutePath();
+	}
 
 	public static final double DOUBLE = 1.0;
 	

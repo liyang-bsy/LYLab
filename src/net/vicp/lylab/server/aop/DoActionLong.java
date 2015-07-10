@@ -50,7 +50,7 @@ public class DoActionLong extends ToClientLongSocket {
 				try {
 					msg = (Message) protocol.toObject();
 				} catch (Exception e) {
-					response.setCode(0x00001);
+					response.setCode(0x00002);
 					response.setMessage("Message not found");
 					log.debug(Utils.getStringFromException(e));
 					break;
@@ -58,7 +58,7 @@ public class DoActionLong extends ToClientLongSocket {
 				// gain key from request
 				key = msg.getKey();
 				if (StringUtils.isBlank(key)) {
-					response.setCode(0x00002);
+					response.setCode(0x00003);
 					response.setMessage("Key not found");
 					break;
 				}
@@ -68,7 +68,7 @@ public class DoActionLong extends ToClientLongSocket {
 					action = new AtomicStrongReference<BaseAction>().get((Class<BaseAction>) Class.forName(getConfig().getString(key + "Action")));
 				} catch (Exception e) { }
 				if (action == null) {
-					response.setCode(0x00003);
+					response.setCode(0x00004);
 					response.setMessage("Action not found");
 					break;
 				}
@@ -76,7 +76,11 @@ public class DoActionLong extends ToClientLongSocket {
 				action.setRequest(msg);
 				action.setResponse(response);
 				// execute action
-				action.exec();
+				try {
+					action.exec();
+				} catch (Throwable t) {
+					log.error(Utils.getStringFromThrowable(t));
+				}
 			} while (false);
 		} catch (Exception e) {
 			log.error(Utils.getStringFromException(e));

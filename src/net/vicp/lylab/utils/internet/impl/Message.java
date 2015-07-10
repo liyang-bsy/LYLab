@@ -16,7 +16,7 @@ public class Message extends SimpleConfirm {
 	private Integer total;
 
 	public Message() {
-		super(-1);
+		super(1);
 		key = "Invalid";
 		message = "Unknow";
 		body = new HashMap<String, Object>();

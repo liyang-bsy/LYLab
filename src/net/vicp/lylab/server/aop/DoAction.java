@@ -34,7 +34,7 @@ public class DoAction extends ToClientSocket {
 			for (Filter filter : startChain)
 				if ((tmp = filter.doFilter(this, request)) != null)
 					return tmp;
-		
+
 		Message msg = null;
 		Message response = new Message();
 		String key = null;
@@ -45,13 +45,12 @@ public class DoAction extends ToClientSocket {
 				try {
 					protocol = ProtocolUtils.fromBytes(bufferProtocol, request);
 				} catch (Exception e) {
-					response.setCode(1);
-					response.setMessage("Protocol not found");
+					break;
 				}
 				try {
 					msg = (Message) protocol.toObject();
 				} catch (Exception e) {
-					response.setCode(2);
+					response.setCode(0x00002);
 					response.setMessage("Message not found");
 					log.debug(Utils.getStringFromException(e));
 					break;
@@ -77,7 +76,11 @@ public class DoAction extends ToClientSocket {
 				action.setRequest(msg);
 				action.setResponse(response);
 				// execute action
-				action.exec();
+				try {
+					action.exec();
+				} catch (Throwable t) {
+					log.error(Utils.getStringFromThrowable(t));
+				}
 			} while (false);
 		} catch (Exception e) {
 			log.error(Utils.getStringFromException(e));
