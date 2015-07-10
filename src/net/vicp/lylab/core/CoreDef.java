@@ -17,7 +17,7 @@ public class CoreDef {
 
 	public static Config config;
 	public static Object[] dock = new Object[16];
-	public static final String CHARSET = "UTF-8";
+	public static String CHARSET = "UTF-8";
 
 	public static final double DOUBLE = 1.0;
 	

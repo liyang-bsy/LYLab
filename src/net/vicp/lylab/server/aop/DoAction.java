@@ -84,7 +84,7 @@ public class DoAction extends ToClientSocket {
 		}
 		// to logger
 		log.debug("Access key:" + key  + "\nBefore:" + msg + "\nAfter:" + response);
-		return response.encode().toBytes();
+		return protocol == null ? null : protocol.encode(response).toBytes();
 	}
 
 	public static Config getConfig() {

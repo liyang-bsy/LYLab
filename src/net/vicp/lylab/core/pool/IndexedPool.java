@@ -37,9 +37,6 @@ public class IndexedPool<T> extends AbstractPool<T> {
 	public Long add(T t) {
 		synchronized (lock) {
 			safeCheck();
-			// TODO judge or not?
-//			if (keyContainer.size() >= maxSize)
-//				return null;
 			Long id = null;
 			id = addToContainer(t);
 			if(id != null && id >= 0)

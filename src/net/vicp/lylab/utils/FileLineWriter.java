@@ -4,11 +4,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.List;
 
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.Transcode;
 
-public final class FileLineWriter extends NonCloneableBaseObject {
+public final class FileLineWriter<T> extends NonCloneableBaseObject {
 	/**
 	 * 路径
 	 */
@@ -39,14 +39,14 @@ public final class FileLineWriter extends NonCloneableBaseObject {
 		Utils.createDirectory(path);
 	}
 
-	public void writeLine(List<Transcode> lines) {
+	public void writeLine(List<T> lines) {
 		synchronized (lock) {
 			try {
-				for (Transcode tmp : lines)
+				for (T tmp : lines)
 				{
 					if(isOpenFile() == false)
 						open();
-					fileOut.write(tmp.encode().toBytes());
+					fileOut.write(Utils.serialize(tmp).getBytes(CoreDef.CHARSET));
 					fileOut.write("\r\n".getBytes());
 					outCount++;
 					if (maxLine <= outCount)
@@ -58,12 +58,28 @@ public final class FileLineWriter extends NonCloneableBaseObject {
 		}
 	}
 
+	public void writeLine(T data) {
+		synchronized (lock) {
+			try {
+				if(isOpenFile() == false)
+					open();
+				fileOut.write(Utils.serialize(data).getBytes(CoreDef.CHARSET));
+				fileOut.write("\r\n".getBytes());
+				outCount++;
+				if (maxLine <= outCount)
+					close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 	public void writeLine(String line) {
 		synchronized (lock) {
 			try {
 				if(isOpenFile() == false)
 					open();
-				fileOut.write((line + "\r\n").getBytes("utf-8"));
+				fileOut.write((line + "\r\n").getBytes(CoreDef.CHARSET));
 				outCount++;
 				if (maxLine <= outCount)
 					close();

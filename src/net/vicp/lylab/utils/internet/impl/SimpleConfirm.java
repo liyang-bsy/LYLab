@@ -1,6 +1,6 @@
 package net.vicp.lylab.utils.internet.impl;
 
-import net.vicp.lylab.core.TranscodeObject;
+import net.vicp.lylab.core.BaseObject;
 
 /**
  * Simple confirm message
@@ -8,7 +8,7 @@ import net.vicp.lylab.core.TranscodeObject;
  * @author Young Lee
  * 
  */
-public class SimpleConfirm extends TranscodeObject {
+public class SimpleConfirm extends BaseObject {
 	private int code;
 	
 	public SimpleConfirm() {}

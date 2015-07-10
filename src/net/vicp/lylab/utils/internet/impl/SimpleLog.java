@@ -1,6 +1,6 @@
 package net.vicp.lylab.utils.internet.impl;
 
-import net.vicp.lylab.core.TranscodeObject;
+import net.vicp.lylab.core.BaseObject;
 
 /**
  * Simple log data structure
@@ -8,7 +8,7 @@ import net.vicp.lylab.core.TranscodeObject;
  * @author Young Lee
  * 
  */
-public class SimpleLog extends TranscodeObject {
+public class SimpleLog extends BaseObject {
 	private String ip;
 	private String server;
 	private String before;

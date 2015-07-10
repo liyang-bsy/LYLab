@@ -1,6 +1,6 @@
 package net.vicp.lylab.core.interfaces;
 
-public interface Protocol {
+public interface Protocol extends Transcode {
 
 	public void setAll(byte[] info, byte[] data);
 	

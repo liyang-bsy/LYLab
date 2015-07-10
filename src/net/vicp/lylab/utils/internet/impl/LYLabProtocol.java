@@ -2,7 +2,6 @@ package net.vicp.lylab.utils.internet.impl;
 
 import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Transcode;
@@ -44,10 +43,6 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 //		this(new byte[] { }, new byte[] { });
 	}
 	
-	public LYLabProtocol(TranscodeObject tp) {
-		this(tp.encode());
-	}
-
 	public LYLabProtocol(Protocol protocol) {
 		this(protocol.getInfo(), protocol.getData());
 	}
@@ -62,6 +57,29 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 		this.length = Utils.IntToBytes4(data.length);
 	}
 
+	@Override
+	public Protocol encode(Object obj)
+	{
+		try {
+			return new LYLabProtocol(obj.getClass(), Utils.serialize(obj).getBytes(CoreDef.CHARSET));
+		} catch (Exception e) { throw new LYException("Encode failed", e); }
+	}
+
+	@Override
+	public Object decode()
+	{
+		if(getInfo() == null)
+			throw new LYException("Inner info is null");
+		if(getData() == null)
+			throw new LYException("Inner data is null");
+		try {
+			return Utils.deserialize(Class.forName(new String(getInfo()))
+					, new String(getData(), CoreDef.CHARSET));  
+		} catch (Exception e) {
+			throw new LYException("Failed to convert data into specific class:" + new String(getInfo()) + ". Maybe the data isn't json?", e);
+		}
+	}
+	
 	@Override
 	public void setAll(byte[] info, byte[] data) {
 		this.info = info;

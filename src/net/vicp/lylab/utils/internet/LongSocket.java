@@ -3,9 +3,7 @@ package net.vicp.lylab.utils.internet;
 import java.net.ServerSocket;
 
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.TranscodeObject;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.HeartBeatSender;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 
@@ -18,17 +16,17 @@ import net.vicp.lylab.utils.Utils;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class LongSocket extends LYSocket implements HeartBeatSender {
+public class LongSocket extends LYSocket {
 	private static final long serialVersionUID = -4542553667467771646L;
-	protected SequenceTemporaryPool<TranscodeObject> dataPool = new SequenceTemporaryPool<TranscodeObject>();
-	protected HeartBeat heartBeat;
+	protected SequenceTemporaryPool<byte[]> dataPool = new SequenceTemporaryPool<byte[]>();
+	protected byte[] heartBeat;
 
-	public LongSocket(ServerSocket serverSocket, HeartBeat heartBeat) {
+	public LongSocket(ServerSocket serverSocket, byte[] heartBeat) {
 		super(serverSocket);
 		this.heartBeat = heartBeat;
 	}
 
-	public LongSocket(String host, Integer port, HeartBeat heartBeat) {
+	public LongSocket(String host, Integer port, byte[] heartBeat) {
 		super(host, port);
 		this.heartBeat = heartBeat;
 	}
@@ -91,14 +89,14 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 		byte[] result = null;
 		try {
 			do {
-				TranscodeObject tmp = dataPool.accessOne();
+				byte[] tmp = dataPool.accessOne();
 				if (tmp == null) {
-					if(!sendHeartBeat(heartBeat)) return null;
+					if(!sendHeartBeat()) return null;
 					await(CoreDef.WAITING_LONG);
 					continue;
 				}
 				signalAll();
-				result = request(tmp.encode().toBytes());
+				result = request(tmp);
 				if (result == null)
 					dataPool.add(0, tmp);
 				break;
@@ -115,7 +113,7 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 	 * @param data
 	 * @return ObjectId of data, null if add failed
 	 */
-	public Long addToPool(TranscodeObject data) {
+	public Long addToPool(byte[] data) {
 		Long objId = dataPool.add(data);
 		if (objId != null) {
 			signalAll();
@@ -129,7 +127,7 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 	 * @param data
 	 * @return ObjectId of data, it won't return until data was added
 	 */
-	public Long addToPool_Force(TranscodeObject data) {
+	public Long addToPool_Force(byte[] data) {
 		Long objId = null;
 		while (((objId = dataPool.add(data)) == null))
 			await(CoreDef.WAITING_LONG);
@@ -139,10 +137,9 @@ public class LongSocket extends LYSocket implements HeartBeatSender {
 		return objId;
 	}
 
-	@Override
-	public boolean sendHeartBeat(HeartBeat heartBeat) {
+	public boolean sendHeartBeat() {
 		try {
-			if(request(heartBeat.encode().toBytes()) != null)
+			if(request(heartBeat) != null)
 				return true;
 		} catch (Exception e) { }
 		return false;
