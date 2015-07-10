@@ -8,11 +8,11 @@ import java.util.List;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
+import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
-import net.vicp.lylab.utils.tq.Task;
+import net.vicp.lylab.utils.tq.LoneWolf;
 
 /**
  * Manager class to recycle target in watch list.<br>
@@ -24,10 +24,9 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2015.06.26
  * @version 2.0.0
  */
-public final class TimeoutController extends Task {
+public final class TimeoutController extends LoneWolf implements LifeCycle {
 	private static final long serialVersionUID = -4494667245957319328L;
 
-	private static AtomicBoolean init = new AtomicBoolean(false);
 	private static AutoInitialize<TimeoutController> instance = new AtomicStrongReference<TimeoutController>();
 
 	private List<WeakReference<Recyclable>> watchList = new LinkedList<WeakReference<Recyclable>>();
@@ -35,9 +34,14 @@ public final class TimeoutController extends Task {
 	/**
 	 * Initialize procedure
 	 */
-	public TimeoutController() {
-		if (init.compareAndSet(false, true))
-			getInstance().begin("TimeoutController");
+	@Override
+	public void initialize() {
+		getInstance().begin("TimeoutController");
+	}
+	
+	@Override
+	public void terminate() {
+		this.callStop();
 	}
 
 	/**
@@ -57,7 +61,7 @@ public final class TimeoutController extends Task {
 			while (!getThread().isInterrupted()) {
 				if (isStopped())
 					break;
-				Thread.sleep(CoreDef.TEN * CoreDef.MINUTE);
+				Thread.sleep(CoreDef.DEFAULT_TIMTOUT_CONTROLLER_INTERVAL);
 				getInstance().timeoutControl();
 			}
 		} catch (InterruptedException e) {
@@ -115,13 +119,11 @@ public final class TimeoutController extends Task {
 	}
 
 	/**
-	 * TimeoutController will end unless interrupted
+	 * TimeoutController will end if interrupted
 	 */
 	@Override
 	protected void aftermath() {
-		init.set(false);
-		instance = null;
-		super.aftermath();
+		instance = new AtomicStrongReference<TimeoutController>();
 	}
 
 	// getters below

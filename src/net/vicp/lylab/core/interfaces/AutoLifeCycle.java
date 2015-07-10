@@ -1,6 +1,8 @@
 package net.vicp.lylab.core.interfaces;
 
-public interface AutoLifeCycle {
+import java.util.EventListener;
+
+public interface AutoLifeCycle extends EventListener {
 	/**
 	 * Call this when life cycle started
 	 */

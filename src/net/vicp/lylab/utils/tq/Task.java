@@ -3,6 +3,7 @@ package net.vicp.lylab.utils.tq;
 import java.io.Serializable;
 import java.util.Date;
 
+import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
@@ -34,16 +35,16 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	/**
 	 * Control its running thread
 	 */
-	protected Thread thread;
+	protected Thread thread = null;
 	/**
 	 * Report itself to LYTaskQueue
 	 */
-	private LYTaskQueue controller;
+	private LYTaskQueue controller = null;
 
 	/**
 	 * Indicate when this task start run()
 	 */
-	protected Date startTime;
+	protected Date startTime = null;
 
 	private volatile AtomicInteger state = new AtomicInteger(BEGAN);
 
@@ -53,11 +54,13 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	static public final int BEGAN = 0;
 	static public final int STARTED = 1;
 	static public final int COMPLETED = 2;
-
-	public Task() {
-		thread = null;
-		startTime = null;
-		state.set(BEGAN);
+	
+	@Override
+	public BaseObject clone() {
+		Task tk = (Task) super.clone();
+		tk.state.set(0);
+		tk.reset();
+		return tk;
 	}
 
 	/**
@@ -67,11 +70,11 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		try {
 			if (!state.compareAndSet(BEGAN, STARTED))
 				return;
-			setStartTime(new Date());
+			startTime = new Date();
 			exec();
 			aftermath();
 		} catch (Throwable t) {
-			log.error(this.toString() + "\ncreated an error:\t" + Utils.getStringFromThrowable(t));
+			log.error(this.toString() + "\ngot an error:\t" + Utils.getStringFromThrowable(t));
 			state.compareAndSet(STARTED, FAILED);
 		} finally {
 			state.compareAndSet(STARTED, COMPLETED);
@@ -222,6 +225,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 //		if(!state.compareAndSet(STOPPED, BEGAN)) return false;
 		if (thread != null && getThread().isAlive())
 			throw new LYException("Reset an alive task");
+		startTime = null;
 		thread = null;
 		setObjectId(0);
 		return true;
@@ -243,11 +247,6 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 
 	public Date getStartTime() {
 		return startTime;
-	}
-
-	public Task setStartTime(Date startTime) {
-		this.startTime = startTime;
-		return this;
 	}
 
 	public long getTimeout() {

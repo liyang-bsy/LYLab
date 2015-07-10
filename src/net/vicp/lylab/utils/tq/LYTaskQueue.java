@@ -7,17 +7,22 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.AutoInitialize;
+import net.vicp.lylab.core.interfaces.LifeCycle;
+import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 import net.vicp.lylab.core.pool.Pool;
 import net.vicp.lylab.core.pool.SequencePool;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
-import net.vicp.lylab.utils.atomic.AtomicSoftReference;
+import net.vicp.lylab.utils.controller.TimeoutController;
 
 /**
  * Manager class to execute all task.<br>
@@ -30,30 +35,25 @@ import net.vicp.lylab.utils.atomic.AtomicSoftReference;
  * @version 2.0.0
  * 
  */
-public final class LYTaskQueue extends Task {// implements LifeCycle {
-	private static final long serialVersionUID = 4935143671023467585L;
+public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable {
+	private static final long serialVersionUID = -406430325838413029L;
 
-	private static String permanentFileName = "lytaskqueue.bin";
-	private static AutoInitialize<LYTaskQueue> instance = new AtomicSoftReference<LYTaskQueue>();
+	private String permanentFileName = "lytaskqueue.bin";
 
 	private volatile Boolean useWatchDog = false;
-	private static volatile AtomicBoolean isRunning = new AtomicBoolean(false);
+	private volatile AtomicBoolean isRunning = new AtomicBoolean(false);
 	private volatile AtomicBoolean isTerminated = new AtomicBoolean(false);
 
 	private volatile boolean recordFailed = false;
 	private List<Task> forewarnList = new ArrayList<Task>();
 
-	private volatile static Integer maxQueue = 100000;
-	private volatile static Integer maxThread = 200;
+	private volatile Integer maxQueue = 100000;
+	private volatile Integer maxThread = 200;
+	private volatile Long tolerance = CoreDef.WAITING_TOLERANCE;
 
 	private Pool<Task> taskPool = new SequenceTemporaryPool<Task>(maxQueue);
 	private Pool<Task> threadPool = new SequencePool<Task>(maxThread);
 
-	public static final Long DEFAULT_TERMINATE_TIMEOUT = 5 * 60 * 1000L;
-
-	// static auto initialize
-	static { init(); }
-	
 	/**
 	 * At your service!
 	 * 
@@ -61,28 +61,28 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 	 *            which should be executed, it will be cloned and its clone will
 	 *            be enqueued. <br>
 	 *            [!] Original parameter 'task' will never be used or changed by
-	 *            LYTaskQueue.addTask(Task task)
+	 *            this.addTask(Task task)
 	 * @return A non-negative taskId returns to recognize specific task. <br>
-	 *         -1, means LYTaskQueue didn't obtain cloned task. <br>
-	 *         -2, means LYTaskQueue was try to terminate itself. No more task
+	 *         -1, means this didn't obtain cloned task. <br>
+	 *         -2, means this was try to terminate itself. No more task
 	 *         will be accepted. <br>
-	 *         -3, means LYTaskQueue couldn't add task into task pool.
+	 *         -3, means this couldn't add task into task pool.
 	 */
-	public static Long addTask(Task task) {
+	public Long addTask(Task task) {
 		Task task0 = (Task) task.clone();
 		if (task0 == null)
 			return -1L;
-		if (getInstance().getIsTerminated().get())
+		if (this.getIsTerminated().get())
 			return -2L;
-		task0.setController(getInstance());
-		if (getInstance().getTaskPool().add(task0) == null)
+		task0.setController(this);
+		if (this.getTaskPool().add(task0) == null)
 			return -3L;
-		synchronized (getInstance().lock) {
-			getInstance().lock.notifyAll();
+		synchronized (this.lock) {
+			this.lock.notifyAll();
 		}
 		if (isRunning.compareAndSet(false, true))
-			if(getInstance().reset())
-				getInstance().begin("LYTaskQueue");
+			if(this.reset())
+				this.begin("LYTaskQueue");
 		return task0.getTaskId();
 	}
 
@@ -92,8 +92,8 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 	@Override
 	public final void exec() {
 		try {
-			while (!getInstance().getIsTerminated().get()) {
-				while (!getInstance().getIsTerminated().get()
+			while (!this.getIsTerminated().get()) {
+				while (!this.getIsTerminated().get()
 						&& !getTaskPool().isEmpty()
 						&& !isThreadPoolFull()) {
 					Task task = getTaskPool().accessOne();
@@ -107,7 +107,7 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 						lock.wait(CoreDef.WAITING_SHORT);
 					}
 				} catch (Throwable t) {
-					log.error("Exception in LYTaskQueue#exec wait():\n"
+					log.error("Exception in this#exec wait():\n"
 							+ Utils.getStringFromThrowable(t));
 				}
 			}
@@ -121,14 +121,14 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 	 * Cancel a task.
 	 * 
 	 * @param taskId
-	 *            which you will get from LYTaskQueue.addTask()
+	 *            which you will get from this.addTask()
 	 * @return true: cancelled<br>
 	 *         false: cancel failed
 	 */
-	public synchronized static Boolean cancel(long taskId) {
-		if (getInstance().getIsTerminated().get() || taskId < 0L)
+	public synchronized Boolean cancel(long taskId) {
+		if (this.getIsTerminated().get() || taskId < 0L)
 			return false;
-		Task tk = getInstance().removeFromTaskPool(taskId);
+		Task tk = this.removeFromTaskPool(taskId);
 		if (tk == null || tk.getState() != Task.BEGAN)
 			return false;
 		tk.callStop();
@@ -139,14 +139,14 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 	 * Stop a task.
 	 * 
 	 * @param taskId
-	 *            which you will get from LYTaskQueue.addTask()
+	 *            which you will get from this.addTask()
 	 * @return true: cancelled<br>
 	 *         false: cancel failed
 	 */
-	public synchronized static Boolean stop(long taskId) {
-		if (getInstance().getIsTerminated().get() || taskId < 0L)
+	public synchronized Boolean stop(long taskId) {
+		if (this.getIsTerminated().get() || taskId < 0L)
 			return false;
-		Task tk = getInstance().removeFromTaskPool(taskId);
+		Task tk = this.removeFromTaskPool(taskId);
 		if (tk == null)
 			return false;
 		tk.callStop();
@@ -156,31 +156,25 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 	/**
 	 * Initialize procedure
 	 */
-	public static void init() {
-		getInstance().getIsTerminated().set(false);
-		ObjectInputStream ois = null;
-		try {
-			File file = new File(permanentFileName);
-			if (file.exists()) {
-				ois = new ObjectInputStream(new FileInputStream(file));
+	@Override
+	public void initialize() {
+		this.getIsTerminated().set(false);
+		File file = new File(permanentFileName);
+		if (file.exists()) {
+			try (ObjectInputStream ois = new ObjectInputStream(
+					new FileInputStream(file));) {
 				Integer total = (Integer) ois.readObject();
 				while (total-- > 0) {
 					Task tk = (Task) ois.readObject();
 					tk.reset();
-					LYTaskQueue.addTask(tk);
+					this.addTask(tk);
 				}
-			}
-			Utils.deleteFile(permanentFileName);
-		} catch (Exception e) {
-			throw new LYException("Unable to load data from last permanent file", e);
-		} finally {
-			if (ois != null) {
-				try {
-					ois.close();
-					ois = null;
-				} catch (IOException e) {
-					throw new LYException("Unable to close permanent file:" + permanentFileName, e);
-				}
+				ois.close();
+				Utils.deleteFile(permanentFileName);
+			} catch (Exception e) {
+				throw new LYException(
+						"Unable to load data from last permanent file", e);
+			} finally {
 			}
 		}
 	}
@@ -189,9 +183,10 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 	 * This action will call off the task queue, then wait tasks in running for
 	 * 5 minutes, then killed, and save tasks in queue onto disk
 	 */
-	public static void terminate() {
+	@Override
+	public void terminate() {
 		// default timeout is 5 minutes
-		terminate(DEFAULT_TERMINATE_TIMEOUT);
+		terminate(CoreDef.DEFAULT_TERMINATE_TIMEOUT);
 	}
 
 	/**
@@ -201,46 +196,49 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 	 * @param timeout
 	 *            waiting limit for running tasks in million second
 	 */
-	public static void terminate(long timeout) {
-		if (getInstance().getIsTerminated().compareAndSet(false, true))
+	public void terminate(long timeout) {
+		if (this.getIsTerminated().compareAndSet(false, true))
 			return;
 		if (timeout == 0L)
 			timeout = 1L;
 
-		synchronized (getInstance().getThreadPool()) {
-			for (Task t : getInstance().getThreadPool())
+		synchronized (this.getThreadPool()) {
+			for (Task t : this.getThreadPool())
 				t.setTimeout(timeout);
 		}
 
-		if (!getInstance().useWatchDog)
-			LYTaskQueue.useWatchDog(getInstance().useWatchDog);
-		getInstance().useWatchDog = true;
+		if (!this.useWatchDog)
+			this.useWatchDog(this.useWatchDog);
+		this.useWatchDog = true;
 		try {
-			File p = new File(permanentFileName);
-			if (!p.exists())
-				p.createNewFile();
-			ObjectOutputStream oos = new ObjectOutputStream(
-					new FileOutputStream(p));
-			synchronized (instance) {
-				oos.writeObject(new Integer(getInstance().getTaskPool().size()));
-				while (!getInstance().getTaskPool().isEmpty())
-					oos.writeObject(getInstance().getTaskPool().accessOne());
-			}
-			oos.close();
-		} catch (IOException e) {
-			log.error("LYTaskQueue - safely shutdown: Permanent process error (This will cause data loss!)");
-			e.printStackTrace();
-		}
-		try {
-			while (getInstance().getThreadPool().size() > 0)
-				getInstance().getThreadPool().accessOne().join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+			while (this.getThreadPool().size() > 0)
+				this.getThreadPool().accessOne().join();
 		} catch (Throwable e) {
-			e.printStackTrace();
-			WatchDog.killAll();
+			killAll();
 		} finally {
-			WatchDog.stopWatchDog();
+			stopWatchDog();
+		}
+		if (!getTaskPool().isEmpty()) {
+			File p = new File(permanentFileName);
+			if (!p.exists()) {
+				try {
+					p.createNewFile();
+				} catch (IOException e) {
+					log.error("LYTaskQueue - safely shutdown: Permanent process error (This may cause data loss!), reason:"
+							+ Utils.getStringFromException(e));
+				}
+			}
+			if (p.exists()) {
+				try (ObjectOutputStream oos = new ObjectOutputStream(
+						new FileOutputStream(p));) {
+					oos.writeObject(new Integer(this.getTaskPool().size()));
+					while (!this.getTaskPool().isEmpty())
+						oos.writeObject(this.getTaskPool().accessOne());
+				} catch (IOException e) {
+					log.error("LYTaskQueue - safely shutdown: Permanent process error (This will cause data loss!), reason:"
+							+ Utils.getStringFromException(e));
+				}
+			}
 		}
 	}
 
@@ -286,37 +284,121 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 	/**
 	 * Turn on WatchDog
 	 */
-	public static void useWatchDog(Boolean useWatchDog) {
+	public void useWatchDog(Boolean useWatchDog) {
 		if (useWatchDog)
-			WatchDog.startWatchDog();
+			startWatchDog();
 		else
-			WatchDog.stopWatchDog();
+			stopWatchDog();
 
-		getInstance().useWatchDog = useWatchDog;
+		this.useWatchDog = useWatchDog;
 	}
 	
+	/**
+	 * WatchDog is always recyclable unless LYTaskQueue call off it
+	 */
+	@Override
+	public boolean isRecyclable()
+	{
+		return true;
+	}
+
+	/**
+	 * Major cycle to recycle tasks in running
+	 */
+	@SuppressWarnings("deprecation")
+	@Override
+	public void recycle() {
+		List<Task> callStopList = new LinkedList<Task>();
+		List<Task> forceStopList = new LinkedList<Task>();
+		boolean finished = false;
+		do {
+			Iterator<Task> iterator = getThreadPool().iterator();
+			try {
+				while (iterator.hasNext()) {
+					Task task = iterator.next();
+					// -1L means infinite
+					if (task.getTimeout() == -1L)
+						continue;
+					if(task.getStartTime() == null) {
+						log.error("A running task missing its start time will be killed immediately:" + task.toString());
+						forceStopList.add(task);
+					}
+					if (task.getTimeout() + tolerance < new Date().getTime() - task.getStartTime().getTime())
+						forceStopList.add(task);
+					else if (task.getTimeout() < new Date().getTime() - task.getStartTime().getTime())
+						callStopList.add(task);
+				}
+				finished = true;
+			} catch (NullPointerException | ConcurrentModificationException e) { }
+		} while (!finished);
+		for(Task task : forceStopList)
+		{
+			task.forceStop();
+			if(task.getRetryCount() > 0)
+			{
+				log.error("Timeout task was killed, but this task requested retry(" + task.getRetryCount() + "):\n" + task.toString());
+				task.setRetryCount(task.getRetryCount() - 1);
+				task.reset();
+				addTask(task);
+			}
+		}
+		for(Task task : callStopList)
+		{
+			task.callStop();
+			log.info("Try to stop timeout task:" + task.getTaskId());
+		}
+	}
+
+	/**
+	 * Call off WatchDog
+	 */
+	public void stopWatchDog() {
+		TimeoutController.removeFromWatch(this);
+	}
+
+	/**
+	 * Turn on WatchDog
+	 */
+	public void startWatchDog() {
+		TimeoutController.addToWatch(this);
+	}
+
+	@Override
+	public void close() throws Exception {
+		stopWatchDog();
+	}
+
+	/**
+	 * You should better keep away from this, kill all tasks is really dangerous
+	 */
+	@SuppressWarnings("deprecation")
+	public void killAll() {
+		for(Task task : this.getThreadPool())
+			task.forceStop();
+	}
+
 	/**
 	 * @return
 	 * <tt>true</tt> if the thread pool is full
 	 */
-	public static Boolean isThreadPoolFull() {
-		return getInstance().getThreadPool().size() == maxThread.intValue();
+	public Boolean isThreadPoolFull() {
+		return this.getThreadPool().size() == maxThread.intValue();
 	}
 
 	/**
 	 * @return
 	 * <tt>true</tt> if the task pool is full
 	 */
-	public static Boolean isTaskPoolFull() {
-		return getInstance().getTaskPool().size() == maxQueue.intValue();
+	public Boolean isTaskPoolFull() {
+		return this.getTaskPool().size() == maxQueue.intValue();
 	}
 
-	public static Integer getWaitingTaskCount() {
-		return getInstance().getTaskPool().size();
+	public Integer getWaitingTaskCount() {
+		return this.getTaskPool().size();
 	}
 	
-	public static Integer getRunningThreadCount() {
-		return getInstance().getThreadPool().size();
+	public Integer getRunningThreadCount() {
+		return this.getThreadPool().size();
 	}
 
 	// special getters & setters below
@@ -326,24 +408,20 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 		return tmp;
 	}
 	
-	public static void setMaxQueue(int maxQueue) {
+	public void setMaxQueue(int maxQueue) {
 		if(maxQueue <= 0) throw new LYException("maxQueue must be positive");
-		LYTaskQueue.maxQueue = maxQueue;
-		getInstance().getTaskPool().setMaxSize(LYTaskQueue.maxQueue);
+		this.maxQueue = maxQueue;
+		this.getTaskPool().setMaxSize(this.maxQueue);
 	}
 
-	public static void setMaxThread(Integer maxThread) {
+	public void setMaxThread(Integer maxThread) {
 		if(maxQueue <= 0) throw new LYException("maxThread must be positive");
-		LYTaskQueue.maxThread = maxThread;
-		getInstance().getThreadPool().setMaxSize(LYTaskQueue.maxThread);
+		this.maxThread = maxThread;
+		this.getThreadPool().setMaxSize(this.maxThread);
 	}
 	
-	public static LYTaskQueue getInstance() {
-		return instance.get(LYTaskQueue.class);
-	}
-
 	public Pool<Task> getThreadPool() {
-		return getInstance().threadPool;
+		return this.threadPool;
 	}
 	
 	private Pool<Task> getTaskPool() {
@@ -355,20 +433,28 @@ public final class LYTaskQueue extends Task {// implements LifeCycle {
 		return isTerminated;
 	}
 
-	public static Integer getMaxQueue() {
+	public Integer getMaxQueue() {
 		return maxQueue;
 	}
 
-	public static Integer getMaxThread() {
+	public Integer getMaxThread() {
 		return maxThread;
 	}
 
-	public static String getPermanentFileName() {
+	public String getPermanentFileName() {
 		return permanentFileName;
 	}
 
-	public static void setPermanentFileName(String permanentFileName) {
-		LYTaskQueue.permanentFileName = permanentFileName;
+	public void setPermanentFileName(String permanentFileName) {
+		this.permanentFileName = permanentFileName;
+	}
+
+	public Long getTolerance() {
+		return tolerance;
+	}
+
+	public void setTolerance(Long tolerance) {
+		this.tolerance = tolerance;
 	}
 
 }
