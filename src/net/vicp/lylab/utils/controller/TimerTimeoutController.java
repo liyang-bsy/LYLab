@@ -29,7 +29,7 @@ public final class TimerTimeoutController extends InstantJob {
 
 	@Override
 	public Integer getInterval() {
-		return 10*SECOND;
+		return MINUTE;
 	}
 	
 	/**
