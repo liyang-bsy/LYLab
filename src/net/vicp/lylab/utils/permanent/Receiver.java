@@ -17,7 +17,6 @@ import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
-import net.vicp.lylab.utils.internet.impl.SimpleHeartBeat;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.LoneWolf;
 //import flexjson.JSONSerializer;
@@ -173,14 +172,14 @@ public class Receiver extends LoneWolf implements AutoLifeCycle, DataSource<Tran
 			if(threadCount.get() < CoreDef.THREE)
 			{
 				threadCount.incrementAndGet();
-				@SuppressWarnings("resource")
-				Dispatcher disp = new Dispatcher(this, host, port, new SimpleHeartBeat());
+//				@SuppressWarnings("resource")
+//				Dispatcher disp = new Dispatcher(this, host, port, new SimpleHeartBeat());
 //				try {
 //					disp.get(dispatcherClass, this, host, port, new SimpleHeartBeat());
 //				} catch (Exception e) {
 //					log.error("Can not create dispatcher:\n" + Utils.getStringFromException(e));
 //				}
-				disp.begin("Dispatcher-" + threadCount);
+//				disp.begin("Dispatcher-" + threadCount);
 			}
 			else {
 				try {

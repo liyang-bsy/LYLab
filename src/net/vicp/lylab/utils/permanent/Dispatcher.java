@@ -6,7 +6,6 @@ import net.vicp.lylab.core.interfaces.DataSource;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Transcode;
 import net.vicp.lylab.utils.internet.ClientLongSocket;
-import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.impl.Message;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 /**
@@ -19,7 +18,7 @@ public class Dispatcher extends ClientLongSocket {
 	
 	protected DataSource<Transcode> controller;
 	
-	public Dispatcher(DataSource<Transcode> controller, String host, Integer port, HeartBeat heartBeat) {
+	public Dispatcher(DataSource<Transcode> controller, String host, Integer port, byte[] heartBeat) {
 		super(host, port, heartBeat);
 		this.controller = controller;
 	}
@@ -31,7 +30,8 @@ public class Dispatcher extends ClientLongSocket {
 			while (controller.running()) {
 				Transcode t = controller.accessOne();
 				if (t != null) {
-					if (doRequest(t.encode().toBytes()) == null)
+					//TODO
+//					if (doRequest(t.encode().toBytes()) == null)
 						controller.takeback(t);
 				} else
 					await(CoreDef.WAITING);

@@ -6,8 +6,6 @@ import java.util.List;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.DataSource;
 import net.vicp.lylab.core.interfaces.Transcode;
-import net.vicp.lylab.utils.FileLineWriter;
-import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.tq.LoneWolf;
 /**
  * Failed
@@ -59,32 +57,32 @@ public class Permanent extends LoneWolf {
 	
 	@Override
 	public void exec() {
-		FileLineWriter flw = new FileLineWriter(savePath);
-		flw.setMaxLine(maxSize);
-		flw.setPostfix(postfix);
-		int circle = 0;
-		do {
-			try {
-				if (count() < maxSize) {
-					circle++;
-					Thread.sleep(CoreDef.WAITING);
-				} else {
-					flw.writeLine(getContainer());
-					circle = 0;
-				}
-				if (circle > tick) {
-					if (count() > 0) {
-						flw.writeLine(getContainer());
-						circle = 0;
-					}
-					flw.close();
-				}
-			} catch (Exception e) {
-				log.error(Utils.getStringFromException(e));
-			}
-		} while (controller.running());
-		flw.writeLine(getContainer());
-		flw.close();
+//		FileLineWriter flw = new FileLineWriter(savePath);
+//		flw.setMaxLine(maxSize);
+//		flw.setPostfix(postfix);
+//		int circle = 0;
+//		do {
+//			try {
+//				if (count() < maxSize) {
+//					circle++;
+//					Thread.sleep(CoreDef.WAITING);
+//				} else {
+//					flw.writeLine(getContainer());
+//					circle = 0;
+//				}
+//				if (circle > tick) {
+//					if (count() > 0) {
+//						flw.writeLine(getContainer());
+//						circle = 0;
+//					}
+//					flw.close();
+//				}
+//			} catch (Exception e) {
+//				log.error(Utils.getStringFromException(e));
+//			}
+//		} while (controller.running());
+//		flw.writeLine(getContainer());
+//		flw.close();
 	}
 
 }
