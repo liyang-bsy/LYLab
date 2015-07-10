@@ -45,8 +45,8 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 	protected String host;
 	protected int port;
 
-	private byte[] readBuffer = new byte[CoreDef.SOCKET_MAX_BUFFER];
-	private int totalRecv = 0;
+	private byte[] buffer = new byte[CoreDef.SOCKET_MAX_BUFFER];
+	private int bufferLen = 0;
 	
 	public LYSocket(ServerSocket serverSocket) {
 		if(serverSocket == null) throw new LYException("Parameter serverSocket is null");
@@ -147,9 +147,9 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 			while (true) {
 				getLen = 0;
 				try {
-					if(totalRecv == readBuffer.length)
-						readBuffer = Arrays.copyOf(readBuffer, readBuffer.length*10);
-					getLen = in.read(readBuffer, totalRecv, readBuffer.length - totalRecv);
+					if(bufferLen == buffer.length)
+						buffer = Arrays.copyOf(buffer, buffer.length*10);
+					getLen = in.read(buffer, bufferLen, buffer.length - bufferLen);
 				} catch (Exception e) {
 					throw new LYException(e);
 				}
@@ -157,10 +157,10 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 					return null;
 				if (getLen == 0)
 					throw new LYException("Impossible");
-				totalRecv += getLen;
+				bufferLen += getLen;
 				if(rawProtocol == null)
-					rawProtocol = ProtocolUtils.rawProtocol(ProtocolUtils.pairToProtocol(readBuffer));
-				int result = ProtocolUtils.validate(rawProtocol, readBuffer, totalRecv);
+					rawProtocol = ProtocolUtils.rawProtocol(ProtocolUtils.pairToProtocol(buffer));
+				int result = ProtocolUtils.validate(rawProtocol, buffer, bufferLen);
 				if (result == -1)
 					throw new LYException("Bad data package");
 				if (result == 1)
@@ -169,7 +169,7 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 					break;
 			}
 		}
-		return readBuffer;
+		return buffer;
 	}
 
 	@Override
@@ -290,12 +290,12 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 		this.afterTransmission = afterTransmission;
 	}
 
-	public byte[] getReadBuffer() {
-		return readBuffer;
+	public byte[] getBuffer() {
+		return buffer;
 	}
 
-	public int getTotalRecv() {
-		return totalRecv;
+	public int getBufferLen() {
+		return bufferLen;
 	}
 
 }
