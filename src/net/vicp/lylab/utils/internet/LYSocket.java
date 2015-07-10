@@ -28,25 +28,28 @@ import net.vicp.lylab.utils.tq.Task;
 public class LYSocket extends Task implements Recyclable, Transmission {
 	private static final long serialVersionUID = 883892527805494627L;
 	
+	// Raw data source
 	protected Socket socket;
-
-	protected Callback beforeConnect = null;
-	protected Callback afterClose = null;
-	protected Callback beforeTransmission = null;
-	protected Callback afterTransmission = null;
 	
 	protected InputStream in;
 	protected OutputStream out;
-	
+
+	// some thing about this socket
 	private boolean isServer;
-	
 	protected AtomicInteger socketRetry = new AtomicInteger();
 	protected int socketMaxRetry = Integer.MAX_VALUE;
 	protected String host;
 	protected int port;
 
+	// Buffer
 	private byte[] buffer = new byte[CoreDef.SOCKET_MAX_BUFFER];
 	private int bufferLen = 0;
+
+	// Callback below
+	protected Callback beforeConnect = null;
+	protected Callback afterClose = null;
+	protected Callback beforeTransmission = null;
+	protected Callback afterTransmission = null;
 	
 	public LYSocket(ServerSocket serverSocket) {
 		if(serverSocket == null) throw new LYException("Parameter serverSocket is null");
@@ -250,7 +253,7 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 		return port;
 	}
 
-	public boolean isServer() {
+	protected boolean isServer() {
 		return isServer;
 	}
 
