@@ -146,6 +146,8 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 		if(isClosed()) throw new LYException("Connection closed");
 		Protocol rawProtocol = null;
 		if (in != null) {
+			bufferLen = 0;
+			Arrays.fill(buffer, (byte) 0);
 			int getLen = 0;
 			while (true) {
 				getLen = 0;
