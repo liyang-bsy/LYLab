@@ -155,6 +155,13 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 //		state.compareAndSet(COMPLETED, COMPLETED);		// non-sense
 		if (thread != null)
 			thread.interrupt();
+		if (this instanceof AutoCloseable)
+			try {
+				((AutoCloseable) this).close();
+			} catch (Exception e) {
+				log.error("Call stop AutoCloseable, but close failed"
+						+ Utils.getStringFromException(e));
+			}
 	}
 
 	/**
