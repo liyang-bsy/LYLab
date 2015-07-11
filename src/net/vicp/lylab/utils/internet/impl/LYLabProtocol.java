@@ -8,7 +8,8 @@ import net.vicp.lylab.utils.Utils;
 
 /**
  * A self-defined protocol easy transfer Objects through socket.<br>
- * Data will be transfered as JSON string.
+ * Data will be transfered as JSON string.<br>
+ * [!] Attention, protocol object is <tt>NOT</tt> thread-safe.
  * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
@@ -57,71 +58,70 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 	}
 
 	@Override
-	public Protocol encode(Object obj)
-	{
+	public byte[] encode(Object obj) {
 		try {
-			return new LYLabProtocol(obj.getClass(), Utils.serialize(obj).getBytes(CoreDef.CHARSET));
+			return this.setAll(obj.getClass().getName().getBytes(), Utils.serialize(obj).getBytes(CoreDef.CHARSET)).toBytes();
+		} catch (Exception e) { throw new LYException("Encode failed", e); }
+	}
+	
+	@Override
+	public void encode(Protocol protocol, Object obj) {
+		try {
+			protocol.setAll(obj.getClass().getName().getBytes(), Utils.serialize(obj).getBytes(CoreDef.CHARSET));
 		} catch (Exception e) { throw new LYException("Encode failed", e); }
 	}
 
 	@Override
-	public Object decode()
-	{
-		if(getInfo() == null)
+	public Object decode() {
+		if (getInfo() == null)
 			throw new LYException("Inner info is null");
-		if(getData() == null)
+		if (getData() == null)
 			throw new LYException("Inner data is null");
 		try {
-			return Utils.deserialize(Class.forName(new String(getInfo()))
-					, new String(getData(), CoreDef.CHARSET));  
+			return Utils.deserialize(Class.forName(new String(getInfo())),
+					new String(getData(), CoreDef.CHARSET));
 		} catch (Exception e) {
-			throw new LYException("Failed to convert data into specific class:" + new String(getInfo()) + ". Maybe the data isn't json?", e);
+			throw new LYException("Failed to convert data into specific class:"
+					+ new String(getInfo()) + ". Maybe the data isn't json?", e);
 		}
 	}
 	
 	@Override
-	public void setAll(byte[] info, byte[] data) {
+	public Protocol setAll(byte[] info, byte[] data) {
 		this.info = info;
 		this.data = data;
 		this.length = Utils.IntToBytes4(data.length);
-	}
-
-	@Override
-	public Object toObject()
-	{
-		if(getInfo() == null)
-			throw new LYException("Inner info is null");
-		if(getData() == null)
-			throw new LYException("Inner data is null");
-		try {
-			return Utils.deserialize(Class.forName(new String(getInfo())), new String(getData(), CoreDef.CHARSET));
-		} catch (Exception e) {
-			throw new LYException("Failed to convert data into specific class:" + new String(getInfo()) + ". Maybe the data isn't json?", e);
-		}
+		return this;
 	}
 
 	@Override
 	public byte[] toBytes() {
-		int size = getHead().length + getSplitSignal().length
-				+ length.length + getSplitSignal().length
-				+ info.length + getSplitSignal().length
-				+ data.length;
+		int headLength = getHead().length;
+		int lengthLength = getLength().length;
+		int infoLength = getInfo().length;
+		int dataLength = getData().length;
+		int splitSignalLength = getSplitSignal().length;
+		
+		int size = headLength + lengthLength
+				+ infoLength + dataLength
+				+ splitSignalLength * 3;
+		
 		byte[] bytes = new byte[size];
 		int i = 0;
-		for (int j = 0; j < getHead().length; j++)
-			bytes[i++] = getHead()[j];
-		for (int j = 0; j < getSplitSignal().length; j++)
-			bytes[i++] = getSplitSignal()[j];
-		for (int j = 0; j < getLength().length; j++)
-			bytes[i++] = getLength()[j];
-		for (int j = 0; j < getSplitSignal().length; j++)
-			bytes[i++] = getSplitSignal()[j];
-		for (int j = 0; j < getInfo().length; j++)
-			bytes[i++] = getInfo()[j];
-		for (int j = 0; j < getSplitSignal().length; j++)
-			bytes[i++] = getSplitSignal()[j];
-		for (int j = 0; j < getData().length; j++)
-			bytes[i++] = getData()[j];
+		for (int j = 0; j < headLength; j++)
+			bytes[i++] = head[j];
+		for (int j = 0; j < splitSignalLength; j++)
+			bytes[i++] = splitSignal[j];
+		for (int j = 0; j < lengthLength; j++)
+			bytes[i++] = length[j];
+		for (int j = 0; j < splitSignalLength; j++)
+			bytes[i++] = splitSignal[j];
+		for (int j = 0; j < infoLength; j++)
+			bytes[i++] = info[j];
+		for (int j = 0; j < splitSignalLength; j++)
+			bytes[i++] = splitSignal[j];
+		for (int j = 0; j < dataLength; j++)
+			bytes[i++] = data[j];
 		return bytes;
 	}
 	

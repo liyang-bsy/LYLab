@@ -53,7 +53,7 @@ public class DoActionLong extends ToClientLongSocket {
 					break;
 				}
 				try {
-					obj = protocol.toObject();
+					obj = protocol.decode();
 					if(obj instanceof HeartBeat)
 						return protocol.toBytes();
 					msg = (Message) obj;
@@ -96,7 +96,7 @@ public class DoActionLong extends ToClientLongSocket {
 		}
 		// to logger
 		log.debug("Access key:" + key  + "\nBefore:" + msg + "\nAfter:" + response);
-		return protocol == null ? null : protocol.encode(response).toBytes();
+		return protocol == null ? null : protocol.encode(response);
 	}
 
 	public static Config getConfig() {

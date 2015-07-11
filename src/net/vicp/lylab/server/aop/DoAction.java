@@ -49,7 +49,7 @@ public class DoAction extends ToClientSocket {
 					break;
 				}
 				try {
-					msg = (Message) protocol.toObject();
+					msg = (Message) protocol.decode();
 				} catch (Exception e) {
 					response.setCode(0x00001);
 					response.setMessage("Message not found");
@@ -89,7 +89,7 @@ public class DoAction extends ToClientSocket {
 		}
 		// to logger
 		log.debug("Access key:" + key  + "\nBefore:" + msg + "\nAfter:" + response);
-		return protocol == null ? null : protocol.encode(response).toBytes();
+		return protocol == null ? null : protocol.encode(response);
 	}
 
 	public static Config getConfig() {

@@ -202,5 +202,8 @@ public final class ProtocolUtils extends BaseObject {
 	public static void setConfig(Config config) {
 		ProtocolUtils.config = config;
 	}
-	
+
+	public static boolean isMultiProtocol() {
+		return config.keySet().size() == 1;
+	}
 }

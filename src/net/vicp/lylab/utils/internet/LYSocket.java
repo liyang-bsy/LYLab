@@ -163,7 +163,7 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 				if (getLen == 0)
 					throw new LYException("Impossible");
 				// Create a raw protocol after first receiving
-				if(bufferLen == 0)
+				if(bufferLen == 0 && bufferProtocol == null && ProtocolUtils.isMultiProtocol())
 					bufferProtocol = ProtocolUtils.rawProtocol(ProtocolUtils.pairToProtocol(buffer));
 				bufferLen += getLen;
 				int result = ProtocolUtils.validate(bufferProtocol, buffer, bufferLen);
