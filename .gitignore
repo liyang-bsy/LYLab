@@ -1,7 +1,4 @@
 /config/
-/.classpath
-/.project
-/.settings/
 /bin/
 /lytaskqueue.bin
 /config.txt
