@@ -1,6 +1,9 @@
 package net.vicp.lylab.utils.internet.impl;
 
+import java.io.Serializable;
 import java.util.Arrays;
+
+import org.apache.commons.lang3.SerializationUtils;
 
 import net.vicp.lylab.core.BaseProtocol;
 import net.vicp.lylab.core.CoreDef;
@@ -21,11 +24,11 @@ import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class LYLabProtocol extends BaseProtocol implements Protocol {
+public class JavaObjProtocol extends BaseProtocol implements Protocol {
 
-	protected final byte[] head = "LYLab".getBytes();
+	protected final byte[] head = "JavaObj".getBytes();
 	protected final byte[] splitSignal = new byte[] { -15 };
-
+	
 	@Override
 	public byte[] getHead() {
 		return head;
@@ -38,10 +41,10 @@ public class LYLabProtocol extends BaseProtocol implements Protocol {
 	
 	@Override
 	public byte[] encode(Object obj) {
-		byte[] info = obj.getClass().getName().getBytes();
+		byte[] info = new byte[] { };
 		byte[] data;
 		try {
-			data = Utils.serialize(obj).getBytes(CoreDef.CHARSET);
+			data = SerializationUtils.serialize((Serializable) obj);
 		} catch (Exception e) {
 			throw new LYException("Cannot serialize object into data", e);
 		}
@@ -96,8 +99,7 @@ public class LYLabProtocol extends BaseProtocol implements Protocol {
 		byte[] data = Arrays.copyOfRange(bytes, infoEndPosition + splitSignal.length, infoEndPosition + splitSignal.length + length);
 		String sInfo = new String(info);
 		try {
-			String sData = new String(data, CoreDef.CHARSET);
-			return Utils.deserialize(Class.forName(sInfo), sData);
+			return SerializationUtils.deserialize(data);
 		} catch (Exception e) {
 			throw new LYException("Failed to convert data into specific class:" + sInfo, e);
 		}

@@ -1,5 +1,6 @@
 package net.vicp.lylab.core;
 
+import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.Algorithm;
 import net.vicp.lylab.utils.Utils;
@@ -15,25 +16,27 @@ public abstract class BaseProtocol extends NonCloneableBaseObject implements Pro
 	 * 0 yes, -1 no, 1 not enough
 	 */
 	@Override
-	public int validate(byte[] bytes, int len) {
-		if (bytes == null) return -1;
-		if (!ProtocolUtils.checkHead(this, bytes))
-			return -1;
+	public boolean validate(byte[] bytes, int len) {
+		if (bytes == null) throw new LYException("Parameter bytes is null");
+		if (!ProtocolUtils.checkHead(bytes, this.getHead()))
+			throw new LYException("Bad data package: mismatch head");
 		
 		int headEndPosition = Algorithm.KMPSearch(bytes, getSplitSignal());
-		if (headEndPosition != getHead().length) return -1;
+		if (headEndPosition != getHead().length)
+			throw new LYException("Bad data package: end position of head not found");
 		
 		int lengthEndPosition = getHead().length + getSplitSignal().length + CoreDef.SIZEOF_INTEGER;
 		int length = Utils.Bytes4ToInt(bytes, getHead().length + getSplitSignal().length);
 		
 		int infoEndPosition = lengthEndPosition + getSplitSignal().length + Algorithm.KMPSearch(bytes, getSplitSignal(), lengthEndPosition + getSplitSignal().length);
-		if (infoEndPosition <= 0) return -1;
+		if (infoEndPosition <= 0)
+			throw new LYException("Bad data package: end position of info not found");
 
 		if(len > length + infoEndPosition + getSplitSignal().length)
-			return -1;
+			throw new LYException("Bad data package: Length out of bound");
 		if(len < length + infoEndPosition + getSplitSignal().length)
-			return 1;
-		return 0;
+			return false;
+		return true;
 	}
 
 }

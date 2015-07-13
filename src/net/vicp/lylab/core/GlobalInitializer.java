@@ -1,10 +1,9 @@
-package net.vicp.lylab.server;
+package net.vicp.lylab.core;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.utils.Utils;

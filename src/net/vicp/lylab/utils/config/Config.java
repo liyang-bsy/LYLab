@@ -41,6 +41,15 @@ public abstract class Config extends NonCloneableBaseObject {
 		return tmp;
 	}
 
+	public Object getInstance(String key) {
+		try {
+			String className = (String) getProperty(key);
+			return Class.forName(className).newInstance();
+		} catch (Exception e) {
+			throw new LYException("Can not make instance", e);
+		}
+	}
+	
 	public String getString(String key) {
 		return getProperty(key).toString();
 	}

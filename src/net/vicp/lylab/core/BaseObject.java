@@ -13,7 +13,6 @@ import net.vicp.lylab.utils.tq.Task;
  *
  */
 public class BaseObject {
-
 	/**
 	 * Every object has an id
 	 */
@@ -37,7 +36,7 @@ public class BaseObject {
 	 * Inner lock
 	 */
 	protected static class Lock { };
-	protected Lock lock = new Lock();
+	protected transient Lock lock = new Lock();
 
 	protected void await(long timeout)
 	{

@@ -6,6 +6,6 @@ public interface Protocol {
 
 	public byte[] encode(Object obj);
 	public Object decode(byte[] bytes);
-	public int validate(byte[] bytes, int len);
+	public boolean validate(byte[] bytes, int len);
 
 }
