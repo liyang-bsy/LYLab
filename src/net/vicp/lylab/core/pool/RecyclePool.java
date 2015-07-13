@@ -114,8 +114,10 @@ public class RecyclePool<T> extends IndexedPool<T> {
 	}
 
 	protected T getFromAvailableContainer() {
-		Long objId = availableKeySet().iterator().next();
-		return getFromAvailableContainer(objId);
+		Iterator<Long> iterator = availableKeySet().iterator();
+		if(!iterator.hasNext())
+			return null;
+		return getFromAvailableContainer(iterator.next());
 	}
 	
 	protected T getFromAvailableContainer(long objId) {
