@@ -1,8 +1,9 @@
 package net.vicp.lylab.server.filter;
 
 import net.vicp.lylab.utils.internet.LYSocket;
+import net.vicp.lylab.utils.internet.impl.Message;
 
 public interface Filter {
-	public byte[] doFilter(LYSocket socket, byte[] request);
+	public Message doFilter(LYSocket socket, Message request);
 	
 }
