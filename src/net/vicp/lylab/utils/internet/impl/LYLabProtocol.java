@@ -1,10 +1,14 @@
 package net.vicp.lylab.utils.internet.impl;
 
-import net.vicp.lylab.core.CloneableBaseObject;
+import java.util.Arrays;
+
+import net.vicp.lylab.core.BaseProtocol;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.utils.Algorithm;
 import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
 /**
  * A self-defined protocol easy transfer Objects through socket.<br>
@@ -17,14 +21,10 @@ import net.vicp.lylab.utils.Utils;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class LYLabProtocol extends CloneableBaseObject implements Protocol {
+public class LYLabProtocol extends BaseProtocol implements Protocol {
 
 	protected final byte[] head = "LYLab".getBytes();
 	protected final byte[] splitSignal = new byte[] { -15 };
-	
-	protected byte[] length;
-	protected byte[] info;
-	protected byte[] data;
 	
 	@Override
 	public byte[] getHead() {
@@ -36,70 +36,21 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 		return splitSignal;
 	}
 	
-	/**
-	 * Create a raw {@link net.vicp.lylab.core.interfaces.Protocol} object
-	 */
-	public LYLabProtocol() {
-//		this(new byte[] { }, new byte[] { });
-	}
-	
-	public LYLabProtocol(Protocol protocol) {
-		this(protocol.getInfo(), protocol.getData());
-	}
-	
-	public LYLabProtocol(Class<?> clazz, byte[] data) {
-		this(clazz.getName().getBytes(), data);
-	}
-	
-	public LYLabProtocol(byte[] info, byte[] data) {
-		this.info = info;
-		this.data = data;
-		this.length = Utils.IntToBytes4(data.length);
-	}
-
 	@Override
 	public byte[] encode(Object obj) {
+		byte[] info = obj.getClass().getName().getBytes();
+		byte[] data;
 		try {
-			return this.setAll(obj.getClass().getName().getBytes(), Utils.serialize(obj).getBytes(CoreDef.CHARSET)).toBytes();
-		} catch (Exception e) { throw new LYException("Encode failed", e); }
-	}
-	
-	@Override
-	public void encode(Protocol protocol, Object obj) {
-		try {
-			protocol.setAll(obj.getClass().getName().getBytes(), Utils.serialize(obj).getBytes(CoreDef.CHARSET));
-		} catch (Exception e) { throw new LYException("Encode failed", e); }
-	}
-
-	@Override
-	public Object decode() {
-		if (getInfo() == null)
-			throw new LYException("Inner info is null");
-		if (getData() == null)
-			throw new LYException("Inner data is null");
-		try {
-			return Utils.deserialize(Class.forName(new String(getInfo())),
-					new String(getData(), CoreDef.CHARSET));
+			data = Utils.serialize(obj).getBytes(CoreDef.CHARSET);
 		} catch (Exception e) {
-			throw new LYException("Failed to convert data into specific class:"
-					+ new String(getInfo()) + ". Maybe the data isn't json?", e);
+			throw new LYException("Cannot serialize object into data", e);
 		}
-	}
-	
-	@Override
-	public Protocol setAll(byte[] info, byte[] data) {
-		this.info = info;
-		this.data = data;
-		this.length = Utils.IntToBytes4(data.length);
-		return this;
-	}
 
-	@Override
-	public byte[] toBytes() {
+		byte[] length = Utils.IntToBytes4(data.length);
 		int headLength = getHead().length;
-		int lengthLength = getLength().length;
-		int infoLength = getInfo().length;
-		int dataLength = getData().length;
+		int lengthLength = length.length;
+		int infoLength = info.length;
+		int dataLength = data.length;
 		int splitSignalLength = getSplitSignal().length;
 		
 		int size = headLength + lengthLength
@@ -124,40 +75,32 @@ public class LYLabProtocol extends CloneableBaseObject implements Protocol {
 			bytes[i++] = data[j];
 		return bytes;
 	}
-	
+
 	@Override
-	public String toString() {
+	public Object decode(byte[] bytes) {
+		if (bytes == null) return null;
+		if (!ProtocolUtils.checkHead(this, bytes))
+			return null;
+
+		int headEndPosition = Algorithm.KMPSearch(bytes, getSplitSignal());
+		if (headEndPosition != getHead().length) return null;
+		
+		int lengthEndPosition = getHead().length + getSplitSignal().length + CoreDef.SIZEOF_INTEGER;
+		int length = Utils.Bytes4ToInt(bytes, getHead().length + getSplitSignal().length);
+		
+		int infoEndPosition = lengthEndPosition + getSplitSignal().length + Algorithm.KMPSearch(bytes, getSplitSignal(), lengthEndPosition + getSplitSignal().length);
+		if (infoEndPosition <= 0) return null;
+
+		byte[] info = Arrays.copyOfRange(bytes, lengthEndPosition + getSplitSignal().length, infoEndPosition);
+
+		byte[] data = Arrays.copyOfRange(bytes, infoEndPosition + getSplitSignal().length, infoEndPosition + getSplitSignal().length + length);
+		String sInfo = new String(info);
 		try {
-			String description = "{info=" + new String(getInfo()) + ",length=" + Utils.Bytes4ToInt(length)
-					+ ",data=" + new String(getData(), CoreDef.CHARSET) + "}";
-			return description;
+			String sData = new String(data, CoreDef.CHARSET);
+			return Utils.deserialize(Class.forName(sInfo), sData);
 		} catch (Exception e) {
-			throw new LYException("Can not encode data into " + CoreDef.CHARSET + " string");
+			throw new LYException("Failed to convert data into specific class:" + sInfo, e);
 		}
-	}
-
-	@Override
-	public byte[] getLength() {
-		return length;
-	}
-
-	@Override
-	public byte[] getInfo() {
-		return info;
-	}
-
-	public void setInfo(byte[] info) {
-		this.info = info;
-	}
-
-	@Override
-	public byte[] getData() {
-		return data;
-	}
-
-	public void setData(byte[] data) {
-		this.data = data;
-		this.length = Utils.IntToBytes4(data.length);
 	}
 	
 }

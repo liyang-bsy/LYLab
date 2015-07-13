@@ -4,7 +4,7 @@ import net.vicp.lylab.utils.config.Config;
 
 public interface InitializeConfig {
 	/**
-	 * This will be called before initialize()<br>
+	 * This should be called before initialize()<br>
 	 * And its data will be used in initialize()/terminate()
 	 * @param config config object
 	 */

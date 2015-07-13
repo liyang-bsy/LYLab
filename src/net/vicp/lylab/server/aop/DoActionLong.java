@@ -4,7 +4,6 @@ import java.net.ServerSocket;
 
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
@@ -12,14 +11,13 @@ import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.ToClientLongSocket;
 import net.vicp.lylab.utils.internet.impl.Message;
-import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
 public class DoActionLong extends ToClientLongSocket {
 	private static final long serialVersionUID = -8400721992403701180L;
 
-	public DoActionLong(ServerSocket serverSocket, byte[] heartBeat) {
+	public DoActionLong(ServerSocket serverSocket, HeartBeat heartBeat) {
 		super(serverSocket, heartBeat);
 	}
 
@@ -42,20 +40,13 @@ public class DoActionLong extends ToClientLongSocket {
 		Message response = new Message();
 		String key = null;
 		BaseAction action = null;
-		Protocol protocol = null;
 		Object obj = null;
 		try {
 			do {
 				try {
-					protocol = ProtocolUtils.fromBytes(bufferProtocol, request);
-				} catch (Exception e) {
-					protocol = null;
-					break;
-				}
-				try {
-					obj = protocol.decode();
+					obj = protocol.decode(request);
 					if(obj instanceof HeartBeat)
-						return protocol.toBytes();
+						return protocol.encode(heartBeat);
 					msg = (Message) obj;
 				} catch (Exception e) {
 					response.setCode(0x00001);

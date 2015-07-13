@@ -1,17 +1,11 @@
 package net.vicp.lylab.core.interfaces;
 
-public interface Protocol extends Transcode {
-
-	public Protocol setAll(byte[] info, byte[] data);
-	
+public interface Protocol {
 	public byte[] getHead();
 	public byte[] getSplitSignal();
 
-	public byte[] toBytes();
-//	public Object toObject();
+	public byte[] encode(Object obj);
+	public Object decode(byte[] bytes);
+	public int validate(byte[] bytes, int len);
 
-	public byte[] getLength();
-	public byte[] getInfo();
-	public byte[] getData();
-	
 }

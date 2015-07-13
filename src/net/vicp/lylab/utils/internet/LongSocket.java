@@ -4,6 +4,7 @@ import java.net.ServerSocket;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 
@@ -19,16 +20,17 @@ import net.vicp.lylab.utils.Utils;
 public class LongSocket extends LYSocket {
 	private static final long serialVersionUID = -4542553667467771646L;
 	protected SequenceTemporaryPool<byte[]> dataPool = new SequenceTemporaryPool<byte[]>();
-	protected byte[] heartBeat;
+	protected HeartBeat heartBeat;
 
-	public LongSocket(ServerSocket serverSocket, byte[] heartBeat) {
+	public LongSocket(ServerSocket serverSocket, HeartBeat heartBeat) {
 		super(serverSocket);
 		this.heartBeat = heartBeat;
 	}
 
-	public LongSocket(String host, Integer port, byte[] heartBeat) {
+	public LongSocket(String host, Integer port, Protocol protocol, HeartBeat heartBeat) {
 		super(host, port);
 		this.heartBeat = heartBeat;
+		this.protocol = protocol;
 	}
 
 	@Override
@@ -127,9 +129,10 @@ public class LongSocket extends LYSocket {
 	 * @param data
 	 * @return ObjectId of data, it won't return until data was added
 	 */
-	public Long addToPool_Force(byte[] data) {
+	public Long addToPool_Force(Object data) {
 		Long objId = null;
-		while (((objId = dataPool.add(data)) == null))
+		byte[] dateBytes = protocol.encode(data);
+		while (((objId = dataPool.add(dateBytes)) == null))
 			await(CoreDef.WAITING_LONG);
 		if (objId != null) {
 			signalAll();
@@ -139,7 +142,9 @@ public class LongSocket extends LYSocket {
 
 	public boolean sendHeartBeat() {
 		try {
-			if(request(heartBeat) != null)
+			if(protocol == null)
+				return true;
+			if(request(protocol.encode(heartBeat)) != null)
 				return true;
 		} catch (Exception e) { }
 		return false;

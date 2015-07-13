@@ -1,5 +1,7 @@
 package net.vicp.lylab.utils.internet;
 
+import net.vicp.lylab.core.interfaces.Protocol;
+
 /**
  * A client specific long socket.
  * You can use this to request foreigner server with long socket.
@@ -13,8 +15,8 @@ package net.vicp.lylab.utils.internet;
 public class ClientLongSocket extends LongSocket {
 	private static final long serialVersionUID = -2811199603276510531L;
 	
-	public ClientLongSocket(String host, Integer port, byte[] heartBeat) {
-		super(host, port, heartBeat);
+	public ClientLongSocket(String host, Integer port, Protocol protocol, HeartBeat heartBeat) {
+		super(host, port, protocol, heartBeat);
 	}
 
 }

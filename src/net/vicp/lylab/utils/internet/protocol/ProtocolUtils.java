@@ -1,14 +1,9 @@
 package net.vicp.lylab.utils.internet.protocol;
 
-import java.util.Arrays;
-
 import net.vicp.lylab.core.BaseObject;
-import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.utils.Algorithm;
-import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.config.Config;
 
 /**
@@ -22,8 +17,9 @@ import net.vicp.lylab.utils.config.Config;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public final class ProtocolUtils extends BaseObject {
+public final class ProtocolUtils extends BaseObject implements InitializeConfig {
 	private static Config config;
+	private static int configSizeCache;
 
 	/**
 	 * Pair to protocol by head with protocol config
@@ -31,7 +27,7 @@ public final class ProtocolUtils extends BaseObject {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static Class<Protocol> pairToProtocol(byte[] head)
+	public static Protocol pairToProtocol(byte[] head)
 	{
 		String sHead = new String(head);
 		Class<Protocol> protocolClass = null;
@@ -48,7 +44,7 @@ public final class ProtocolUtils extends BaseObject {
 		}
 		if(protocolClass == null)
 			throw new LYException("Can not pair sHead[" + sHead + "] to any protocol");
-		return protocolClass;
+		return rawProtocol(protocolClass);
 	}
 	
 	/**
@@ -70,10 +66,6 @@ public final class ProtocolUtils extends BaseObject {
 		return protocol;
 	}
 
-//	public static byte[] toBytes(Protocol protocol) {
-//		return protocol.toBytes();
-//	}
-
 	/**
 	 * Compare bytes start from a specific position for a specific limit
 	 * @param e1 source to compare
@@ -94,116 +86,28 @@ public final class ProtocolUtils extends BaseObject {
 		return true;
 	}
 	
-	private static boolean checkHead(Protocol protocol, byte[] bytes)
+	public static boolean checkHead(Protocol protocol, byte[] bytes)
 	{
 		if (!bytesContinueWith(bytes, 0, protocol.getHead(), 0, protocol.getHead().length)) return false;
 		return true;
 	}
-
-	/**
-	 * Assemble bytes into a protocol
-	 * @param bytes
-	 * @return
-	 */
-	public static Protocol fromBytes(byte[] bytes) {
-		if (bytes == null) return null;
-		Class<Protocol> protocolClass = pairToProtocol(bytes);
-		Protocol protocol = rawProtocol(protocolClass);
-		if (protocol == null) return null;
-//		byte[] temp = Arrays.copyOfRange(bytes, 0, protocol.getHead().length);
-		if (!checkHead(protocol, bytes))
-			return null;
-
-		int headEndPosition = Algorithm.KMPSearch(bytes, protocol.getSplitSignal());
-		if (headEndPosition != protocol.getHead().length) return null;
-		
-		int lengthEndPosition = protocol.getHead().length + protocol.getSplitSignal().length + CoreDef.SIZEOF_INTEGER;
-		int length = Utils.Bytes4ToInt(bytes, protocol.getHead().length + protocol.getSplitSignal().length);
-		
-		int infoEndPosition = lengthEndPosition + protocol.getSplitSignal().length + Algorithm.KMPSearch(bytes, protocol.getSplitSignal(), lengthEndPosition + protocol.getSplitSignal().length);
-		if (infoEndPosition <= 0) return null;
-
-		byte[] info = Arrays.copyOfRange(bytes, lengthEndPosition + protocol.getSplitSignal().length, infoEndPosition);
-
-		byte[] data = Arrays.copyOfRange(bytes, infoEndPosition + protocol.getSplitSignal().length, infoEndPosition + protocol.getSplitSignal().length + length);
-
-		return new AtomicStrongReference<Protocol>().get(protocolClass, info, data);
-		//return new Protocol(info, data);
-	}
 	
-	/**
-	 * Assemble bytes into a protocol
-	 * @param bytes
-	 * @return
-	 */
-	public static Protocol fromBytes(Protocol protocol, byte[] bytes) {
-		if (bytes == null) return null;
-		if (protocol == null) {
-			Class<Protocol> protocolClass = pairToProtocol(bytes);
-			protocol = rawProtocol(protocolClass);
-		}
-//		byte[] temp = Arrays.copyOfRange(bytes, 0, protocol.getHead().length);
-		if (!checkHead(protocol, bytes))
-			return null;
-
-		int headEndPosition = Algorithm.KMPSearch(bytes, protocol.getSplitSignal());
-		if (headEndPosition != protocol.getHead().length) return null;
-		
-		int lengthEndPosition = protocol.getHead().length + protocol.getSplitSignal().length + CoreDef.SIZEOF_INTEGER;
-		int length = Utils.Bytes4ToInt(bytes, protocol.getHead().length + protocol.getSplitSignal().length);
-		
-		int infoEndPosition = lengthEndPosition + protocol.getSplitSignal().length + Algorithm.KMPSearch(bytes, protocol.getSplitSignal(), lengthEndPosition + protocol.getSplitSignal().length);
-		if (infoEndPosition <= 0) return null;
-
-		byte[] info = Arrays.copyOfRange(bytes, lengthEndPosition + protocol.getSplitSignal().length, infoEndPosition);
-
-		byte[] data = Arrays.copyOfRange(bytes, infoEndPosition + protocol.getSplitSignal().length, infoEndPosition + protocol.getSplitSignal().length + length);
-		protocol.setAll(info, data);
-		return protocol;
-		//return new Protocol(info, data);
-	}
-
-	/**
-	 * Fast validate if these bytes could be assemble into a protocol
-	 * @param protocol
-	 * @param bytes
-	 * @param len
-	 * @return
-	 * 0 yes, -1 no, 1 not enough
-	 */
-	public static int validate(Protocol protocol, byte[] bytes, int len) {
-		if (protocol == null || bytes == null) return -1;
-//		Protocol protocol = rawProtocol(pairToProtocol(bytes));
-//		byte[] temp = Arrays.copyOfRange(bytes, 0, protocol.getHead().length);
-		if (!checkHead(protocol, bytes))
-			return -1;
-		
-		int headEndPosition = Algorithm.KMPSearch(bytes, protocol.getSplitSignal());
-		if (headEndPosition != protocol.getHead().length) return -1;
-		
-		int lengthEndPosition = protocol.getHead().length + protocol.getSplitSignal().length + CoreDef.SIZEOF_INTEGER;
-		int length = Utils.Bytes4ToInt(bytes, protocol.getHead().length + protocol.getSplitSignal().length);
-		
-		int infoEndPosition = lengthEndPosition + protocol.getSplitSignal().length + Algorithm.KMPSearch(bytes, protocol.getSplitSignal(), lengthEndPosition + protocol.getSplitSignal().length);
-		if (infoEndPosition <= 0) return -1;
-
-		if(len > length + infoEndPosition + protocol.getSplitSignal().length)
-			return -1;
-		if(len < length + infoEndPosition + protocol.getSplitSignal().length)
-			return 1;
-		return 0;
-	}
-
 	private static Config getConfig() {
 		if(config == null) throw new LYException("Protocol config is null");
 		return config;
 	}
 
+	@Override
+	public void obtainConfig(Config config) {
+		setConfig(config);
+	}
+
 	public static void setConfig(Config config) {
 		ProtocolUtils.config = config;
+		configSizeCache = config.keySet().size();
 	}
 
 	public static boolean isMultiProtocol() {
-		return config.keySet().size() == 1;
+		return configSizeCache != 1;
 	}
 }

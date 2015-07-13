@@ -3,14 +3,12 @@ package net.vicp.lylab.server.aop;
 import java.net.ServerSocket;
 
 import net.vicp.lylab.core.BaseAction;
-import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.internet.ToClientSocket;
 import net.vicp.lylab.utils.internet.impl.Message;
-import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,17 +37,10 @@ public class DoAction extends ToClientSocket {
 		Message response = new Message();
 		String key = null;
 		BaseAction action = null;
-		Protocol protocol = null;
 		try {
 			do {
 				try {
-					protocol = ProtocolUtils.fromBytes(bufferProtocol, request);
-				} catch (Exception e) {
-					protocol = null;
-					break;
-				}
-				try {
-					msg = (Message) protocol.decode();
+					msg = (Message) protocol.decode(request);
 				} catch (Exception e) {
 					response.setCode(0x00001);
 					response.setMessage("Message not found");

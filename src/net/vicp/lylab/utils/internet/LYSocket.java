@@ -44,7 +44,7 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 	// Buffer
 	private byte[] buffer = new byte[CoreDef.SOCKET_MAX_BUFFER];
 	private int bufferLen = 0;
-	protected Protocol bufferProtocol = null;
+	protected Protocol protocol = null;
 
 	// Callback below
 	protected Callback beforeConnect = null;
@@ -163,10 +163,10 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 				if (getLen == 0)
 					throw new LYException("Impossible");
 				// Create a raw protocol after first receiving
-				if(bufferLen == 0 && bufferProtocol == null && ProtocolUtils.isMultiProtocol())
-					bufferProtocol = ProtocolUtils.rawProtocol(ProtocolUtils.pairToProtocol(buffer));
+				if((bufferLen == 0 && protocol == null)|| ProtocolUtils.isMultiProtocol())
+					protocol = ProtocolUtils.pairToProtocol(buffer);
 				bufferLen += getLen;
-				int result = ProtocolUtils.validate(bufferProtocol, buffer, bufferLen);
+				int result = protocol.validate(buffer, bufferLen);
 				if (result == -1)
 					throw new LYException("Bad data package");
 				if (result == 1)
