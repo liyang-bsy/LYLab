@@ -2,6 +2,7 @@ package net.vicp.lylab.utils.internet.protocol;
 
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.config.Config;
 
@@ -17,7 +18,7 @@ import net.vicp.lylab.utils.config.Config;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public final class ProtocolUtils extends BaseObject {
+public final class ProtocolUtils extends BaseObject implements InitializeConfig {
 	private static int configSize;
 
 	private static Protocol[] rawProtocols = new Protocol[0];
@@ -75,6 +76,11 @@ public final class ProtocolUtils extends BaseObject {
 		return true;
 	}
 
+	@Override
+	public void obtainConfig(Config config) {
+		setConfig(config);
+	}
+	
 	public synchronized static void setConfig(Config config) {
 		configSize = config.keySet().size();
 		rawProtocols = new Protocol[configSize];

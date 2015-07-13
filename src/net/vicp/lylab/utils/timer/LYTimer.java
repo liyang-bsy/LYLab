@@ -24,19 +24,15 @@ import net.vicp.lylab.utils.config.Config;
  * 
  */
 public final class LYTimer extends NonCloneableBaseObject implements LifeCycle, InitializeConfig {
-	
-	private static Config config;
-	private static List<TimerJob> jobs = new ArrayList<TimerJob>();
-	private static AutoInitialize<Timer> timer = new AtomicStrongReference<Timer>();
-	private static AtomicBoolean Scheduled = new AtomicBoolean(false);
-	private static AutoInitialize<LYTimer> instance = new AtomicStrongReference<LYTimer>();
+	private Config config;
+	private List<TimerJob> jobs = new ArrayList<TimerJob>();
+	private AutoInitialize<Timer> timer = new AtomicStrongReference<Timer>();
+	private AtomicBoolean init = new AtomicBoolean(false);
 	
 	@Override
 	public void initialize() {
-		if(config == null) return;
 		synchronized (lock) {
-			if (!Scheduled.compareAndSet(false, true))
-				return;
+			if(init.getAndSet(true)) return;
 			for (String key : config.keySet()) {
 				try {
 					jobs.add((TimerJob) Class.forName(config.getString(key))
@@ -63,7 +59,7 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle, 
 				tj.cancel();
 				log.info("LYPlan - Cancel scheduled job: " + tj.getClass().getName());
 			}
-			Scheduled.set(false);
+			init.set(false);
 			timer.get(Timer.class).cancel();
 		}
 	}
@@ -96,16 +92,12 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle, 
 		}
 	}
 
-	public static List<TimerJob> getJobs() {
+	public List<TimerJob> getJobs() {
 		return jobs;
 	}
 
-	public static void setConfig(Config config) {
-		LYTimer.config = config;
-	}
-
-	public static LYTimer getInstance() {
-		return instance.get(LYTimer.class);
+	public void setConfig(Config config) {
+		this.config = config;
 	}
 
 }
