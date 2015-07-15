@@ -30,7 +30,7 @@ public class BaseObject {
 	/**
 	 * Now every BaseObject may use this to log something
 	 */
-	protected static Log log = LogFactory.getLog(Task.class);
+	protected transient static Log log = LogFactory.getLog(Task.class);
 
 	/**
 	 * Inner lock

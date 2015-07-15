@@ -12,6 +12,7 @@ import net.vicp.lylab.core.interfaces.Callback;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.core.interfaces.recycle.Recyclable;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.Task;
@@ -78,7 +79,8 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 		try {
 			if (isServer()) {
 				byte[] bytes = receive();
-				if(bytes == null) return;
+				if(bytes == null)
+					return;
 				send(doResponse(bytes));
 				close();
 			} else {
@@ -86,6 +88,17 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 			}
 		} catch (Exception e) {
 			throw new LYException("Connect break", e);
+		} finally {
+			try {
+				send("Connection break".getBytes());
+			} catch (Exception ex) {
+				log.info(Utils.getStringFromException(ex));
+			}
+			try {
+				close();
+			} catch (Exception ex) {
+				log.info(Utils.getStringFromException(ex));
+			}
 		}
 	}
 

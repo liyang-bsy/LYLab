@@ -6,48 +6,52 @@ import java.security.NoSuchAlgorithmException;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 
 public final class MD5 extends NonCloneableBaseObject {
-	public static String str;
+	
+	private static MessageDigest md5;
+	static {
+		try {
+			md5 = MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e) { }
+	}
 
 	public static String md5_32(String plainText) {
-		try {
-			MessageDigest md = MessageDigest.getInstance("MD5");
-			md.update(plainText.getBytes());
-			byte b[] = md.digest();
-			int i;
-			StringBuffer buf = new StringBuffer("");
-			for (int offset = 0; offset < b.length; offset++) {
-				i = b[offset];
-				if (i < 0)
-					i += 256;
-				if (i < 16)
-					buf.append("0");
-				buf.append(Integer.toHexString(i));
-			}
-			str = buf.toString();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+		StringBuffer buf = new StringBuffer("");
+		byte b[];
+		synchronized (md5) {
+			md5.reset();
+			md5.update(plainText.getBytes());
+			b = md5.digest();
 		}
-		return str;
+		int i;
+		for (int offset = 0; offset < b.length; offset++) {
+			i = b[offset];
+			if (i < 0)
+				i += 256;
+			if (i < 16)
+				buf.append("0");
+			buf.append(Integer.toHexString(i));
+		}
+		return buf.toString();
 	}
+	
 	public static String md5_16(String plainText) {
-		try {
-			MessageDigest md = MessageDigest.getInstance("MD5");
-			md.update(plainText.getBytes());
-			byte b[] = md.digest();
-			int i;
-			StringBuffer buf = new StringBuffer("");
-			for (int offset = 0; offset < b.length; offset++) {
-				i = b[offset];
-				if (i < 0)
-					i += 256;
-				if (i < 16)
-					buf.append("0");
-				buf.append(Integer.toHexString(i));
-			}
-			str = buf.toString().substring(8, 24);
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+		StringBuffer buf = new StringBuffer("");
+		byte b[];
+		synchronized (md5) {
+			md5.reset();
+			md5.update(plainText.getBytes());
+			b = md5.digest();
 		}
-		return str;
+		int i;
+		for (int offset = 0; offset < b.length; offset++) {
+			i = b[offset];
+			if (i < 0)
+				i += 256;
+			if (i < 16)
+				buf.append("0");
+			buf.append(Integer.toHexString(i));
+		}
+		buf.toString().substring(8, 24);
+		return buf.toString().substring(8, 24);
 	}
 }

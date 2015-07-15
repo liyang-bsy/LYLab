@@ -56,9 +56,14 @@ public class LongSocket extends LYSocket {
 			throw new LYException("Connect break", e);
 		} finally {
 			try {
+				send("Connection break".getBytes());
+			} catch (Exception ex) {
+				log.info(Utils.getStringFromException(ex));
+			}
+			try {
 				close();
-			} catch (Exception e) {
-				throw new LYException("Why?", e);
+			} catch (Exception ex) {
+				log.info(Utils.getStringFromException(ex));
 			}
 		}
 	}

@@ -6,9 +6,12 @@ import java.util.List;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
+import net.vicp.lylab.core.interfaces.DoHash;
+import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.utils.MD5;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
+import net.vicp.lylab.utils.config.Config;
+import net.vicp.lylab.utils.hash.MD5Hash;
 
 /**
  * Local cache system.
@@ -17,13 +20,20 @@ import net.vicp.lylab.utils.atomic.AtomicStrongReference;
  * @since 2015.07.01
  * @version 1.0.2
  */
-public final class LYCache extends NonCloneableBaseObject implements LifeCycle {
+public final class LYCache extends NonCloneableBaseObject implements LifeCycle, InitializeConfig {
+	private Config config = null;
 	private List<CacheContainer> bundles = null;
 	private long expireTime = CoreDef.DEFAULT_LYCACHE_EXPIRE_TIME;
 	private long memoryLimitation = CoreDef.DEFAULT_LYCACHE_MEMORY_LIMITATION;
+	private static DoHash doHash = new MD5Hash();
 	public double threshold = CoreDef.DEFAULT_LYCACHE_THRESHOLD;
 
 	private static AutoInitialize<LYCache> instance = new AtomicStrongReference<LYCache>();
+
+	@Override
+	public void obtainConfig(Config config) {
+		this.config = config;
+	}
 
 	@Override
 	public synchronized void initialize() {
@@ -31,8 +41,14 @@ public final class LYCache extends NonCloneableBaseObject implements LifeCycle {
 		for (int i = 0; i < 16; i++)
 			list.add(new CacheContainer());
 		getInstance().bundles = list;
-		setExpireTime(expireTime); // 30min = 60s*30min
-		LYCache.setMemoryControl(memoryLimitation, threshold); // 1GB
+		if(config == null) {
+			setExpireTime(expireTime); // 30min = 60s*30min
+			LYCache.setMemoryControl(memoryLimitation, threshold); // 1GB
+		}
+		else {
+			setExpireTime(config.getLong("expireTime")); // 30min = 60s*30min
+			LYCache.setMemoryControl(config.getLong("memoryLimitation"), config.getDouble("threshold")); // 1GB
+		}
 	}
 
 	@Override
@@ -62,6 +78,10 @@ public final class LYCache extends NonCloneableBaseObject implements LifeCycle {
 		return getContainer(seq);
 	}
 
+	public static int keyRule(String key) {
+		return doHash.hash(key);
+	}
+
 	public static List<CacheContainer> getBundles() {
 		return getInstance().bundles;
 	}
@@ -82,17 +102,6 @@ public final class LYCache extends NonCloneableBaseObject implements LifeCycle {
 		for (CacheContainer cc : getBundles())
 			size += cc.getMemoryUsage();
 		return size;
-	}
-
-	public static int keyRule(String key) {
-		String md5 = MD5.md5_32(key).toLowerCase();
-		char c = md5.charAt(0);
-		int ret = -1;
-		if (c >= '0' && c <= '9')
-			ret = c - '0';
-		else
-			ret = c - 'a' + 10;
-		return ret;
 	}
 
 	// function start
