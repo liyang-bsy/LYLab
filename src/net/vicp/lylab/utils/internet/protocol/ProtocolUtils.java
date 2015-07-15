@@ -38,7 +38,7 @@ public final class ProtocolUtils extends BaseObject implements InitializeConfig 
 			}
 		}
 		if (protocol == null)
-			throw new LYException("Can not pair with any protocol:\n" + new String(head));
+			throw new LYException("Can not pair with any protocol:\n" + new String(head).trim());
 		return protocol;
 	}
 
