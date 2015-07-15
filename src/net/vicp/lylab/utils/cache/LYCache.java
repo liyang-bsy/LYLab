@@ -79,7 +79,7 @@ public final class LYCache extends NonCloneableBaseObject implements LifeCycle, 
 	}
 
 	public static int keyRule(String key) {
-		return doHash.hash(key);
+		return Math.abs(doHash.hash(key))%16;
 	}
 
 	public static List<CacheContainer> getBundles() {
