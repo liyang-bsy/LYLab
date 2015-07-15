@@ -149,7 +149,7 @@ public class LongSocket extends LYSocket {
 		return objId;
 	}
 
-	public boolean sendHeartBeat() {
+	private boolean sendHeartBeat() {
 		try {
 			if(protocol == null)
 				return true;
@@ -157,6 +157,10 @@ public class LongSocket extends LYSocket {
 				return true;
 		} catch (Exception e) { }
 		return false;
+	}
+
+	public int getDataPoolSize() {
+		return dataPool.size();
 	}
 
 }

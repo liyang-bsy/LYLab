@@ -14,24 +14,24 @@ public class Master extends NonCloneableBaseObject {
 	private final int numberOfReplicas;
 
 	public Master(DoHash hashMaker, int numberOfReplicas,
-			Collection<Servant> nodes) {
+			Collection<Servant> servants) {
 		this.hashMaker = hashMaker;
 		this.numberOfReplicas = numberOfReplicas;
 
-		for (Servant node : nodes) {
-			add(node);
+		for (Servant servant : servants) {
+			add(servant);
 		}
 	}
 
-	public void add(Servant node) {
+	public void add(Servant servant) {
 		for (int i = 0; i < numberOfReplicas; i++) {
-			circle.put(hashMaker.hash(node.toString() + i), node);
+			circle.put(hashMaker.hash(servant.toString() + i), servant);
 		}
 	}
 
-	public void remove(Servant node) {
+	public void remove(Servant servant) {
 		for (int i = 0; i < numberOfReplicas; i++) {
-			circle.remove(hashMaker.hash(node.toString() + i));
+			circle.remove(hashMaker.hash(servant.toString() + i));
 		}
 	}
 
