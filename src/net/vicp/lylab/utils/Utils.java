@@ -207,13 +207,20 @@ public class Utils extends NonCloneableBaseObject {
 		}
 		return ret;
 	}
-	
-	public static boolean inList(@SuppressWarnings("rawtypes") List list, Object item) {
+
+	public static boolean inList(Object[] list, Object item) {
 		if(list == null || item == null) return false;
 		for(Object o:list)
 			if(o.equals(item))
 				return true;
 		return false;
+	}
+
+	public static boolean inList(@SuppressWarnings("rawtypes") List list, Object item) {
+		if (list == null || item == null || list.isEmpty()
+				|| !list.contains(item))
+			return false;
+		return true;
 	}
 
 	/**
