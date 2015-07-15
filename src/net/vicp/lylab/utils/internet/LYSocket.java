@@ -188,6 +188,8 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 
 	@Override
 	public void close() throws Exception {
+		if (thread != null)
+			thread.interrupt();
 		if (socket != null) {
 			socket.shutdownInput();
 			socket.shutdownOutput();

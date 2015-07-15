@@ -79,16 +79,23 @@ public class LongSocket extends LYSocket {
 
 	@Override
 	public byte[] request(byte[] request) {
+		return syncRequest(request);
+	}
+
+	public byte[] syncRequest(byte[] request) {
 		if (isServer())
 			return null;
-		byte[] ret = null;
-		try {
-			send(request);
-			ret = receive();
-		} catch (Exception e) {
-			log.error(Utils.getStringFromException(e));
+		synchronized(lock)
+		{
+			byte[] ret = null;
+			try {
+				send(request);
+				ret = receive();
+			} catch (Exception e) {
+				log.error(Utils.getStringFromException(e));
+			}
+			return ret;
 		}
-		return ret;
 	}
 
 	@Override
