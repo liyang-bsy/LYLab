@@ -19,7 +19,7 @@ public abstract class Config extends NonCloneableBaseObject {
 		reload();
 	}
 
-	protected abstract void reload();
+	public abstract void reload();
 	
 	protected String fileName;
 	protected Map<String, Object> dataMap;
