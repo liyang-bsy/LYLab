@@ -1,6 +1,7 @@
 package net.vicp.lylab.server.aop;
 
 import java.net.ServerSocket;
+import java.util.List;
 
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.interfaces.Aop;
@@ -21,8 +22,7 @@ public class DoActionLong extends ToClientLongSocket implements Aop {
 	}
 
 	protected static Config config;
-	protected static Filter[] startChain;
-	protected static Filter[] afterChain;
+	protected static List<Filter> filterChain;
 
 	@Override
 	public byte[] response(byte[] request) {
@@ -52,8 +52,8 @@ public class DoActionLong extends ToClientLongSocket implements Aop {
 		BaseAction action = null;
 		Message response = null;
 		// do start filter
-		if (startChain != null && startChain.length != 0)
-			for (Filter filter : startChain)
+		if (filterChain != null && filterChain.size() != 0)
+			for (Filter filter : filterChain)
 				if ((response = filter.doFilter(this, request)) != null)
 					return response;
 		response = new Message();
@@ -101,6 +101,14 @@ public class DoActionLong extends ToClientLongSocket implements Aop {
 
 	public static void setConfig(Config config) {
 		DoActionLong.config = config;
+	}
+
+	public static List<Filter> getFilterChain() {
+		return filterChain;
+	}
+
+	public static void setFilterChain(List<Filter> filterChain) {
+		DoActionLong.filterChain = filterChain;
 	}
 
 }

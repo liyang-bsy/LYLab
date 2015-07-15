@@ -1,14 +1,12 @@
 package net.vicp.lylab.utils.internet.impl;
 
-import net.vicp.lylab.core.BaseObject;
-
 /**
  * Simple log data structure
  * 
  * @author Young Lee
  * 
  */
-public class SimpleLog extends BaseObject {
+public class SimpleLog extends SimpleConfirm {
 	private String ip;
 	private String server;
 	private String before;
@@ -54,6 +52,12 @@ public class SimpleLog extends BaseObject {
 
 	public void setAfter(String after) {
 		this.after = after;
+	}
+
+	@Override
+	public String toString() {
+		return "SimpleLog [ip=" + ip + ", server=" + server + ", before="
+				+ before + ", after=" + after + ", code=" + code + "]";
 	}
 	
 }

@@ -9,11 +9,11 @@ import net.vicp.lylab.core.BaseObject;
  * 
  */
 public class SimpleConfirm extends BaseObject {
-	private int code;
+	protected int code;
 	
-	public SimpleConfirm() {}
+	public SimpleConfirm() { }
 
-	public SimpleConfirm(int code) {
+	public SimpleConfirm(Integer code) {
 		this.code = code;
 	}
 

@@ -10,10 +10,10 @@ import java.util.Map;
  * 
  */
 public class Message extends SimpleConfirm {
-	private String message;
-	private String key;
-	private Map<String, Object> body;
-	private Integer total;
+	protected String message;
+	protected String key;
+	protected Map<String, Object> body;
+	protected Integer total;
 
 	public Message() {
 		super(-1);
@@ -59,6 +59,12 @@ public class Message extends SimpleConfirm {
 	{
 		this.setCode(0);
 		this.setMessage("ok");
+	}
+
+	@Override
+	public String toString() {
+		return "Message [message=" + message + ", key=" + key + ", body="
+				+ body + ", total=" + total + ", code=" + code + "]";
 	}
 	
 }

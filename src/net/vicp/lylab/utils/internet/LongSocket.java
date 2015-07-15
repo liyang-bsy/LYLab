@@ -40,6 +40,7 @@ public class LongSocket extends LYSocket {
 
 	@Override
 	public void exec() {
+		String lastWord = "Connect break";
 		try {
 			connect();
 			if (isServer()) {
@@ -47,23 +48,26 @@ public class LongSocket extends LYSocket {
 				{
 					byte[] bytes = receive();
 					if(bytes == null) return;
-					send(doResponse(bytes));
+					bytes = doResponse(bytes);
+					if(bytes == null) return;
+					send(bytes);
 				}
 			} else {
 				while (doRequest(null) != null);
 			}
-		} catch (Exception e) {
-			throw new LYException("Connect break", e);
+		} catch (Throwable t) {
+			lastWord = t.getMessage();
+			throw new LYException("Connect break", t);
 		} finally {
 			try {
-				send("Connection break".getBytes());
-			} catch (Exception ex) {
-				log.info(Utils.getStringFromException(ex));
+				send(lastWord.getBytes());
+			} catch (Exception e) {
+				log.info(Utils.getStringFromException(e));
 			}
 			try {
 				close();
-			} catch (Exception ex) {
-				log.info(Utils.getStringFromException(ex));
+			} catch (Exception e) {
+				log.info(Utils.getStringFromException(e));
 			}
 		}
 	}
