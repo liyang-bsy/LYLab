@@ -35,12 +35,12 @@ public final class TimeoutController extends LoneWolf implements LifeCycle {
 	 * Initialize procedure
 	 */
 	@Override
-	public void initialize() {
+	public void start() {
 		getInstance().begin("TimeoutController");
 	}
 	
 	@Override
-	public void terminate() {
+	public void close() {
 		this.callStop();
 	}
 	

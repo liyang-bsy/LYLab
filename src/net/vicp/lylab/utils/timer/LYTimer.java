@@ -30,7 +30,7 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle, 
 	private AtomicBoolean init = new AtomicBoolean(false);
 	
 	@Override
-	public void initialize() {
+	public void start() {
 		synchronized (lock) {
 			if(init.getAndSet(true)) return;
 			for (String key : config.keySet()) {
@@ -53,7 +53,7 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle, 
 	}
 
 	@Override
-	public void terminate() {
+	public void close() {
 		synchronized (lock) {
 			for (TimerJob tj : getJobs()) {
 				tj.cancel();

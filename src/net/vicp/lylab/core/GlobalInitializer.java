@@ -26,11 +26,11 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 	private GlobalInitializer(Config config, TreeConfig rootConfig) {
 		GlobalInitializer.config = config;
 		GlobalInitializer.rootConfig = rootConfig;
-		initialize();
+		start();
 	}
 
 	@Override
-	public void initialize() {
+	public void start() {
 		if(inited.getAndSet(true) == true)
 			return;
 		log.info("Initializer - Initialization started");
@@ -45,8 +45,8 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 					((InitializeConfig) tmp).obtainConfig(rootConfig.getConfig(key));
 				}
 				if (tmp instanceof LifeCycle) {
-					log.info(tmp.getClass().getSimpleName() + " - Initialized");
-					((LifeCycle) tmp).initialize();
+					((LifeCycle) tmp).start();
+					log.info(tmp.getClass().getSimpleName() + " - Started");
 				}
 				singletonManager.put(key, tmp);
 			} catch (Exception e) {
@@ -56,15 +56,19 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 	}
 
 	@Override
-	public void terminate() {
+	public void close() {
 		inited.set(false);
 		log.info("Initializer - Termination started");
 		Object obj;
 		for (String key : singletonManager.keySet()) {
 			obj = singletonManager.get(key);
 			if (obj instanceof LifeCycle) {
-				log.info(obj.getClass().getSimpleName() + " - Terminated");
-				((LifeCycle) obj).terminate();
+				try {
+					((LifeCycle) obj).close();
+					log.info(obj.getClass().getSimpleName() + " - Closed");
+				} catch (Exception e) {
+					log.info(obj.getClass().getSimpleName() + " - Close failed:" + Utils.getStringFromException(e));
+				}
 			}
 		}
 	}
@@ -80,7 +84,7 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 	
 	public synchronized static void destroyInstance() {
 		if(instance != null)
-			instance.terminate();
+			instance.close();
 		instance = null;
 	}
 

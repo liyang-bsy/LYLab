@@ -36,7 +36,7 @@ public final class LYCache extends NonCloneableBaseObject implements LifeCycle, 
 	}
 
 	@Override
-	public synchronized void initialize() {
+	public synchronized void start() {
 		ArrayList<CacheContainer> list = new ArrayList<CacheContainer>();
 		for (int i = 0; i < 16; i++)
 			list.add(new CacheContainer());
@@ -52,7 +52,7 @@ public final class LYCache extends NonCloneableBaseObject implements LifeCycle, 
 	}
 
 	@Override
-	public synchronized void terminate() { }
+	public synchronized void close() { }
 
 	public static void setMemoryControl(long memoryLimitation, double threshold) {
 		if (threshold > 1.0D)

@@ -165,7 +165,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 	}
 
 	@Override
-	public void initialize() {
+	public void start() {
 		connect();
 	}
 

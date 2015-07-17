@@ -157,7 +157,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 * Initialize procedure
 	 */
 	@Override
-	public void initialize() {
+	public void start() {
 		this.getIsTerminated().set(false);
 		File file = new File(permanentFileName);
 		if (file.exists()) {
@@ -184,9 +184,9 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 * 5 minutes, then killed, and save tasks in queue onto disk
 	 */
 	@Override
-	public void terminate() {
+	public void close() {
 		// default timeout is 5 minutes
-		terminate(CoreDef.DEFAULT_TERMINATE_TIMEOUT);
+		close(CoreDef.DEFAULT_TERMINATE_TIMEOUT);
 	}
 
 	/**
@@ -196,7 +196,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 * @param timeout
 	 *            waiting limit for running tasks in million second
 	 */
-	public void terminate(long timeout) {
+	public void close(long timeout) {
 		if (this.getIsTerminated().compareAndSet(false, true))
 			return;
 		if (timeout == 0L)
@@ -361,11 +361,6 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 */
 	protected void startWatchDog() {
 		TimeoutController.addToWatch(this);
-	}
-
-	@Override
-	public void close() throws Exception {
-		terminate();
 	}
 
 	/**
