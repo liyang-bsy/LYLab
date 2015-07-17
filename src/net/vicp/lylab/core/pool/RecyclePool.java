@@ -213,10 +213,8 @@ public class RecyclePool<T> extends IndexedPool<T> {
 			if (keyContainer.isEmpty())
 				return null;
 			T tmp = null;
-			try {
-				if(available) tmp = getFromAvailableContainer();
-				else tmp = getFromBusyContainer();
-			} catch (Exception e) { }
+			if(available) tmp = getFromAvailableContainer();
+			else tmp = getFromBusyContainer();
 			return tmp;
 		}
 	}

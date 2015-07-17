@@ -91,11 +91,9 @@ public class ConnectionPool<T> extends TimeoutRecyclePool<T> {
 		safeCheck();
 		synchronized (lock) {
 			T tmp = null;
-			try {
-				if(available)
-					tmp = accessAndValidate();
-				else tmp = getFromBusyContainer();
-			} catch (Exception e) { }
+			if(available)
+				tmp = accessAndValidate();
+			else tmp = getFromBusyContainer();
 			return tmp;
 		}
 	}

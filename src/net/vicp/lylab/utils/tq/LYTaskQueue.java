@@ -365,7 +365,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 
 	@Override
 	public void close() throws Exception {
-		stopWatchDog();
+		terminate();
 	}
 
 	/**
