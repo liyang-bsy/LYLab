@@ -26,7 +26,7 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class LYSocket extends Task implements Recyclable, Transmission {
+public class TaskSocket extends Task implements Recyclable, Transmission {
 	private static final long serialVersionUID = 883892527805494627L;
 	
 	// Raw data source
@@ -53,7 +53,7 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 	protected Callback beforeTransmission = null;
 	protected Callback afterTransmission = null;
 	
-	public LYSocket(ServerSocket serverSocket) {
+	public TaskSocket(ServerSocket serverSocket) {
 		if(serverSocket == null) throw new LYException("Parameter serverSocket is null");
 		try {
 			this.socket = serverSocket.accept();
@@ -68,7 +68,7 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 		}
 	}
 	
-	public LYSocket(String host, Integer port) {
+	public TaskSocket(String host, Integer port) {
 		this.host = host;
 		this.port = port;
 		isServer = false;

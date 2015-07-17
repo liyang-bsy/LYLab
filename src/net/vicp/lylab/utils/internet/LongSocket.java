@@ -18,7 +18,7 @@ import net.vicp.lylab.utils.Utils;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class LongSocket extends LYSocket implements KeepAlive {
+public class LongSocket extends TaskSocket implements KeepAlive {
 	private static final long serialVersionUID = -4542553667467771646L;
 	protected SequenceTemporaryPool<byte[]> dataPool = new SequenceTemporaryPool<byte[]>();
 	protected HeartBeat heartBeat;

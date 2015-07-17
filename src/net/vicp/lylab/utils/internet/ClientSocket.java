@@ -13,7 +13,7 @@ import net.vicp.lylab.core.interfaces.Transmission;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class ClientSocket extends LYSocket implements Recyclable, AutoCloseable, Transmission {
+public class ClientSocket extends TaskSocket implements Recyclable, AutoCloseable, Transmission {
 	private static final long serialVersionUID = 7043024251356229037L;
 
 	public ClientSocket(String host, Integer port) {

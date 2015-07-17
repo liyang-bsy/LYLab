@@ -12,7 +12,7 @@ import java.net.ServerSocket;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public abstract class ToClientSocket extends LYSocket {
+public abstract class ToClientSocket extends TaskSocket {
 	private static final long serialVersionUID = -5356816913222343651L;
 
 	public ToClientSocket(ServerSocket serverSocket) {
