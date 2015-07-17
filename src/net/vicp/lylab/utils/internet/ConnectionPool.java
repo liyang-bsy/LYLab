@@ -59,21 +59,21 @@ public class ConnectionPool<T> extends TimeoutRecyclePool<T> {
 				if(size() > maxSize)
 					return tmp;
 				Long id = null;
+				T passerby = null;
 				try {
 					Constructor<T> con = prototypeClass.getConstructor(host.getClass(), port.getClass(), Protocol.class, HeartBeat.class);
-					T passerby = con.newInstance(host, port, protocol, heartBeat);
+					passerby = con.newInstance(host, port, protocol, heartBeat);
 					if(passerby == null)
 						throw new LYException("Create prototype instance failed");
 					if(passerby instanceof Start)
 						((Start) passerby).start();
-					
-					while((id = add(passerby))==null) {
-						attemptCount++;
-						if(attemptCount > 5) throw new LYException("Attempt to create new instance for 5 times");
-					}
 				} catch (Exception e) {
 					throw new LYException("Prototype class must have a constructor with param"
 							+ "(String host, Integer port, Protocol protocol, HeartBeat heartBeat", e);
+				}
+				while((id = add(passerby))==null) {
+					attemptCount++;
+					if(attemptCount > 10) throw new LYException("Attempt to add new instance to pool for 10 times, the container is full");
 				}
 				tmp = getFromAvailableContainer(id);
 			}
