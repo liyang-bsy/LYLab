@@ -227,7 +227,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 * @throws
 	 * 		LYException if the task is alive
 	 */
-	public boolean reset() {
+	public final boolean reset() {
 		if(state.get() == STARTED) return false;
 //		if(!state.compareAndSet(STOPPED, BEGAN)) return false;
 		if (thread != null && getThread().isAlive())
