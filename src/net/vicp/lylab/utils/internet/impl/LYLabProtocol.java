@@ -2,8 +2,8 @@ package net.vicp.lylab.utils.internet.impl;
 
 import java.util.Arrays;
 
-import net.vicp.lylab.core.BaseProtocol;
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.Algorithm;
@@ -21,7 +21,7 @@ import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class LYLabProtocol extends BaseProtocol implements Protocol {
+public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 
 	protected final byte[] head = "LYLab".getBytes();
 	protected final byte[] splitSignal = new byte[] { -15 };
@@ -81,26 +81,58 @@ public class LYLabProtocol extends BaseProtocol implements Protocol {
 		if (bytes == null) return null;
 		if (!ProtocolUtils.checkHead(bytes, head))
 			return null;
-
-		int headEndPosition = Algorithm.KMPSearch(bytes, splitSignal);
-		if (headEndPosition != head.length) return null;
-		
-		int lengthEndPosition = head.length + splitSignal.length + CoreDef.SIZEOF_INTEGER;
-		int length = Utils.Bytes4ToInt(bytes, head.length + splitSignal.length);
-		
-		int infoEndPosition = lengthEndPosition + splitSignal.length + Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
-		if (infoEndPosition <= 0) return null;
-
-		byte[] info = Arrays.copyOfRange(bytes, lengthEndPosition + splitSignal.length, infoEndPosition);
-
-		byte[] data = Arrays.copyOfRange(bytes, infoEndPosition + splitSignal.length, infoEndPosition + splitSignal.length + length);
-		String sInfo = new String(info);
+		String sInfo = null, sData = null;
+		int headEndPosition = 0, lengthEndPosition = 0, infoEndPosition = 0;
+		byte[] info, data;
 		try {
-			String sData = new String(data, CoreDef.CHARSET);
+			headEndPosition = Algorithm.KMPSearch(bytes, splitSignal);
+			if (headEndPosition != head.length) return null;
+			
+			lengthEndPosition = head.length + splitSignal.length + CoreDef.SIZEOF_INTEGER;
+			int length = Utils.Bytes4ToInt(bytes, head.length + splitSignal.length);
+			
+			infoEndPosition = lengthEndPosition + splitSignal.length + Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
+			if (infoEndPosition <= 0) return null;
+	
+			info = Arrays.copyOfRange(bytes, lengthEndPosition + splitSignal.length, infoEndPosition);
+	
+			data = Arrays.copyOfRange(bytes, infoEndPosition + splitSignal.length, infoEndPosition + splitSignal.length + length);
+			sInfo = new String(info);
+			sData = new String(data, CoreDef.CHARSET);
 			return Utils.deserialize(Class.forName(sInfo), sData);
 		} catch (Exception e) {
-			throw new LYException("Failed to convert data into specific class:" + sInfo, e);
+			String originData = null;
+			try {
+				originData = new String(bytes, CoreDef.CHARSET);
+			} catch (Exception ex) {
+				originData = "Convert failed:" + Utils.getStringFromException(ex);
+			}
+			throw new LYException("Failed to convert data[" + originData + "] into specific class:" + sInfo, e);
 		}
+	}
+	
+	@Override
+	public boolean validate(byte[] bytes, int len) {
+		if (bytes == null) throw new LYException("Parameter bytes is null");
+		if (!ProtocolUtils.checkHead(bytes, this.getHead()))
+			throw new LYException("Bad data package: mismatch head");
+		
+		int headEndPosition = Algorithm.KMPSearch(bytes, getSplitSignal());
+		if (headEndPosition != getHead().length)
+			throw new LYException("Bad data package: end position of head not found");
+		
+		int lengthEndPosition = getHead().length + getSplitSignal().length + CoreDef.SIZEOF_INTEGER;
+		int length = Utils.Bytes4ToInt(bytes, getHead().length + getSplitSignal().length);
+		
+		int infoEndPosition = lengthEndPosition + getSplitSignal().length + Algorithm.KMPSearch(bytes, getSplitSignal(), lengthEndPosition + getSplitSignal().length);
+		if (infoEndPosition <= 0)
+			throw new LYException("Bad data package: end position of info not found");
+
+		if(len > length + infoEndPosition + getSplitSignal().length)
+			throw new LYException("Bad data package: Length out of bound");
+		if(len < length + infoEndPosition + getSplitSignal().length)
+			return false;
+		return true;
 	}
 	
 }

@@ -1,7 +1,7 @@
 package net.vicp.lylab.utils.internet;
 
+import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
-import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 
 /**
  * A client specific socket.

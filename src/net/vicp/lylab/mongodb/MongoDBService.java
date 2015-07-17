@@ -149,8 +149,8 @@ public class MongoDBService<T> {
 			return new ArrayList<T>();
 		Query<T> query = getDao().createQuery().disableValidation();
 		queryAnalasis(query, filter, value);
-		page.setTotalProperty((int) query.countAll());
-		return query.limit(page.getPageSize()).offset(page.getFirstResult()).order(order).asList();
+		page.setTotal((int) query.countAll());
+		return query.limit(page.getLimit()).offset((page.getStart()-1)*page.getLimit()).order(order).asList();
 	}
 	/**
 	 * 查询日志通用接口，查询多个对象的总数

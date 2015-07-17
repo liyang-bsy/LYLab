@@ -16,7 +16,7 @@ import java.util.List;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.core.interfaces.recycle.Recyclable;
+import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.pool.Pool;
 import net.vicp.lylab.core.pool.SequencePool;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
@@ -352,14 +352,14 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	/**
 	 * Call off WatchDog
 	 */
-	public void stopWatchDog() {
+	protected void stopWatchDog() {
 		TimeoutController.removeFromWatch(this);
 	}
 
 	/**
 	 * Turn on WatchDog
 	 */
-	public void startWatchDog() {
+	protected void startWatchDog() {
 		TimeoutController.addToWatch(this);
 	}
 

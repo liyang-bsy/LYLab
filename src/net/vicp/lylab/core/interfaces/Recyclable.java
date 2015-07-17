@@ -1,4 +1,4 @@
-package net.vicp.lylab.core.interfaces.recycle;
+package net.vicp.lylab.core.interfaces;
 
 /**
  * General Recyclable interface for all classes.<br>

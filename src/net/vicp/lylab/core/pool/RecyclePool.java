@@ -8,7 +8,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.utils.Utils;
 
 /**
  * 抽象的分离池
@@ -54,9 +56,8 @@ public class RecyclePool<T> extends IndexedPool<T> {
 	@Override
 	public void close() {
 		synchronized (lock) {
+			clear();
 			super.close();
-			if (busyContainer != null)
-				busyContainer.clear();
 			busyContainer = null;
 		}
 	}
@@ -71,6 +72,28 @@ public class RecyclePool<T> extends IndexedPool<T> {
 	@Override
 	public void clear() {
 		synchronized (lock) {
+			if (isClosed())
+				return;
+			for(Long id:availableKeySet())
+			{
+				T tmp = availableContainer.get(id);
+				if(tmp instanceof AutoCloseable)
+					try {
+						((AutoCloseable) tmp).close();
+					} catch (Exception e) {
+						log.error(Utils.getStringFromException(e));
+					}
+			}
+			for(Long id:busyKeySet())
+			{
+				T tmp = busyContainer.get(id);
+				if(tmp instanceof AutoCloseable)
+					try {
+						((AutoCloseable) tmp).close();
+					} catch (Exception e) {
+						log.error(Utils.getStringFromException(e));
+					}
+			}
 			super.clear();
 			keyContainer.clear();
 			busyContainer.clear();
@@ -86,17 +109,9 @@ public class RecyclePool<T> extends IndexedPool<T> {
 		synchronized (lock) {
 			safeCheck();
 			T tmp = busyContainer.remove(objId);
-			if(tmp != null)
-			{
-				try {
-					if (tmp instanceof AutoCloseable) {
-						((AutoCloseable) tmp).close();
-					}
-					addToContainer(tmp);
-					return tmp;
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+			if (tmp != null) {
+				addToContainer(tmp);
+				return tmp;
 			}
 			return null;
 		}
@@ -109,6 +124,48 @@ public class RecyclePool<T> extends IndexedPool<T> {
 			T tmp = removeFromContainer(objId);
 			if(tmp != null)
 				keyContainer.remove(objId);
+			return tmp;
+		}
+	}
+
+	/**
+	 * Search and remove from both available container and busy container.
+	 * @param item to be removed
+	 * @return
+	 * removed item, null means not found
+	 */
+	protected T searchAndRemove(T item) {
+		synchronized (lock) {
+			if (isClosed() && item == null)
+				return null;
+			safeCheck();
+			long objId = 0L;
+			if (item instanceof BaseObject)
+				objId = ((BaseObject) item).getObjectId();
+			else {
+				if (availableContainer.containsValue(item))
+					for (Long id : availableKeySet()) {
+						if (availableContainer.get(id).equals(item)) {
+							objId = id.longValue();
+							break;
+						}
+					}
+				else if (busyContainer.containsValue(item))
+					for (Long id : busyKeySet()) {
+						if (busyContainer.get(id).equals(item)) {
+							objId = id.longValue();
+							break;
+						}
+					}
+			}
+			T tmp = null;
+			if (objId > 0) {
+				tmp = removeFromContainer(objId);
+				if (tmp == null)
+					tmp = busyContainer.remove(objId);
+				if (tmp != null)
+					keyContainer.remove(objId);
+			}
 			return tmp;
 		}
 	}
@@ -183,8 +240,7 @@ public class RecyclePool<T> extends IndexedPool<T> {
 					T tmp = null;
 					if(available) tmp = getFromAvailableContainer(key);
 					else tmp = getFromBusyContainer(key);
-					if(tmp!=null)
-					{
+					if(tmp!=null) {
 						retList.add(tmp);
 					}
 					iterator.remove();

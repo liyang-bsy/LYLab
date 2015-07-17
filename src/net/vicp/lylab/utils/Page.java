@@ -1,84 +1,62 @@
 package net.vicp.lylab.utils;
 
-public final class Page {
-	public static final int DEFAULT_PAGE_SIZE = 20;
-	private int totalProperty;
-	private int pageCount;
-	private int pageSize;
-	private int pageIndex;
-	protected int firstPageNo = 1;
-	protected int prePageNo = 1;
-	protected int nextPageNo = 1;
-	protected int lastPageNo = 1;
+import net.vicp.lylab.core.CoreDef;
+
+public class Page {
+	protected int total;
+	protected int start;
+	protected int limit;
 
 	public Page() {
-		this.pageIndex = 1;
-		this.pageSize = DEFAULT_PAGE_SIZE;
+		this.start = 0;
+		this.limit = CoreDef.DEFAULT_PAGE_SIZE;
 	}
 
-	public Page(int start, int pageSize) {
-		if (pageSize < 1)
-			pageSize = 1;
-		this.pageSize = pageSize;
-		pageIndex = start / pageSize;
-		pageIndex++;
+	public Page(int start, int limit) {
+		if (start < 1)
+			start = 1;
+		if (limit < 1)
+			limit = 1;
+		this.start = start;
+		this.limit = limit;
 	}
 
-	public Page(int pageIndex) {
-		if (pageIndex < 1)
-			pageIndex = 1;
-		this.pageIndex = pageIndex;
-		this.pageSize = DEFAULT_PAGE_SIZE;
+	public int getTotal() {
+		return total;
 	}
 
-	public int getPageIndex() {
-		return pageIndex;
+	public void setTotal(int total) {
+		this.total = total;
 	}
 
-	public int getPageSize() {
-		return pageSize;
+	public int getStart() {
+		return start;
 	}
 
-	public int getPageCount() {
-		return pageCount;
+	public void setStart(int start) {
+		if (start < 1)
+			start = 1;
+		this.start = start;
 	}
 
-	public int getFirstResult() {
-		return (pageIndex - 1) * pageSize;
+	public int getLimit() {
+		return limit;
 	}
 
-	public boolean getHasPrevious() {
-		return pageIndex > 1;
+	public void setLimit(int limit) {
+		if (limit < 1)
+			limit = 1;
+		this.limit = limit;
 	}
 
-	public boolean getHasNext() {
-		return pageIndex < pageCount;
+	public void setPageNo(int pageNo) {
+		if (limit < 1)
+			limit = 1;
+		start = pageNo / limit + 1;
 	}
 
-	public boolean isEmpty() {
-		return totalProperty == 0;
+	public int getPageNo() {
+		return (start - 1) * limit;
 	}
 
-	public void setPageCount(int pageCount) {
-		this.pageCount = pageCount;
-	}
-
-	public void setPageSize(int pageSize) {
-		this.pageSize = pageSize;
-	}
-
-	public void setPageIndex(int pageIndex) {
-		this.pageIndex = pageIndex;
-	}
-
-	public int getTotalProperty() {
-		return totalProperty;
-	}
-
-	public void setTotalProperty(int totalProperty) {
-		this.totalProperty = totalProperty;
-
-		pageCount = totalProperty / pageSize
-				+ (totalProperty % pageSize == 0 ? 0 : 1);
-	}
 }

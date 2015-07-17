@@ -102,5 +102,7 @@ public class CoreDef {
 	public static final long DEFAULT_LYCACHE_EXPIRE_TIME = FIFTEEN*TWO*MINUTE;
 	public static final long DEFAULT_LYCACHE_MEMORY_LIMITATION = ONE * GB;
 	public static final double DEFAULT_LYCACHE_THRESHOLD = DOUBLE * EIGHT / TEN;
+
+	public static final int DEFAULT_PAGE_SIZE = TWENTY;
 	
 }

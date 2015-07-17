@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.BaseObject;
+import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 
@@ -14,11 +15,11 @@ import net.vicp.lylab.core.exception.LYException;
  * @author liyang
  *
  */
-public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
+public abstract class AbstractPool<T> extends CloneableBaseObject implements Pool<T> {
 	
-	private Map<Long, T> availableContainer;
+	protected Map<Long, T> availableContainer;
 	protected Long idIndicator = 1L;
-	public Integer maxSize;
+	protected int maxSize;
 
 	public AbstractPool() {
 		this(CoreDef.DEFAULT_POOL_MAX_SIZE);
@@ -116,7 +117,7 @@ public abstract class AbstractPool<T> extends BaseObject implements Pool<T> {
 	}
 
 	@Override
-	public Integer getMaxSize() {
+	public int getMaxSize() {
 		return maxSize;
 	}
 

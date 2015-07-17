@@ -21,7 +21,7 @@ public interface Pool<T> extends Cloneable, Iterable<T> {
 	public void clear();
     public void close();
     public boolean isClosed();
-    public Integer getMaxSize();
+    public int getMaxSize();
     public void setMaxSize(int maxSize);
 	
 }

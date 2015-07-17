@@ -94,6 +94,8 @@ public class IndexedPool<T> extends AbstractPool<T> {
 	@Override
 	public void clear() {
 		synchronized (lock) {
+			if (isClosed())
+				return;
 			super.clear();
 			keyContainer.clear();
 		}
@@ -102,9 +104,8 @@ public class IndexedPool<T> extends AbstractPool<T> {
 	@Override
 	public void close() {
 		synchronized (lock) {
+			clear();
 			super.close();
-			if (keyContainer != null)
-				keyContainer.clear();
 			keyContainer = null;
 		}
 	}

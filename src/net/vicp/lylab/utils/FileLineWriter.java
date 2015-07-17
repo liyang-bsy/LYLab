@@ -123,7 +123,7 @@ public final class FileLineWriter<T> extends NonCloneableBaseObject {
 					File file = new File(fileName);
 					String savedFileName = fileName.replaceFirst(
 							"(?s)" + ".temp" + "(?!.*?" + ".temp" + ")",
-							postfix);
+							"." + postfix);
 					file.renameTo(new File(savedFileName));
 					outCount = 0;
 					fileName = "";

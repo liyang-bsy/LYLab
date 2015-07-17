@@ -4,6 +4,7 @@ import java.net.ServerSocket;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
@@ -17,10 +18,12 @@ import net.vicp.lylab.utils.Utils;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class LongSocket extends LYSocket {
+public class LongSocket extends LYSocket implements KeepAlive {
 	private static final long serialVersionUID = -4542553667467771646L;
 	protected SequenceTemporaryPool<byte[]> dataPool = new SequenceTemporaryPool<byte[]>();
 	protected HeartBeat heartBeat;
+	protected long lastActivity = 0L;
+	protected long interval = CoreDef.DEFAULT_SOCKET_TTIMEOUT/4;
 
 	public LongSocket(ServerSocket serverSocket, HeartBeat heartBeat) {
 		super(serverSocket);
@@ -42,17 +45,19 @@ public class LongSocket extends LYSocket {
 	public void exec() {
 		String lastWord = "Connect break";
 		try {
-			connect();
 			if (isServer()) {
-				while (true)
-				{
+				while (true) {
 					byte[] bytes = receive();
-					if(bytes == null) return;
+					if (bytes == null)
+						return;
 					bytes = doResponse(bytes);
-					if(bytes == null) return;
+					if (bytes == null) {
+						throw new LYException("Server attempt response null to client");
+					}
 					send(bytes);
 				}
 			} else {
+				connect();
 				while (doRequest(null) != null);
 			}
 		} catch (Throwable t) {
@@ -79,14 +84,11 @@ public class LongSocket extends LYSocket {
 
 	@Override
 	public byte[] request(byte[] request) {
-		return syncRequest(request);
-	}
-
-	public byte[] syncRequest(byte[] request) {
 		if (isServer())
 			return null;
 		synchronized(lock)
 		{
+			lastActivity = System.currentTimeMillis();
 			byte[] ret = null;
 			try {
 				send(request);
@@ -109,7 +111,7 @@ public class LongSocket extends LYSocket {
 			do {
 				byte[] tmp = dataPool.accessOne();
 				if (tmp == null) {
-					if(!sendHeartBeat()) return null;
+					if(!keepAlive()) return null;
 					await(CoreDef.WAITING_LONG);
 					continue;
 				}
@@ -121,7 +123,9 @@ public class LongSocket extends LYSocket {
 			} while (true);
 			if(afterTransmission != null)
 				afterTransmission.callback(result);
-		} catch (Exception e) { }
+		} catch (Exception e) {
+			throw new LYException(e);
+		}
 		return result;
 	}
 
@@ -156,18 +160,61 @@ public class LongSocket extends LYSocket {
 		return objId;
 	}
 
-	private boolean sendHeartBeat() {
-		try {
-			if(protocol == null)
-				return true;
-			if(request(protocol.encode(heartBeat)) != null)
-				return true;
-		} catch (Exception e) { }
-		return false;
-	}
-
 	public int getDataPoolSize() {
 		return dataPool.size();
+	}
+
+	@Override
+	public void initialize() {
+		connect();
+	}
+
+	@Override
+	public void setInterval(long interval) {
+		this.interval = interval;
+	}
+
+	@Override
+	public boolean isDying() {
+		synchronized (lock) {
+			if(System.currentTimeMillis() - lastActivity > interval)
+				return true;
+			return false;
+		}
+	}
+
+	@Override
+	public boolean keepAlive() {
+		synchronized (lock) {
+			if(!isDying()) return true;
+			try {
+				if(protocol == null)
+					return true;
+				byte[] bytes = request(protocol.encode(heartBeat));
+				if (bytes != null) {
+					Object obj = protocol.decode(bytes);
+					if (obj instanceof HeartBeat)
+						return true;
+					else
+						log.error("Send heartbeat failed\n" + obj.toString());
+				}
+			} catch (Exception e) { }
+			return false;
+		}
+	}
+
+	@Override
+	public boolean isAlive() {
+		if (isClosed())
+			return false;
+		// It is said that this method may cause unexpected result on Windows 7
+		/*try {
+			socket.sendUrgentData(0xFF);
+		} catch (Exception e) {
+			return false;
+		}*/
+		if(!keepAlive()) return false;
+		return true;
 	}
 
 }

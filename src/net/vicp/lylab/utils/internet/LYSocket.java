@@ -10,8 +10,8 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Callback;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
-import net.vicp.lylab.core.interfaces.recycle.Recyclable;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
@@ -168,11 +168,10 @@ public class LYSocket extends Task implements Recyclable, Transmission {
 					if(bufferLen == buffer.length)
 						buffer = Arrays.copyOf(buffer, buffer.length*10);
 					getLen = in.read(buffer, bufferLen, buffer.length - bufferLen);
+					if (getLen == -1) return null;
 				} catch (Exception e) {
 					throw new LYException(e);
 				}
-				if (getLen == -1)
-					return null;
 				if (getLen == 0)
 					throw new LYException("Impossible");
 				// Create a raw protocol after first receiving

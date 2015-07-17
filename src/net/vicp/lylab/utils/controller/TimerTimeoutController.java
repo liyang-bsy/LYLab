@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.vicp.lylab.core.interfaces.recycle.Recyclable;
+import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.timer.InstantJob;
 

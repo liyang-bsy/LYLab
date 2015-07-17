@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.recycle.Recyclable;
+import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
 /**
@@ -52,6 +52,7 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 			startTime.clear();
 		}
 	}
+	
 	@Override
 	protected T getFromAvailableContainer(long objId) {
 		safeCheck();
@@ -69,32 +70,61 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 	}
 
 	@Override
-	public void recycle() {
-		for (Long id : startTime.keySet()) {
-			Date start = startTime.get(id);
-			if (new Date().getTime() - start.getTime() > timeout) {
+	public T recycle(long objId) {
+		synchronized (lock) {
+			safeCheck();
+			T tmp = busyContainer.remove(objId);
+			if(tmp != null)
+			{
 				try {
+					addToContainer(tmp);
+					return tmp;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return null;
+		}
+	}
+
+	@Override
+	public void recycle() {
+		synchronized (lock) {
+			for (Long id : startTime.keySet()) {
+				Date start = startTime.get(id);
+				if (new Date().getTime() - start.getTime() > timeout) {
 					T tmp = busyContainer.get(id);
 					if (tmp != null) {
-						if (tmp instanceof AutoCloseable)
-							((AutoCloseable) tmp).close();
+						try {
+							if (tmp instanceof AutoCloseable) {
+								((AutoCloseable) tmp).close();
+							}
+						} catch (Exception e) {
+							throw new LYException("Recycle failed", e);
+						}
 						busyContainer.remove(id);
 						keyContainer.remove(id);
 						startTime.remove(id);
 					}
-				} catch (Exception e) {
-					throw new LYException("Recycle failed", e);
 				}
 			}
+			if(keyContainer.size() == size())
+				safeCheck();
 		}
-		if(keyContainer.size() == size())
-			safeCheck();
 	}
 
 	@Override
 	public boolean isRecyclable() {
 		safeCheck();
 		return startTime.size() != 0;
+	}
+
+	public Long getTimeout() {
+		return timeout;
+	}
+
+	public void setTimeout(Long timeout) {
+		this.timeout = timeout;
 	}
 
 }

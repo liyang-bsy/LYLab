@@ -3,15 +3,15 @@ package net.vicp.lylab.utils.internet.impl;
 import java.io.Serializable;
 import java.util.Arrays;
 
-import org.apache.commons.lang3.SerializationUtils;
-
-import net.vicp.lylab.core.BaseProtocol;
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.Algorithm;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
+
+import org.apache.commons.lang3.SerializationUtils;
 
 /**
  * A self-defined protocol easy transfer Objects through socket.<br>
@@ -24,8 +24,8 @@ import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class JavaObjProtocol extends BaseProtocol implements Protocol {
-
+public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol {
+	
 	protected final byte[] head = "JavaObj".getBytes();
 	protected final byte[] splitSignal = new byte[] { -15 };
 	
@@ -41,7 +41,6 @@ public class JavaObjProtocol extends BaseProtocol implements Protocol {
 	
 	@Override
 	public byte[] encode(Object obj) {
-		byte[] info = new byte[] { };
 		byte[] data;
 		try {
 			data = SerializationUtils.serialize((Serializable) obj);
@@ -52,13 +51,12 @@ public class JavaObjProtocol extends BaseProtocol implements Protocol {
 		byte[] length = Utils.IntToBytes4(data.length);
 		int headLength = head.length;
 		int lengthLength = length.length;
-		int infoLength = info.length;
 		int dataLength = data.length;
 		int splitSignalLength = splitSignal.length;
 		
 		int size = headLength + lengthLength
-				+ infoLength + dataLength
-				+ splitSignalLength * 3;
+				+ dataLength
+				+ splitSignalLength * 2;
 		
 		byte[] bytes = new byte[size];
 		int i = 0;
@@ -68,10 +66,6 @@ public class JavaObjProtocol extends BaseProtocol implements Protocol {
 			bytes[i++] = splitSignal[j];
 		for (int j = 0; j < lengthLength; j++)
 			bytes[i++] = length[j];
-		for (int j = 0; j < splitSignalLength; j++)
-			bytes[i++] = splitSignal[j];
-		for (int j = 0; j < infoLength; j++)
-			bytes[i++] = info[j];
 		for (int j = 0; j < splitSignalLength; j++)
 			bytes[i++] = splitSignal[j];
 		for (int j = 0; j < dataLength; j++)
@@ -91,18 +85,32 @@ public class JavaObjProtocol extends BaseProtocol implements Protocol {
 		int lengthEndPosition = head.length + splitSignal.length + CoreDef.SIZEOF_INTEGER;
 		int length = Utils.Bytes4ToInt(bytes, head.length + splitSignal.length);
 		
-		int infoEndPosition = lengthEndPosition + splitSignal.length + Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
-		if (infoEndPosition <= 0) return null;
-
-		byte[] info = Arrays.copyOfRange(bytes, lengthEndPosition + splitSignal.length, infoEndPosition);
-
-		byte[] data = Arrays.copyOfRange(bytes, infoEndPosition + splitSignal.length, infoEndPosition + splitSignal.length + length);
-		String sInfo = new String(info);
+		byte[] data = Arrays.copyOfRange(bytes, lengthEndPosition + splitSignal.length, lengthEndPosition + splitSignal.length + length);
 		try {
 			return SerializationUtils.deserialize(data);
 		} catch (Exception e) {
-			throw new LYException("Failed to convert data into specific class:" + sInfo, e);
+			throw new LYException("Failed to convert data into object", e);
 		}
+	}
+	
+	@Override
+	public boolean validate(byte[] bytes, int len) {
+		if (bytes == null) throw new LYException("Parameter bytes is null");
+		if (!ProtocolUtils.checkHead(bytes, this.getHead()))
+			throw new LYException("Bad data package: mismatch head");
+		
+		int headEndPosition = Algorithm.KMPSearch(bytes, getSplitSignal());
+		if (headEndPosition != getHead().length)
+			throw new LYException("Bad data package: end position of head not found");
+		
+		int lengthEndPosition = getHead().length + getSplitSignal().length + CoreDef.SIZEOF_INTEGER;
+		int length = Utils.Bytes4ToInt(bytes, getHead().length + getSplitSignal().length);
+		
+		if(len > length + lengthEndPosition + getSplitSignal().length)
+			throw new LYException("Bad data package: Length out of bound");
+		if(len < length + lengthEndPosition + getSplitSignal().length)
+			return false;
+		return true;
 	}
 	
 }

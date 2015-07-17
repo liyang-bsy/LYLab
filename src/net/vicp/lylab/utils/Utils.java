@@ -287,7 +287,7 @@ public class Utils extends NonCloneableBaseObject {
 		try {
 			return mapper.get(ObjectMapper.class).readValue(json, instanceClass);  
 		} catch (Exception e) {
-			throw new LYException("Can not deserialize follow json into " + instanceClass.getName() + "\n" + json, e);
+			throw new LYException("Can not deserialize follow json[" + json + "] into " + instanceClass.getName(), e);
 		}
 	}
 	

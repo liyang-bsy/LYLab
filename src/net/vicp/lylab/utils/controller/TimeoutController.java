@@ -9,7 +9,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.core.interfaces.recycle.Recyclable;
+import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.tq.LoneWolf;
