@@ -18,15 +18,15 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class ServerTaskSocket extends Task implements LifeCycle{
+public class SyncServer extends Task implements LifeCycle{
 	private static final long serialVersionUID = 883892527805494627L;
 	protected volatile boolean running = true;
 	protected ServerSocket serverSocket;
 	protected LYTaskQueue tq;
 	
-	protected static ServerTaskSocket instance;
+	protected static SyncServer instance;
 	
-	protected ServerTaskSocket() { }
+	protected SyncServer() { }
 	
 	@Override
 	public void start() { }
@@ -49,11 +49,11 @@ public class ServerTaskSocket extends Task implements LifeCycle{
 		}
 	}
 	
-	public static ServerTaskSocket getInstance() {
+	public static SyncServer getInstance() {
 		if(instance == null)
 			synchronized (instance) {
 				if(instance == null)
-					instance = new ServerTaskSocket();
+					instance = new SyncServer();
 			}
 		return instance;
 	}

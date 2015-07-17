@@ -94,13 +94,13 @@ public class DoActionLong extends ToClientLongSocket implements Aop {
 		log.debug("Access key:" + key  + "\nBefore:" + request + "\nAfter:" + response);
 		return response;
 	}
-
+	
 	public static Config getConfig() {
 		return config;
 	}
 
 	public static void setConfig(Config config) {
-		DoActionLong.config = config;
+		DoAction.config = config;
 	}
 
 	public static List<Filter> getFilterChain() {

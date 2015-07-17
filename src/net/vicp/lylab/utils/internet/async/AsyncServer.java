@@ -9,7 +9,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Set;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
@@ -32,24 +35,18 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class AsyncServerSocket extends Task implements Recyclable, DoResponse {
+public class AsyncServer extends Task implements AutoCloseable, DoResponse {
 	private static final long serialVersionUID = 883892527805494627L;
 	
 	// Raw data source
 	protected Selector selector = null;
 	protected ServerSocketChannel serverSocketChannel = null;
 	protected ServerSocket serverSocket = null;
-	
 	protected Socket socket = null;
-
-	// some thing about this socket
-	protected AtomicInteger socketRetry = new AtomicInteger();
-	protected int socketMaxRetry = Integer.MAX_VALUE;
 	protected int port;
 
 	// Buffer
 	private ByteBuffer buffer = ByteBuffer.allocate(CoreDef.SOCKET_MAX_BUFFER);
-	private int bufferLen = 0;
 	protected Protocol protocol = null;
 
 	// Callback below
@@ -62,7 +59,7 @@ public class AsyncServerSocket extends Task implements Recyclable, DoResponse {
 	 * Server mode
 	 * @param port
 	 */
-	public AsyncServerSocket(int port) {
+	public AsyncServer(int port) {
 		try {
 			selector = Selector.open();
 			serverSocketChannel = ServerSocketChannel.open();
@@ -80,19 +77,44 @@ public class AsyncServerSocket extends Task implements Recyclable, DoResponse {
 	@Override
 	public void exec() {
 		try {
-			byte[] bytes = receive();
-			if(bytes == null)
-				return;
-			send(doResponse(bytes));
-			close();
+			while (true) {
+				// Will be block here
+				selector.select();
+				Set<SelectionKey> selectionKeys = selector.selectedKeys();
+				Iterator<SelectionKey> iter = selectionKeys.iterator();
+				SocketChannel socketChannel;
+				
+				while (iter.hasNext()) {
+					SelectionKey key = iter.next();
+					// 判断事件类型
+					if ((key.readyOps() & SelectionKey.OP_ACCEPT) == SelectionKey.OP_ACCEPT) {
+						ServerSocketChannel nssc = (ServerSocketChannel) key.channel();
+						socketChannel = nssc.accept();
+						// 设为非阻塞
+						socketChannel.configureBlocking(false);
+						socketChannel.register(selector, SelectionKey.OP_READ);
+						iter.remove();
+//						System.out.println("有新的链接" + socketChannel);
+					} else if ((key.readyOps() & SelectionKey.OP_READ) == SelectionKey.OP_READ) {
+						socketChannel = (SocketChannel) key.channel();
+						while (true) {
+							int a = socketChannel.read(buffer);
+							if (a == -1)
+								break;
+							if (a > 0) {
+								Object o = p.decode(buffer);
+								socketChannel.write(ByteBuffer.wrap(p.encode(o)));
+								break;
+							}
+						}
+
+						iter.remove();
+					}
+				}
+			}
 		} catch (Exception e) {
 			throw new LYException("Connect break", e);
 		} finally {
-			try {
-				send("Connection break".getBytes());
-			} catch (Exception ex) {
-				log.info(Utils.getStringFromException(ex));
-			}
 			try {
 				close();
 			} catch (Exception ex) {
@@ -110,47 +132,49 @@ public class AsyncServerSocket extends Task implements Recyclable, DoResponse {
 	public byte[] doResponse(byte[] request) {
 		if(beforeTransmission != null)
 			beforeTransmission.callback(request);
-		if(!isServer()) throw new LYException("Do response is forbidden to a client socket");
 		byte[] ret = response(request);
 		if(afterTransmission != null)
 			afterTransmission.callback(ret);
 		return ret;
 	}
 	
-	public boolean send(ByteBuffer msg) throws Exception {
-		if(isClosed()) return false;
-		serverSocket.write(msg);
-		serverSocket.flush();
-		return true;
+	public boolean send(SocketChannel socketChannel, byte[] msg) throws Exception {
+		if (isClosed())
+			return false;
+		if (socketChannel != null) {
+			socketChannel.write(ByteBuffer.wrap(msg));
+			return true;
+		}
+		return false;
 	}
 	
-	public byte[] receive() throws Exception {
+	public byte[] receive(SocketChannel socketChannel) throws Exception {
 		if(isClosed()) throw new LYException("Connection closed");
-		if (in != null) {
-			bufferLen = 0;
-			Arrays.fill(buffer, (byte) 0);
+		if (socketChannel != null) {
+			int bufferLen = 0;
+			buffer.clear();
 			int getLen = 0;
 			while (true) {
 				getLen = 0;
 				try {
-					if(bufferLen == buffer.length)
-						buffer = Arrays.copyOf(buffer, buffer.length*10);
-					getLen = in.read(buffer, bufferLen, buffer.length - bufferLen);
+					if(bufferLen == buffer.array().length) {
+						byte[] newBytes = Arrays.copyOf(buffer.array(), buffer.array().length*10);
+						buffer = ByteBuffer.wrap(newBytes);
+					}
+					getLen = socketChannel.read(buffer);
 					if (getLen == -1) return null;
 				} catch (Exception e) {
 					throw new LYException(e);
 				}
-				if (getLen == 0)
-					throw new LYException("Impossible");
 				// Create a raw protocol after first receiving
 				if(bufferLen == 0 && (protocol == null || ProtocolUtils.isMultiProtocol()))
-					protocol = ProtocolUtils.pairWithProtocol(buffer);
+					protocol = ProtocolUtils.pairWithProtocol(buffer.array());
 				bufferLen += getLen;
-				if (protocol.validate(buffer, bufferLen))
+				if (protocol.validate(buffer.array(), bufferLen))
 					break;
 			}
 		}
-		return buffer;
+		return buffer.array();
 	}
 
 	@Override
@@ -163,8 +187,6 @@ public class AsyncServerSocket extends Task implements Recyclable, DoResponse {
 			if(!socket.isClosed())
 				socket.close();
 			socket = null;
-			in = null;
-			out = null;
 		}
 		if(afterClose != null)
 			afterClose.callback();
@@ -172,29 +194,6 @@ public class AsyncServerSocket extends Task implements Recyclable, DoResponse {
 
 	public boolean isClosed() {
 		return socket == null || socket.isClosed();
-	}
-
-	@Override
-	public boolean isRecyclable() {
-		return (socketRetry.get() < socketMaxRetry) && !isServer() && isClosed();
-	}
-
-	@Override
-	public void recycle() {
-		if (socketRetry.incrementAndGet() > socketMaxRetry)
-			throw new LYException("Socket recycled for too many times");
-		recycle(host, port);
-	}
-
-	protected void recycle(String host, int port) {
-		if(isServer()) return;
-		try {
-			socket = new Socket(host, port);
-			in = socket.getInputStream();
-			out = socket.getOutputStream();
-		} catch (Exception e) {
-			throw new LYException("Recycle connection failed");
-		}
 	}
 
 	// getters & setters below
