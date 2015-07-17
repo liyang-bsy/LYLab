@@ -185,7 +185,7 @@ public class Utils extends NonCloneableBaseObject {
 		File file = new File(fileName);
 		try (FileInputStream in = new FileInputStream(file);
 				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(in, CoreDef.CHARSET));) {
+						new InputStreamReader(in, CoreDef.CHARSET()));) {
 			String tempString = null;
 			// 一次读入一行，直到读入null为文件结束
 			while ((tempString = reader.readLine()) != null) {

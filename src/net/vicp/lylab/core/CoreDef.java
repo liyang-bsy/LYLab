@@ -1,6 +1,9 @@
 package net.vicp.lylab.core;
 
 import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 
 import net.vicp.lylab.utils.config.Config;
 
@@ -19,8 +22,23 @@ public class CoreDef {
 
 	public static Config config;
 	public static Object[] dock = new Object[16];
-	public static String CHARSET = "UTF-8";
 	
+	protected static String _charset = "UTF-8";
+	protected static Charset charset = Charset.forName(CoreDef._charset);
+	public static CharsetEncoder charsetEncoder = charset.newEncoder();
+	public static CharsetDecoder charsetDecoder = charset.newDecoder();
+	
+	public static String CHARSET() {
+		return _charset;
+	}
+
+	public static void setCharset(String charset) {
+		CoreDef._charset = charset;
+		CoreDef.charset = Charset.forName(CoreDef._charset);
+		charsetEncoder = CoreDef.charset.newEncoder();
+		charsetDecoder = CoreDef.charset.newDecoder();
+	}
+
 	public static final String rootPath;
 	static {
 		File file = new File("");

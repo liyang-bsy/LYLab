@@ -35,7 +35,7 @@ public class TaskSocket extends Task implements Recyclable, Transmission {
 	protected InputStream in;
 	protected OutputStream out;
 
-	// some thing about this socket
+	// Some thing about this socket
 	private boolean isServer;
 	protected AtomicInteger socketRetry = new AtomicInteger();
 	protected int socketMaxRetry = Integer.MAX_VALUE;

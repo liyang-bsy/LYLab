@@ -46,7 +46,7 @@ public final class FileLineWriter<T> extends NonCloneableBaseObject {
 				{
 					if(isOpenFile() == false)
 						open();
-					fileOut.write(Utils.serialize(tmp).getBytes(CoreDef.CHARSET));
+					fileOut.write(Utils.serialize(tmp).getBytes(CoreDef.CHARSET()));
 					fileOut.write("\r\n".getBytes());
 					outCount++;
 					if (maxLine <= outCount)
@@ -63,7 +63,7 @@ public final class FileLineWriter<T> extends NonCloneableBaseObject {
 			try {
 				if(isOpenFile() == false)
 					open();
-				fileOut.write(Utils.serialize(data).getBytes(CoreDef.CHARSET));
+				fileOut.write(Utils.serialize(data).getBytes(CoreDef.CHARSET()));
 				fileOut.write("\r\n".getBytes());
 				outCount++;
 				if (maxLine <= outCount)
@@ -79,7 +79,7 @@ public final class FileLineWriter<T> extends NonCloneableBaseObject {
 			try {
 				if(isOpenFile() == false)
 					open();
-				fileOut.write((line + "\r\n").getBytes(CoreDef.CHARSET));
+				fileOut.write((line + "\r\n").getBytes(CoreDef.CHARSET()));
 				outCount++;
 				if (maxLine <= outCount)
 					close();

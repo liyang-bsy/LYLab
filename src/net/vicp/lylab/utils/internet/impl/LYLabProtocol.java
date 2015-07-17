@@ -41,7 +41,7 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 		byte[] info = obj.getClass().getName().getBytes();
 		byte[] data;
 		try {
-			data = Utils.serialize(obj).getBytes(CoreDef.CHARSET);
+			data = Utils.serialize(obj).getBytes(CoreDef.CHARSET());
 		} catch (Exception e) {
 			throw new LYException("Cannot serialize object into data", e);
 		}
@@ -98,12 +98,12 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 	
 			data = Arrays.copyOfRange(bytes, infoEndPosition + splitSignal.length, infoEndPosition + splitSignal.length + length);
 			sInfo = new String(info);
-			sData = new String(data, CoreDef.CHARSET);
+			sData = new String(data, CoreDef.CHARSET());
 			return Utils.deserialize(Class.forName(sInfo), sData);
 		} catch (Exception e) {
 			String originData = null;
 			try {
-				originData = new String(bytes, CoreDef.CHARSET);
+				originData = new String(bytes, CoreDef.CHARSET());
 			} catch (Exception ex) {
 				originData = "Convert failed:" + Utils.getStringFromException(ex);
 			}

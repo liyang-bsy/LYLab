@@ -42,7 +42,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 
 	private volatile Boolean useWatchDog = false;
 	private volatile AtomicBoolean isRunning = new AtomicBoolean(false);
-	private volatile AtomicBoolean isTerminated = new AtomicBoolean(false);
+	private volatile AtomicBoolean closed = new AtomicBoolean(false);
 
 	private volatile boolean recordFailed = false;
 	private List<Task> forewarnList = new ArrayList<Task>();
@@ -61,7 +61,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 *            which should be executed, it will be cloned and its clone will
 	 *            be enqueued. <br>
 	 *            [!] Original parameter 'task' will never be used or changed by
-	 *            this.addTask(Task task)
+	 *            addTask(Task task)
 	 * @return A non-negative taskId returns to recognize specific task. <br>
 	 *         -1, means this didn't obtain cloned task. <br>
 	 *         -2, means this was try to terminate itself. No more task
@@ -72,17 +72,17 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 		Task task0 = (Task) task.clone();
 		if (task0 == null)
 			return -1L;
-		if (this.getIsTerminated().get())
+		if (closed.get())
 			return -2L;
 		task0.setController(this);
-		if (this.getTaskPool().add(task0) == null)
+		if (taskPool.add(task0) == null)
 			return -3L;
-		synchronized (this.lock) {
-			this.lock.notifyAll();
+		synchronized (lock) {
+			lock.notifyAll();
 		}
 		if (isRunning.compareAndSet(false, true))
-			if(this.reset())
-				this.begin("LYTaskQueue");
+			if(reset())
+				begin("LYTaskQueue");
 		return task0.getTaskId();
 	}
 
@@ -92,8 +92,8 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	@Override
 	public final void exec() {
 		try {
-			while (!this.getIsTerminated().get()) {
-				while (!this.getIsTerminated().get()
+			while (!closed.get()) {
+				while (!closed.get()
 						&& !getTaskPool().isEmpty()
 						&& !isThreadPoolFull()) {
 					Task task = getTaskPool().accessOne();
@@ -121,14 +121,14 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 * Cancel a task.
 	 * 
 	 * @param taskId
-	 *            which you will get from this.addTask()
+	 *            which you will get from addTask()
 	 * @return true: cancelled<br>
 	 *         false: cancel failed
 	 */
 	public synchronized Boolean cancel(long taskId) {
-		if (this.getIsTerminated().get() || taskId < 0L)
+		if (closed.get() || taskId < 0L)
 			return false;
-		Task tk = this.removeFromTaskPool(taskId);
+		Task tk = removeFromTaskPool(taskId);
 		if (tk == null || tk.getState() != Task.BEGAN)
 			return false;
 		tk.callStop();
@@ -139,14 +139,14 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 * Stop a task.
 	 * 
 	 * @param taskId
-	 *            which you will get from this.addTask()
+	 *            which you will get from addTask()
 	 * @return true: cancelled<br>
 	 *         false: cancel failed
 	 */
 	public synchronized Boolean stop(long taskId) {
-		if (this.getIsTerminated().get() || taskId < 0L)
+		if (closed.get() || taskId < 0L)
 			return false;
-		Task tk = this.removeFromTaskPool(taskId);
+		Task tk = removeFromTaskPool(taskId);
 		if (tk == null)
 			return false;
 		tk.callStop();
@@ -158,7 +158,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 */
 	@Override
 	public void start() {
-		this.getIsTerminated().set(false);
+		closed.set(false);
 		File file = new File(permanentFileName);
 		if (file.exists()) {
 			try (ObjectInputStream ois = new ObjectInputStream(
@@ -167,7 +167,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 				while (total-- > 0) {
 					Task tk = (Task) ois.readObject();
 					tk.reset();
-					this.addTask(tk);
+					addTask(tk);
 				}
 				ois.close();
 				Utils.deleteFile(permanentFileName);
@@ -197,22 +197,22 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 *            waiting limit for running tasks in million second
 	 */
 	public void close(long timeout) {
-		if (this.getIsTerminated().compareAndSet(false, true))
+		if (!closed.compareAndSet(false, true))
 			return;
 		if (timeout == 0L)
 			timeout = 1L;
 
-		synchronized (this.getThreadPool()) {
-			for (Task t : this.getThreadPool())
+		synchronized (threadPool) {
+			for (Task t : threadPool)
 				t.setTimeout(timeout);
 		}
 
-		if (!this.useWatchDog)
-			this.useWatchDog(this.useWatchDog);
-		this.useWatchDog = true;
+		if (!useWatchDog)
+			useWatchDog(useWatchDog);
+		useWatchDog = true;
 		try {
-			while (this.getThreadPool().size() > 0)
-				this.getThreadPool().accessOne().join();
+			while (threadPool.size() > 0)
+				threadPool.accessOne().join();
 		} catch (Throwable e) {
 			killAll();
 		} finally {
@@ -231,9 +231,9 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 			if (p.exists()) {
 				try (ObjectOutputStream oos = new ObjectOutputStream(
 						new FileOutputStream(p));) {
-					oos.writeObject(new Integer(this.getTaskPool().size()));
-					while (!this.getTaskPool().isEmpty())
-						oos.writeObject(this.getTaskPool().accessOne());
+					oos.writeObject(new Integer(taskPool.size()));
+					while (!taskPool.isEmpty())
+						oos.writeObject(taskPool.accessOne());
 				} catch (IOException e) {
 					log.error("LYTaskQueue - safely shutdown: Permanent process error (This will cause data loss!), reason:"
 							+ Utils.getStringFromException(e));
@@ -368,7 +368,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 */
 	@SuppressWarnings("deprecation")
 	public void killAll() {
-		for(Task task : this.getThreadPool())
+		for(Task task : getThreadPool())
 			task.forceStop();
 	}
 
@@ -377,7 +377,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 * <tt>true</tt> if the thread pool is full
 	 */
 	public Boolean isThreadPoolFull() {
-		return this.getThreadPool().size() == maxThread.intValue();
+		return getThreadPool().size() == maxThread.intValue();
 	}
 
 	/**
@@ -385,15 +385,15 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 * <tt>true</tt> if the task pool is full
 	 */
 	public Boolean isTaskPoolFull() {
-		return this.getTaskPool().size() == maxQueue.intValue();
+		return taskPool.size() == maxQueue.intValue();
 	}
 
 	public Integer getWaitingTaskCount() {
-		return this.getTaskPool().size();
+		return taskPool.size();
 	}
 	
 	public Integer getRunningThreadCount() {
-		return this.getThreadPool().size();
+		return getThreadPool().size();
 	}
 
 	// special getters & setters below
@@ -406,17 +406,17 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	public void setMaxQueue(int maxQueue) {
 		if(maxQueue <= 0) throw new LYException("maxQueue must be positive");
 		this.maxQueue = maxQueue;
-		this.getTaskPool().setMaxSize(this.maxQueue);
+		taskPool.setMaxSize(maxQueue);
 	}
 
 	public void setMaxThread(Integer maxThread) {
 		if(maxQueue <= 0) throw new LYException("maxThread must be positive");
 		this.maxThread = maxThread;
-		this.getThreadPool().setMaxSize(this.maxThread);
+		getThreadPool().setMaxSize(maxThread);
 	}
 	
 	public Pool<Task> getThreadPool() {
-		return this.threadPool;
+		return threadPool;
 	}
 	
 	private Pool<Task> getTaskPool() {
@@ -424,8 +424,8 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	}
 
 	// getters & setters below
-	public AtomicBoolean getIsTerminated() {
-		return isTerminated;
+	public boolean isClosed() {
+		return closed.get();
 	}
 
 	public Integer getMaxQueue() {

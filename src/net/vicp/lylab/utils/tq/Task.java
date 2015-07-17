@@ -46,7 +46,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 */
 	protected Date startTime = null;
 
-	private volatile AtomicInteger state = new AtomicInteger(BEGAN);
+	private final AtomicInteger state = new AtomicInteger(BEGAN);
 
 	static public final int STOPPED = -3;
 	static public final int CANCELLED = -2;

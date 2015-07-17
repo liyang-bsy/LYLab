@@ -1,89 +1,137 @@
 package net.vicp.lylab.utils.internet.async;
 
-import java.io.IOException;
+import java.io.File;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.*;
+import java.nio.CharBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.util.Iterator;
-import java.util.Set;
 
-import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
+import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.utils.config.TreeConfig;
+import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
 public class Server {
-	// 服务器端通道
-	ServerSocketChannel ssc;
+	
+	protected Selector selector;
+	protected Charset charset = Charset.forName("UTF-8");
+	protected CharsetEncoder charsetEncoder = charset.newEncoder();
+	protected CharsetDecoder charsetDecoder = charset.newDecoder();
+	int count = 1;
+	
+	/**
+	 * @throws Exception
+	 */
+	public Server() throws Exception{
+		this(8888);
+	}
+	
+	/**
+	 * @param port
+	 * @throws Exception
+	 */
+	public Server(int port) throws Exception {
+		selector = Selector.open();
+		ServerSocketChannel ssc = ServerSocketChannel.open();
+		ssc.socket().bind(new InetSocketAddress(port)); // port
+		ssc.configureBlocking(false);
+		ssc.register(selector, SelectionKey.OP_ACCEPT);// register
 
-	public void start() {
-		try {
-			// 异步IO的核心对象名selector 具有事件侦听的效果
-			// selector就是您注册对各种io事件的兴趣的地方 而且当那些事件发生时 就是这个对象告诉您所发生的事情
-			Selector selector = Selector.open();
-			// 打开一个serversocketchannel通道
-			ServerSocketChannel ssc = ServerSocketChannel.open();
-			// 设为异步
-			ssc.configureBlocking(false);
-			// 绑定端口
-			ServerSocket ss = ssc.socket();
-			InetSocketAddress address = new InetSocketAddress(5555);
-			ss.bind(address);
-			// 注册事件 regisiter的第一个参数总是selector 第二个总是op_accept 这里他指定我们要监听accept事件
-			// 也就是当有新的链接进来是发生的事件
-			ssc.register(selector, SelectionKey.OP_ACCEPT);
-			System.out.println("端口注册完成");
-			while (true) {
-				// select()这个方法会阻塞 直到有一个已注册的事件发生 当一个或者更多的事件注册进来的时候 这个会返回事件的数量
-				selector.select();
-				// 调用selectedKeys()会返回事件对象集合
-				Set<SelectionKey> selectionKeys = selector.selectedKeys();
-				// 然后我们迭代处理每一个事件
-				Iterator<SelectionKey> iter = selectionKeys.iterator();
-				byte[] buffer = new byte[2048];
-				ByteBuffer bb = ByteBuffer.allocate(2048);
-				Protocol p = new LYLabProtocol();
-				while (iter.hasNext()) {
-					SelectionKey key = iter.next();
-					// 判断事件类型
-					if ((key.readyOps() & SelectionKey.OP_ACCEPT) == SelectionKey.OP_ACCEPT) {
-						ServerSocketChannel nssc = (ServerSocketChannel) key
-								.channel();
-						sc = nssc.accept();
-						// 设为非阻塞
-						sc.configureBlocking(false);
-						sc.register(selector, SelectionKey.OP_READ);
-						iter.remove();
-						System.out.println("有新的链接" + sc);
-					} else if ((key.readyOps() & SelectionKey.OP_READ) == SelectionKey.OP_READ) {
-						sc = (SocketChannel) key.channel();
-						{
-							while (true) {
-								bb.clear();
-								int a = sc.read(bb);
-								buffer = bb.array();
-								if (a == -1)
-									break;
-								if (a > 0) {
-									Object o = p.decode(buffer);
-									sc.write(ByteBuffer.wrap(p.encode(o)));
-									break;
-								}
-							}
-						}
-
-//						sc.close();
-//						System.out.println("连接处理结束");
-						iter.remove();
-					}
-				}
+		while (true) {
+			// selector 线程。select() 会阻塞，直到有客户端连接，或者有消息读入
+			selector.select();
+			Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+			while (iterator.hasNext()) {
+				SelectionKey selectionKey = iterator.next();
+				iterator.remove(); // 删除此消息
+				// 并在当前线程内处理
+				handleSelectionKey(selectionKey);
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
+
 	}
 
-	public static void main(String args[]) {
-		new Server().start();
+	/**
+	 * @param selectionKey
+	 * @throws Exception
+	 */
+	public void handleSelectionKey(SelectionKey selectionKey) throws Exception {
+		if (selectionKey.isAcceptable()) {
+			ServerSocketChannel ssc = (ServerSocketChannel) selectionKey.channel();
+			SocketChannel socketChannel = ssc.accept();
+			socketChannel.configureBlocking(false);
+			Socket socket = socketChannel.socket();
+			// 立即注册一个 OP_READ 的SelectionKey, 接收客户端的消息
+			SelectionKey key = socketChannel.register(selector,SelectionKey.OP_READ);
+			
+			SocketAddress clientInfo = socket.getRemoteSocketAddress();
+			key.attach("第 " + (count++) + " 个客户端 [" + clientInfo + "]");
+			// 打印
+			println(key.attachment() + " 连接成功");
+
+		} else if (selectionKey.isReadable()) {
+
+			// 有消息进来
+			ByteBuffer byteBuffer = ByteBuffer.allocate(100);
+			SocketChannel sc = (SocketChannel) selectionKey.channel();
+
+			try {
+				int len = sc.read(byteBuffer);
+				// 如果len>0，表示有输入。如果len==0, 表示输入结束。需要关闭 socketChannel
+				if (len > 0) {
+					byteBuffer.flip();
+					String msg = charsetDecoder.decode(byteBuffer).toString();
+					println(selectionKey.attachment() + " ：" + msg);
+					
+					// 根据客户端的消息，查找到对应的输出
+					String newMsg = "****************";
+					ByteBuffer bt = charsetEncoder.encode(CharBuffer.wrap(newMsg + "\n"));
+					sc.write(bt);
+				} else {
+					// 输入结束，关闭 socketChannel
+					println(selectionKey.attachment()+ " 已关闭连接");
+					sc.close();
+				}
+
+			} catch (Exception e) {
+				// 如果read抛出异常，表示连接异常中断，需要关闭 socketChannel
+				e.printStackTrace();
+				sc.close();
+			}
+		} else if (selectionKey.isWritable()) {
+			println("TODO: isWritable()");
+		} else if (selectionKey.isConnectable()) {
+			println("TODO: isConnectable()");
+		} else {
+			println("TODO: else");
+		}
+
 	}
+
+	/**
+	 * @param object
+	 */
+	public static void println(Object object) {
+		System.out.println(object);
+	}
+
+	/**
+	 * @param args
+	 * @throws Exception
+	 */
+	public static void main(String[] args) throws Exception {
+		CoreDef.config = new TreeConfig(CoreDef.rootPath + File.separator + "config" + File.separator + "config.txt");
+//		LYTimer.setConfig(CoreDef.config.getConfig("timer"));
+		ProtocolUtils.setConfig(CoreDef.config.getConfig("protocol"));
+		new AsyncSocket(8888).begin("AsyncServer");
+	}
+
 }
