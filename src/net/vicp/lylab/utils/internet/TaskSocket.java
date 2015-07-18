@@ -149,14 +149,18 @@ public class TaskSocket extends Task implements Recyclable, Transmission {
 		}
 	}
 	
-	public boolean send(byte[] msg) throws Exception {
+	public boolean send(byte[] msg) {
 		if(isClosed()) return false;
-		out.write(msg);
-		out.flush();
+		try {
+			out.write(msg);
+			out.flush();
+		} catch (Exception e) {
+			throw new LYException("Send failed", e);
+		}
 		return true;
 	}
 	
-	public byte[] receive() throws Exception {
+	public byte[] receive() {
 		if(isClosed()) throw new LYException("Connection closed");
 		if (in != null) {
 			bufferLen = 0;
@@ -186,7 +190,8 @@ public class TaskSocket extends Task implements Recyclable, Transmission {
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() {
+		try {
 		if (thread != null)
 			thread.interrupt();
 		if (socket != null) {
@@ -200,6 +205,9 @@ public class TaskSocket extends Task implements Recyclable, Transmission {
 		}
 		if(afterClose != null)
 			afterClose.callback();
+		} catch (Exception e) {
+			throw new LYException("Close failed", e);
+		}
 	}
 
 	public boolean isClosed() {

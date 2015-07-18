@@ -5,9 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
 
-import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
 

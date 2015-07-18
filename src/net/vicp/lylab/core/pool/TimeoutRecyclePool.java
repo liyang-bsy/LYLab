@@ -70,24 +70,6 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 	}
 
 	@Override
-	public T recycle(long objId) {
-		synchronized (lock) {
-			safeCheck();
-			T tmp = busyContainer.remove(objId);
-			if(tmp != null)
-			{
-				try {
-					addToContainer(tmp);
-					return tmp;
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			return null;
-		}
-	}
-
-	@Override
 	public void recycle() {
 		synchronized (lock) {
 			for (Long id : startTime.keySet()) {

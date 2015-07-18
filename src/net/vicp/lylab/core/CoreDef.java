@@ -102,7 +102,6 @@ public class CoreDef {
 	public static final long INTERVAL_LONG = FIVE*SECOND;				// 5 second
 	
 	public static final long WAITING_TOLERANCE = TWO*MINUTE;			// 5 min
-	public static final long DEFAULT_TTIMEOUT = HOUR;					// 1 hour
 	public static final long DEFAULT_TASK_TTIMEOUT = TEN*MINUTE;		// 10 minutes
 	
 	public static final int DEFAULT_POOL_MAX_SIZE = FIVE*TEN;
@@ -116,6 +115,7 @@ public class CoreDef {
 	
 	public static final int SOCKET_MAX_BUFFER = TWO * KB;
 	public static final int DEFAULT_SOCKET_TTIMEOUT = (int) (TWENTY*SECOND);
+	public static final int DEFAULT_READ_TTIMEOUT = (int) (TWO*SECOND);
 
 	public static final long DEFAULT_LYCACHE_EXPIRE_TIME = FIFTEEN*TWO*MINUTE;
 	public static final long DEFAULT_LYCACHE_MEMORY_LIMITATION = ONE * GB;

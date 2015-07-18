@@ -29,7 +29,7 @@ public final class ProtocolUtils extends BaseObject implements InitializeConfig 
 	 * @param head
 	 * @return
 	 */
-	public static Protocol pairWithProtocol(byte[] head) throws Exception {
+	public static Protocol pairWithProtocol(byte[] head) {
 		Protocol protocol = null;
 		for (Protocol rawProtocol : rawProtocols) {
 			if (checkHead(head, rawProtocol.getHead())) {

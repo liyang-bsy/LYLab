@@ -12,12 +12,14 @@ import java.util.Map;
 public class Message extends SimpleConfirm {
 	protected String message;
 	protected String key;
+	protected String token;
 	protected Map<String, Object> body;
 	protected Integer total;
 
 	public Message() {
 		super(-1);
 		key = "Invalid";
+		token = "";
 		message = "Unknow";
 		body = new HashMap<String, Object>();
 		total = 0;
@@ -29,6 +31,14 @@ public class Message extends SimpleConfirm {
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	public String getToken() {
+		return token;
+	}
+
+	public void setToken(String token) {
+		this.token = token;
 	}
 
 	public String getKey() {

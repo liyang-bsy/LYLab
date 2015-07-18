@@ -105,15 +105,40 @@ public class RecyclePool<T> extends IndexedPool<T> {
 		return busyContainer.keySet();
 	}
 
-	public T recycle(long objId) {
+	public boolean recycle(long objId) {
 		synchronized (lock) {
 			safeCheck();
 			T tmp = busyContainer.remove(objId);
 			if (tmp != null) {
 				addToContainer(tmp);
-				return tmp;
+				return true;
 			}
-			return null;
+			return false;
+		}
+	}
+
+	public boolean recycle(T item) {
+		synchronized (lock) {
+			safeCheck();
+			long objId = 0L;
+			if (item instanceof BaseObject)
+				objId = ((BaseObject) item).getObjectId();
+			else {
+				for (Long id : busyKeySet()) {
+					if (busyContainer.get(id).equals(item)) {
+						objId = id.longValue();
+						break;
+					}
+				}
+			}
+			if (objId > 0) {
+				T tmp = busyContainer.remove(objId);
+				if (tmp != null) {
+					addToContainer(tmp);
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 
@@ -143,14 +168,13 @@ public class RecyclePool<T> extends IndexedPool<T> {
 			if (item instanceof BaseObject)
 				objId = ((BaseObject) item).getObjectId();
 			else {
-				if (availableContainer.containsValue(item))
-					for (Long id : availableKeySet()) {
-						if (availableContainer.get(id).equals(item)) {
-							objId = id.longValue();
-							break;
-						}
+				for (Long id : availableKeySet()) {
+					if (availableContainer.get(id).equals(item)) {
+						objId = id.longValue();
+						break;
 					}
-				else if (busyContainer.containsValue(item))
+				}
+				if (objId == 0)
 					for (Long id : busyKeySet()) {
 						if (busyContainer.get(id).equals(item)) {
 							objId = id.longValue();
