@@ -22,11 +22,11 @@ public abstract class AbstractPool<T> extends CloneableBaseObject implements Poo
 	protected int maxSize;
 
 	public AbstractPool() {
-		this(CoreDef.DEFAULT_POOL_MAX_SIZE);
+		this(CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 	}
 
 	public AbstractPool(int maxSize) {
-		this.maxSize = ((maxSize > 0)? maxSize : CoreDef.DEFAULT_POOL_MAX_SIZE);
+		this.maxSize = ((maxSize > 0)? maxSize : CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 		this.availableContainer = new ConcurrentHashMap<Long, T>();
 	}
 	

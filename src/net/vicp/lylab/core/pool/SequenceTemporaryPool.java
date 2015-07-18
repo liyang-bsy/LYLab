@@ -16,7 +16,7 @@ import net.vicp.lylab.core.CoreDef;
 public class SequenceTemporaryPool<T> extends SequencePool<T> {
 
 	public SequenceTemporaryPool() {
-		this(CoreDef.DEFAULT_POOL_MAX_SIZE);
+		this(CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 	}
 
 	public SequenceTemporaryPool(int maxSize) {

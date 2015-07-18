@@ -19,7 +19,7 @@ public class IndexedPool<T> extends AbstractPool<T> {
 	protected volatile Collection<Long> keyContainer;
 
 	public IndexedPool(Collection<Long> keyContainerType) {
-		this(keyContainerType, CoreDef.DEFAULT_POOL_MAX_SIZE);
+		this(keyContainerType, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 	}
 
 	public IndexedPool(Collection<Long> keyContainerType, int maxSize) {

@@ -13,7 +13,7 @@ import net.vicp.lylab.core.CoreDef;
 public class RandomPool<T> extends IndexedPool<T> {
 
 	public RandomPool() {
-		this(CoreDef.DEFAULT_POOL_MAX_SIZE);
+		this(CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 	}
 
 	public RandomPool(int maxSize) {

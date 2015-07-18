@@ -22,7 +22,7 @@ public class RecyclePool<T> extends IndexedPool<T> {
 	protected Map<Long, T> busyContainer;
 
 	public RecyclePool() {
-		this(CoreDef.DEFAULT_POOL_MAX_SIZE);
+		this(CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 	}
 	
 	public RecyclePool(Integer maxSize) {

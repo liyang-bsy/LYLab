@@ -1,34 +1,23 @@
 package net.vicp.lylab.server.aop;
 
-import java.net.ServerSocket;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import net.vicp.lylab.core.BaseAction;
+import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.config.Config;
-import net.vicp.lylab.utils.internet.ToClientSocket;
 import net.vicp.lylab.utils.internet.async.BaseSocket;
 import net.vicp.lylab.utils.internet.impl.Message;
 
-import org.apache.commons.lang3.StringUtils;
-
-public class DoAction extends ToClientSocket implements Aop {
-	private static final long serialVersionUID = -8400721992403701180L;
-
-	public DoAction(ServerSocket serverSocket) {
-		super(serverSocket);
-	}
+public class AsyncDoAction extends NonCloneableBaseObject implements Aop {
 
 	protected static Config config;
 	protected static List<Filter> filterChain;
-
-	@Override
-	public byte[] response(byte[] request) {
-		return enterAction(protocol, this, request);
-	}
 	
 	@Override
 	public byte[] enterAction(Protocol protocol, BaseSocket client, byte[] request) {
@@ -103,7 +92,7 @@ public class DoAction extends ToClientSocket implements Aop {
 	}
 
 	public static void setConfig(Config config) {
-		DoAction.config = config;
+		AsyncDoAction.config = config;
 	}
 
 	public static List<Filter> getFilterChain() {
@@ -111,7 +100,7 @@ public class DoAction extends ToClientSocket implements Aop {
 	}
 
 	public static void setFilterChain(List<Filter> filterChain) {
-		DoAction.filterChain = filterChain;
+		AsyncDoAction.filterChain = filterChain;
 	}
 
 }

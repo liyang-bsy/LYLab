@@ -24,17 +24,17 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 	 */
 	public TimeoutRecyclePool()
 	{
-		this(CoreDef.TWO * CoreDef.MINUTE, CoreDef.DEFAULT_POOL_MAX_SIZE);
+		this(CoreDef.DEFAULT_CONTAINER_TIMEOUT, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 	}
 	
 	public TimeoutRecyclePool(long timeout)
 	{
-		this(timeout, CoreDef.DEFAULT_POOL_MAX_SIZE);
+		this(timeout, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 	}
 	
 	public TimeoutRecyclePool(int maxSize)
 	{
-		this(2*CoreDef.MINUTE, maxSize);
+		this(CoreDef.DEFAULT_CONTAINER_TIMEOUT, maxSize);
 	}
 	
 	public TimeoutRecyclePool(long timeout, int maxSize)

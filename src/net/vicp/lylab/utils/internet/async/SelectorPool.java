@@ -19,33 +19,20 @@ import net.vicp.lylab.utils.internet.HeartBeat;
  * @version 1.0.0
  */
 public class SelectorPool extends TimeoutRecyclePool<Selector> {
-	protected String host;
-	protected Integer port;
-	protected HeartBeat heartBeat;
-	protected Protocol protocol;
 
-	public SelectorPool(String host, Integer port, Protocol protocol, HeartBeat heartBeat)
+	public SelectorPool()
 	{
 		super();
-		this.host = host;
-		this.port = port;
-		this.protocol = protocol;
-		this.heartBeat = heartBeat;
 	}
 	
-	public SelectorPool(String host, Integer port, Protocol protocol, HeartBeat heartBeat, long timeout, int maxSize)
+	public SelectorPool(long timeout, int maxSize)
 	{
 		super(timeout, maxSize);
-		this.host = host;
-		this.port = port;
-		this.protocol = protocol;
-		this.heartBeat = heartBeat;
 	}
 	
 	protected Selector accessAndValidate()
 	{
 		Selector tmp = null;
-		boolean isDead = true;
 		int attemptCount = 0;
 		do {
 			tmp = getFromAvailableContainer();
@@ -66,7 +53,7 @@ public class SelectorPool extends TimeoutRecyclePool<Selector> {
 				}
 				tmp = getFromAvailableContainer(id);
 			}
-		} while(isDead);
+		} while(false);
 		return tmp;
 	}
 

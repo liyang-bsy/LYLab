@@ -8,14 +8,12 @@ import java.util.Arrays;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.Callback;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.atomic.AtomicInteger;
+import net.vicp.lylab.utils.internet.async.BaseSocket;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
-import net.vicp.lylab.utils.tq.Task;
 
 /**
  * A raw socket can be used for communicating with server, you need close socket after using it.
@@ -26,7 +24,7 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class TaskSocket extends Task implements Recyclable, Transmission {
+public class TaskSocket extends BaseSocket implements Recyclable, Transmission {
 	private static final long serialVersionUID = 883892527805494627L;
 	
 	// Raw data source
@@ -35,24 +33,11 @@ public class TaskSocket extends Task implements Recyclable, Transmission {
 	protected InputStream in;
 	protected OutputStream out;
 
-	// Some thing about this socket
-	private boolean isServer;
-	protected AtomicInteger socketRetry = new AtomicInteger();
-	protected int socketMaxRetry = Integer.MAX_VALUE;
-	protected String host;
-	protected int port;
-
 	// Buffer
 	private byte[] buffer = new byte[CoreDef.SOCKET_MAX_BUFFER];
 	private int bufferLen = 0;
 	protected Protocol protocol = null;
 
-	// Callback below
-	protected Callback beforeConnect = null;
-	protected Callback afterClose = null;
-	protected Callback beforeTransmission = null;
-	protected Callback afterTransmission = null;
-	
 	public TaskSocket(ServerSocket serverSocket) {
 		if(serverSocket == null) throw new LYException("Parameter serverSocket is null");
 		try {
@@ -61,7 +46,7 @@ public class TaskSocket extends Task implements Recyclable, Transmission {
 			this.port = socket.getPort();
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
-			isServer = true;
+			setIsServer(true);
 			setSoTimeout(CoreDef.DEFAULT_SOCKET_TTIMEOUT);
 		} catch (Exception e) {
 			throw new LYException("Can not establish connection to socket", e);
@@ -71,7 +56,7 @@ public class TaskSocket extends Task implements Recyclable, Transmission {
 	public TaskSocket(String host, Integer port) {
 		this.host = host;
 		this.port = port;
-		isServer = false;
+		setIsServer(false);
 	}
 
 	@Override
@@ -132,6 +117,11 @@ public class TaskSocket extends Task implements Recyclable, Transmission {
 		if(afterTransmission != null)
 			afterTransmission.callback(ret);
 		return ret;
+	}
+	
+	@Override
+	public void start() {
+		// do nothing
 	}
 	
 	public void connect()
@@ -257,61 +247,6 @@ public class TaskSocket extends Task implements Recyclable, Transmission {
 	}
 
 	// getters & setters below
-	public int getSocketMaxRetry() {
-		return socketMaxRetry;
-	}
-
-	public void setSocketMaxRetry(int socketMaxRetry) {
-		this.socketMaxRetry = socketMaxRetry;
-	}
-
-	public String getHost() {
-		return host;
-	}
-
-	public int getPort() {
-		return port;
-	}
-
-	protected boolean isServer() {
-		return isServer;
-	}
-
-	public int getSocketRetry() {
-		return socketRetry.get();
-	}
-
-	public Callback getBeforeConnect() {
-		return beforeConnect;
-	}
-
-	public void setBeforeConnect(Callback beforeConnect) {
-		this.beforeConnect = beforeConnect;
-	}
-
-	public Callback getAfterClose() {
-		return afterClose;
-	}
-
-	public void setAfterClose(Callback afterClose) {
-		this.afterClose = afterClose;
-	}
-
-	public Callback getBeforeTransmission() {
-		return beforeTransmission;
-	}
-
-	public void setBeforeTransmission(Callback beforeTransmission) {
-		this.beforeTransmission = beforeTransmission;
-	}
-
-	public Callback getAfterTransmission() {
-		return afterTransmission;
-	}
-
-	public void setAfterTransmission(Callback afterTransmission) {
-		this.afterTransmission = afterTransmission;
-	}
 
 	public byte[] getBuffer() {
 		return buffer;

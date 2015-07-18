@@ -5,11 +5,13 @@ import java.util.List;
 
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.interfaces.Aop;
+import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.ToClientLongSocket;
+import net.vicp.lylab.utils.internet.async.BaseSocket;
 import net.vicp.lylab.utils.internet.impl.Message;
 
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +28,11 @@ public class DoActionLong extends ToClientLongSocket implements Aop {
 
 	@Override
 	public byte[] response(byte[] request) {
+		return enterAction(protocol, this, request);
+	}
+	
+	@Override
+	public byte[] enterAction(Protocol protocol, BaseSocket client, byte[] request) {
 		Message msg = null;
 		Message response = null;
 		try {
@@ -42,19 +49,19 @@ public class DoActionLong extends ToClientLongSocket implements Aop {
 			response.setMessage("Message not found");
 		}
 		else
-			response = doAction(msg);
+			response = doAction(client, msg);
 		return protocol == null ? null : protocol.encode(response);
 	}
 
 	@Override
-	public Message doAction(Message request) {
+	public Message doAction(BaseSocket client, Message request) {
 		String key = null;
 		BaseAction action = null;
 		Message response = null;
 		// do start filter
 		if (filterChain != null && filterChain.size() != 0)
 			for (Filter filter : filterChain)
-				if ((response = filter.doFilter(this, request)) != null)
+				if ((response = filter.doFilter(client, request)) != null)
 					return response;
 		response = new Message();
 		try {
@@ -77,7 +84,7 @@ public class DoActionLong extends ToClientLongSocket implements Aop {
 					break;
 				}
 				// Initialize action
-				action.setSocket(this);
+				action.setSocket(client);
 				action.setRequest(request);
 				action.setResponse(response);
 				// execute action

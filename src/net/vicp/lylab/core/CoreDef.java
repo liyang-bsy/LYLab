@@ -103,14 +103,15 @@ public class CoreDef {
 	
 	public static final long WAITING_TOLERANCE = TWO*MINUTE;			// 5 min
 	public static final long DEFAULT_TASK_TTIMEOUT = TEN*MINUTE;		// 10 minutes
-	
-	public static final int DEFAULT_POOL_MAX_SIZE = FIVE*TEN;
+
+	public static final long DEFAULT_CONTAINER_TIMEOUT = 2*MINUTE;
+	public static final int DEFAULT_CONTAINER_MAX_SIZE = FIVE*TEN;
 
 	public static final int DEFAULT_PERMANENT_MAX_SIZE = HUNDRED*THOUSAND;
 	public static final int DEFAULT_PERMANENT_TICK = SIX*TEN;
 	public static final long DEFAULT_TERMINATE_TIMEOUT = FIVE*MINUTE;
 	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = ONE*MINUTE;
-	
+
 	public static final long ONE_TIME_TASK = ZERO;
 	
 	public static final int SOCKET_MAX_BUFFER = TWO * KB;

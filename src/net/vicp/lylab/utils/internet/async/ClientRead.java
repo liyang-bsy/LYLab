@@ -31,7 +31,8 @@ public class ClientRead implements Runnable {
 						sc.read(buffer);
 						buffer.flip();
 						// 将字节转化为为UTF-16的字符串
-						String receivedString = protocol.decode(buffer.array()).toString();
+						byte[] ret = buffer.array();
+						String receivedString = protocol.decode(ret).toString();
 						// 控制台打印出来
 						System.out.println("接收到来自服务器"
 								+ sc.socket().getRemoteSocketAddress() + "的信息:"

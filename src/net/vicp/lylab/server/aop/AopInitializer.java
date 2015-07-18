@@ -31,6 +31,7 @@ public class AopInitializer extends NonCloneableBaseObject implements LifeCycle,
 			}
 		}
 		DoAction.setFilterChain(filterChain);
+		AsyncDoAction.setFilterChain(filterChain);
 		DoActionLong.setFilterChain(filterChain);
 	}
 
