@@ -18,22 +18,35 @@ import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
  * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young
- * @since 2015.07.01
- * @version 1.0.0
+ * @since 2015.07.19
+ * @version 2.0.0
  */
 public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 
+	public static void main(String[] arg)
+	{
+		Protocol protocol = new JavaObjProtocol();
+		{
+			byte[] bytes = protocol.encode(new SimpleMessage());
+			System.out.println(protocol.validate(bytes, bytes.length));
+			System.out.println(protocol.decode(bytes));
+		}
+		{
+			byte[] bytes = protocol.encode(new SimpleMessage());
+			bytes = Arrays.copyOf(bytes, 1400);
+			for (int i = 1200; i >= 20; i--)
+				bytes[i] = bytes[i - 20];
+			System.out.println(protocol.validate(bytes, 20, bytes.length));
+			System.out.println(protocol.decode(bytes, 20));
+		}
+	}
+	
 	protected final byte[] head = "LYLab".getBytes();
 	protected final byte[] splitSignal = new byte[] { -15 };
 
 	@Override
 	public byte[] getHead() {
 		return head;
-	}
-	
-	@Override
-	public byte[] getSplitSignal() {
-		return splitSignal;
 	}
 	
 	@Override
@@ -78,27 +91,29 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 
 	@Override
 	public Object decode(byte[] bytes) {
+		return decode(bytes, 0);
+	}
+
+	@Override
+	public Object decode(byte[] bytes, int offset) {
 		if (bytes == null) return null;
-		if (!ProtocolUtils.checkHead(bytes, head))
+		if (!ProtocolUtils.checkHead(bytes, offset, head))
 			return null;
 		String sInfo = null, sData = null;
 		int headEndPosition = 0, lengthEndPosition = 0, infoEndPosition = 0;
-		byte[] info, data;
 		try {
-			headEndPosition = Algorithm.KMPSearch(bytes, splitSignal);
-			if (headEndPosition != head.length) return null;
-			
-			lengthEndPosition = head.length + splitSignal.length + CoreDef.SIZEOF_INTEGER;
-			int length = Utils.Bytes4ToInt(bytes, head.length + splitSignal.length);
-			
-			infoEndPosition = lengthEndPosition + splitSignal.length + Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
-			if (infoEndPosition <= 0) return null;
+			headEndPosition = offset + head.length;
+
+			if(bytes.length - 4 < headEndPosition + splitSignal.length)
+				return 0;
+			int dataLength = Utils.Bytes4ToInt(bytes, headEndPosition + splitSignal.length);
+			lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
+			int infoLength = Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
+			infoLength = (infoLength==-1 ? 0:infoLength);
+			infoEndPosition = lengthEndPosition + splitSignal.length + infoLength;
 	
-			info = Arrays.copyOfRange(bytes, lengthEndPosition + splitSignal.length, infoEndPosition);
-	
-			data = Arrays.copyOfRange(bytes, infoEndPosition + splitSignal.length, infoEndPosition + splitSignal.length + length);
-			sInfo = new String(info);
-			sData = new String(data, CoreDef.CHARSET());
+			sInfo = new String(bytes, lengthEndPosition + splitSignal.length, infoLength);
+			sData = new String(bytes, infoEndPosition + splitSignal.length, dataLength, CoreDef.CHARSET());
 			return Utils.deserialize(Class.forName(sInfo), sData);
 		} catch (Exception e) {
 			String originData = null;
@@ -112,27 +127,32 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 	}
 	
 	@Override
-	public boolean validate(byte[] bytes, int len) {
-		if (bytes == null) throw new LYException("Parameter bytes is null");
-		if (!ProtocolUtils.checkHead(bytes, this.getHead()))
-			throw new LYException("Bad data package: mismatch head");
-		
-		int headEndPosition = Algorithm.KMPSearch(bytes, getSplitSignal());
-		if (headEndPosition != getHead().length)
-			throw new LYException("Bad data package: end position of head not found");
-		
-		int lengthEndPosition = getHead().length + getSplitSignal().length + CoreDef.SIZEOF_INTEGER;
-		int length = Utils.Bytes4ToInt(bytes, getHead().length + getSplitSignal().length);
-		
-		int infoEndPosition = lengthEndPosition + getSplitSignal().length + Algorithm.KMPSearch(bytes, getSplitSignal(), lengthEndPosition + getSplitSignal().length);
-		if (infoEndPosition <= 0)
-			throw new LYException("Bad data package: end position of info not found");
+	public int validate(byte[] bytes, int len) {
+		return validate(bytes, 0, len);
+	}
 
-		if(len > length + infoEndPosition + getSplitSignal().length)
-			throw new LYException("Bad data package: Length out of bound");
-		if(len < length + infoEndPosition + getSplitSignal().length)
-			return false;
-		return true;
+	@Override
+	public int validate(byte[] bytes, int offset, int len) {
+		if (bytes == null) throw new LYException("Parameter bytes is null");
+		if (!ProtocolUtils.checkHead(bytes, offset, head))
+			return 0;
+			//throw new LYException("Bad data package: mismatch head");
+		
+		int headEndPosition = head.length + offset;
+		
+		if(bytes.length - 4 < headEndPosition + splitSignal.length)
+			return 0;
+		int length = Utils.Bytes4ToInt(bytes, headEndPosition + splitSignal.length);
+		int lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
+
+		int infoLength = Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
+		infoLength = (infoLength==-1 ? 0:infoLength);
+		int infoEndPosition = lengthEndPosition + splitSignal.length + infoLength;
+		
+		int dataEndPosition = length + infoEndPosition + splitSignal.length;
+		if(len < dataEndPosition)
+			return 0;
+		return dataEndPosition;
 	}
 	
 }

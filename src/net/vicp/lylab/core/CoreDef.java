@@ -1,6 +1,7 @@
 package net.vicp.lylab.core;
 
 import java.io.File;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
@@ -27,6 +28,8 @@ public class CoreDef {
 	protected static Charset charset = Charset.forName(CoreDef._charset);
 	public static CharsetEncoder charsetEncoder = charset.newEncoder();
 	public static CharsetDecoder charsetDecoder = charset.newDecoder();
+	public static final boolean BIG_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN? true :false;
+	public static final boolean LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN? true :false;
 	
 	public static String CHARSET() {
 		return _charset;

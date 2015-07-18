@@ -304,46 +304,34 @@ public class Utils extends NonCloneableBaseObject {
 		}
 	}
 
-//	public static String toJson(Object obj, String ... excludeRule)
-//	{
-//		if(obj == null)
-//			throw new LYException("Parameter obj is null");
-//		return new JSONSerializer().exclude("*.class", "*.objectId").exclude(excludeRule).deepSerialize(obj);
-//	}
-//
-//	public static Object toObject(String json, String className)
-//	{
-//		if(json == null)
-//			throw new LYException("Parameter json is null");
-//		if(className == null)
-//			throw new LYException("Parameter className is null");
-//		try {
-//			return new JSONDeserializer<Object>().use(null, Class.forName(className)).deserialize(json);
-//		} catch (Exception e) {
-//			throw new LYException("Can not found class name[" + className + "]", e);
-//		}
-//	}
-//
-//	public Object toObject(String json, Class<?> instanceClass)
-//	{
-//		if(json == null)
-//			throw new LYException("Parameter json is null");
-//		if(instanceClass == null)
-//			throw new LYException("Parameter instanceClass is null");
-//		return new JSONDeserializer<Object>().use(null, instanceClass).deserialize(json);
-//	}
+	private static byte int3(int x) { return (byte) (x >> 24); }
+	private static byte int2(int x) { return (byte) (x >> 16); }
+	private static byte int1(int x) { return (byte) (x >> 8); }
+	private static byte int0(int x) { return (byte) (x); }
 
+	private static int makeInt(byte b3, byte b2, byte b1, byte b0) {
+		return (((b3) << 24) | ((b2 & 0xff) << 16) | ((b1 & 0xff) << 8) | ((b0 & 0xff)));
+	}
+    
 	/**
 	 * 数字转byte
 	 * 
 	 * @param num
 	 * @return
 	 */
-	public static byte[] IntToBytes4(int integer) {
+	public static byte[] IntToBytes4(int x) {
 		byte[] bytes = new byte[4];
-		for (int ix = 0; ix < 4; ++ix) {
-			int offset = 32 - (ix + 1) * 8;
-			bytes[ix] = (byte) ((integer >> offset) & 0xff);
+		if(CoreDef.BIG_ENDIAN) {
+			bytes[3] = int3(x);
+			bytes[2] = int2(x);
+			bytes[1] = int1(x);
+			bytes[0] = int0(x);
+		}
+		else {
+			bytes[0] = int3(x);
+			bytes[1] = int2(x);
+			bytes[2] = int1(x);
+			bytes[3] = int0(x);
 		}
 		return bytes;
 	}
@@ -355,12 +343,10 @@ public class Utils extends NonCloneableBaseObject {
 	 * @return
 	 */
 	public static int Bytes4ToInt(byte[] bytes) {
-		int integer = 0;
-		for (int ix = 0; ix < 4; ++ix) {
-			integer <<= 8;
-			integer |= (bytes[ix] & 0xff);
-		}
-		return integer;
+		if (CoreDef.BIG_ENDIAN)
+			return makeInt(bytes[3], bytes[2], bytes[1], bytes[0]);
+		else
+			return makeInt(bytes[0], bytes[1], bytes[2], bytes[3]);
 	}
 
 	/**
@@ -370,18 +356,16 @@ public class Utils extends NonCloneableBaseObject {
 	 * @return
 	 */
 	public static int Bytes4ToInt(byte[] bytes, int offset) {
-		if(bytes.length < offset + 4)
-			throw new LYException("Out of bounds, byte length:" + bytes.length + ", but offset is:" + offset);
-		try {
-			int num = 0;
-			for (int ix = offset; ix < offset + 4; ++ix) {
-				num <<= 8;
-				num |= (bytes[ix] & 0xff);
-			}
-			return num;
-		} catch (Exception e) {
-			return 0;
-		}
+		if (bytes.length - 4 < offset)
+			throw new LYException("Out of bounds, byte length is " + bytes.length
+					+ " while offset is " + offset);
+
+		if (CoreDef.BIG_ENDIAN)
+			return makeInt(bytes[offset + 3], bytes[offset + 2],
+					bytes[offset + 1], bytes[offset + 0]);
+		else
+			return makeInt(bytes[offset + 0], bytes[offset + 1],
+					bytes[offset + 2], bytes[offset + 3]);
 	}
 	
 	/**

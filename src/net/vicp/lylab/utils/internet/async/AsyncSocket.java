@@ -68,7 +68,7 @@ public class AsyncSocket extends BaseSocket implements LifeCycle, InitializeConf
 			this.aop = aop;
 			setIsServer(true);
 		} catch (Exception e) {
-			throw new LYException("Can not establish connection to socket", e);
+			throw new LYException("Establish server failed", e);
 		}
 	}
 
@@ -236,7 +236,8 @@ public class AsyncSocket extends BaseSocket implements LifeCycle, InitializeConf
 				if(bufferLen == 0 && (protocol == null || ProtocolUtils.isMultiProtocol()))
 					protocol = ProtocolUtils.pairWithProtocol(buffer.array());
 				bufferLen += getLen;
-				if (protocol.validate(buffer.array(), bufferLen))
+				
+				if (protocol.validate(buffer.array(), bufferLen) > 0)
 					break;
 			}
 		}

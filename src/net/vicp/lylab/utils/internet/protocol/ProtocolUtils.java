@@ -30,9 +30,18 @@ public final class ProtocolUtils extends BaseObject implements InitializeConfig 
 	 * @return
 	 */
 	public static Protocol pairWithProtocol(byte[] head) {
+		return pairWithProtocol(head, 0);
+	}
+	/**
+	 * Pair to protocol by head with protocol config
+	 * 
+	 * @param head
+	 * @return
+	 */
+	public static Protocol pairWithProtocol(byte[] head, int offset) {
 		Protocol protocol = null;
 		for (Protocol rawProtocol : rawProtocols) {
-			if (checkHead(head, rawProtocol.getHead())) {
+			if (checkHead(head, offset, rawProtocol.getHead())) {
 				protocol = rawProtocol;
 				break;
 			}
@@ -65,13 +74,17 @@ public final class ProtocolUtils extends BaseObject implements InitializeConfig 
 				|| e2.length - e2Offset < cmpLength)
 			return false;
 		for (int i = 0; i < cmpLength; i++)
-			if (e1[i] != e2[e2Offset + i])
+			if (e1[e1Offset + i] != e2[e2Offset + i])
 				return false;
 		return true;
 	}
 
 	public static boolean checkHead(byte[] bytes, byte[] head) {
-		if (!bytesContinueWith(bytes, 0, head, 0, head.length))
+		return checkHead(bytes, 0, head);
+	}
+
+	public static boolean checkHead(byte[] bytes, int offset, byte[] head) {
+		if (!bytesContinueWith(bytes, offset, head, 0, head.length))
 			return false;
 		return true;
 	}

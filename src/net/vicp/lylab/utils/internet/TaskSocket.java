@@ -172,7 +172,8 @@ public class TaskSocket extends BaseSocket implements Recyclable, Transmission {
 				if(bufferLen == 0 && (protocol == null || ProtocolUtils.isMultiProtocol()))
 					protocol = ProtocolUtils.pairWithProtocol(buffer);
 				bufferLen += getLen;
-				if (protocol.validate(buffer, bufferLen))
+				
+				if (protocol.validate(buffer, bufferLen) > 0)
 					break;
 			}
 		}

@@ -4,9 +4,7 @@ import java.nio.channels.Selector;
 import java.util.Date;
 
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.pool.TimeoutRecyclePool;
-import net.vicp.lylab.utils.internet.HeartBeat;
 
 /**
  * A selector pool maintenance specific selector.

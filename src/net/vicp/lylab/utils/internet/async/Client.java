@@ -2,7 +2,6 @@ package net.vicp.lylab.utils.internet.async;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -10,9 +9,7 @@ import java.nio.channels.SocketChannel;
 
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
-import net.vicp.lylab.utils.internet.impl.Message;
-import net.vicp.lylab.utils.tq.LYTaskQueue;
-import net.vicp.lylab.utils.tq.Task;
+import net.vicp.lylab.utils.internet.impl.SimpleMessage;
 
 public class Client {
 	Protocol protocol = new LYLabProtocol();
@@ -67,7 +64,7 @@ public class Client {
 		Client client = new Client("localhost", 8888);
 
 		Protocol protocol= new LYLabProtocol();
-		Message msg = new Message();
+		SimpleMessage msg = new SimpleMessage();
 		client.sendMsg(protocol.encode(msg));
 		client.sendMsg(protocol.encode(msg));
 		client.sendMsg(protocol.encode(msg));

@@ -12,7 +12,7 @@ import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.internet.async.BaseSocket;
-import net.vicp.lylab.utils.internet.impl.Message;
+import net.vicp.lylab.utils.internet.impl.SimpleMessage;
 
 public class AsyncDoAction extends NonCloneableBaseObject implements Aop {
 
@@ -21,15 +21,15 @@ public class AsyncDoAction extends NonCloneableBaseObject implements Aop {
 	
 	@Override
 	public byte[] enterAction(Protocol protocol, BaseSocket client, byte[] request) {
-		Message msg = null;
-		Message response = null;
+		SimpleMessage msg = null;
+		SimpleMessage response = null;
 		try {
-			msg = (Message) protocol.decode(request);
+			msg = (SimpleMessage) protocol.decode(request);
 		} catch (Exception e) {
 			log.debug(Utils.getStringFromException(e));
 		}
 		if(msg == null) {
-			response = new Message();
+			response = new SimpleMessage();
 			response.setCode(0x00001);
 			response.setMessage("Message not found");
 		}
@@ -39,16 +39,16 @@ public class AsyncDoAction extends NonCloneableBaseObject implements Aop {
 	}
 	
 	@Override
-	public Message doAction(BaseSocket client, Message request) {
+	public SimpleMessage doAction(BaseSocket client, SimpleMessage request) {
 		String key = null;
 		BaseAction action = null;
-		Message response = null;
+		SimpleMessage response = null;
 		// do start filter
 		if (filterChain != null && filterChain.size() != 0)
 			for (Filter filter : filterChain)
 				if ((response = filter.doFilter(client, request)) != null)
 					return response;
-		response = new Message();
+		response = new SimpleMessage();
 		try {
 			do {
 				// gain key from request
