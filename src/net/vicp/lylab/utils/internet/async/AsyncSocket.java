@@ -5,39 +5,27 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Aop;
-import net.vicp.lylab.core.interfaces.Callback;
 import net.vicp.lylab.core.interfaces.DoResponse;
 import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.pool.RecyclePool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.config.Config;
-import net.vicp.lylab.utils.internet.ConnectionPool;
-import net.vicp.lylab.utils.internet.impl.Message;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
-import net.vicp.lylab.utils.tq.Task;
 
 /**
  * A raw socket can be used for communicating with server, you need close socket after using it.
@@ -48,40 +36,26 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class AsyncSocket extends Task implements LifeCycle, InitializeConfig, DoResponse {
+public class AsyncSocket extends BaseSocket implements LifeCycle, InitializeConfig, DoResponse {
 	private static final long serialVersionUID = 883892527805494627L;
 
 	// Raw data source
 	protected Selector selector = null;
 	protected Selector writeSelector = null;
 	protected AtomicBoolean closed = new AtomicBoolean(false);
-
+	protected Aop aop = null;
 	// Token mapping
-	protected Map<String, String> tokenMap = new ConcurrentHashMap<String, String>();
 	protected Map<String, SocketChannel> ipMap = new ConcurrentHashMap<String, SocketChannel>();
 	protected RecyclePool<Selector> selectorPool;
 
-	// Some thing about this socket
-	private boolean isServer;
-	protected String host;
-	protected int port;
-	protected Config config;
-
 	// Buffer
 	private ByteBuffer buffer = ByteBuffer.allocate(CoreDef.SOCKET_MAX_BUFFER);
-	protected Protocol protocol = null;
-
-	// Callback below
-	protected Callback beforeConnect = null;
-	protected Callback afterClose = null;
-	protected Callback beforeTransmission = null;
-	protected Callback afterTransmission = null;
 	
 	/**
 	 * Server mode
 	 * @param port
 	 */
-	public AsyncSocket(int port) {
+	public AsyncSocket(int port, Aop aop) {
 		try {
 			selector = Selector.open();
 			writeSelector = Selector.open();
@@ -90,9 +64,9 @@ public class AsyncSocket extends Task implements LifeCycle, InitializeConfig, Do
 			ServerSocket serverSocket = serverSocketChannel.socket();
 			serverSocket.bind(new InetSocketAddress(port));
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-			isServer = true;
-			
-			;
+			selectorPool = new SelectorPool(CoreDef.DEFAULT_CONTAINER_TIMEOUT,CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
+			this.aop = aop;
+			setIsServer(true);
 		} catch (Exception e) {
 			throw new LYException("Can not establish connection to socket", e);
 		}
@@ -119,7 +93,6 @@ public class AsyncSocket extends Task implements LifeCycle, InitializeConfig, Do
 					return;
 				}
 				byte[] response = doResponse(buffer.array());
-				// 根据客户端的消息，查找到对应的输出
 				socketChannel.write(ByteBuffer.wrap(response));
 			} catch (Exception e) {
 				throw new LYException("Close failed", e);
@@ -160,10 +133,9 @@ public class AsyncSocket extends Task implements LifeCycle, InitializeConfig, Do
 
 	@Override
 	public byte[] response(byte[] request) {
-		Object obj = protocol.decode(request);
-		// do something
-		protocol.encode(obj);
-		return request;
+		if(aop == null) return request;
+		byte[] response = aop.enterAction(protocol, this, request);
+		return response;
 	}
 	
 	public byte[] doResponse(byte[] request) {
@@ -203,8 +175,10 @@ public class AsyncSocket extends Task implements LifeCycle, InitializeConfig, Do
 				if (len == 0) {
 					key = socketChannel.register(writeSelector, SelectionKey.OP_WRITE);
 					if (writeSelector.select(writeTimeout) == 0) {
-						if (attempts > 2)
+						if (attempts > 2) {
+							socketChannel.close();
 							throw new IOException("Client disconnected");
+						}
 					} else {
 						attempts--;
 					}
