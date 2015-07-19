@@ -2,8 +2,6 @@ package net.vicp.lylab.utils.internet;
 
 import java.net.Socket;
 
-import net.vicp.lylab.utils.internet.async.BaseSocket;
-
 /**
  * A raw socket can be used for communicating with server, you need close socket after using it.
  * <br><br>

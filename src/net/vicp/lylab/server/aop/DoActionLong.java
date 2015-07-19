@@ -9,7 +9,7 @@ import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.config.Config;
-import net.vicp.lylab.utils.internet.async.BaseSocket;
+import net.vicp.lylab.utils.internet.BaseSocket;
 
 import org.apache.commons.lang3.StringUtils;
 

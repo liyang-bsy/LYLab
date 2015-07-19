@@ -2,7 +2,7 @@ package net.vicp.lylab.core;
 
 import net.vicp.lylab.core.interfaces.Executor;
 import net.vicp.lylab.core.model.SimpleMessage;
-import net.vicp.lylab.utils.internet.async.BaseSocket;
+import net.vicp.lylab.utils.internet.BaseSocket;
 
 /**
  * BaseAction is a abstract Action, Override exec() to do your service

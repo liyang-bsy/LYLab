@@ -14,7 +14,6 @@ import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.internet.async.BaseSocket;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
 /**
