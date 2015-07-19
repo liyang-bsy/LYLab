@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.Start;
+import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.pool.TimeoutRecyclePool;
@@ -65,8 +65,8 @@ public class ConnectionPool<T> extends TimeoutRecyclePool<T> {
 					passerby = con.newInstance(host, port, protocol, heartBeat);
 					if(passerby == null)
 						throw new LYException("Create prototype instance failed");
-					if(passerby instanceof Start)
-						((Start) passerby).start();
+					if(passerby instanceof Initializable)
+						((Initializable) passerby).initialize();
 				} catch (Exception e) {
 					throw new LYException("Prototype class must have a constructor with param"
 							+ "(String host, Integer port, Protocol protocol, HeartBeat heartBeat", e);

@@ -4,8 +4,8 @@ import java.net.ServerSocket;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.LifeCycle;
+import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.server.aop.DoActionLong;
-import net.vicp.lylab.utils.internet.impl.SimpleHeartBeat;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.Task;
 
@@ -29,7 +29,7 @@ public class SyncServer extends Task implements LifeCycle{
 	protected SyncServer() { }
 	
 	@Override
-	public void start() { }
+	public void initialize() { }
 	
 	@Override
 	public void close() throws Exception {

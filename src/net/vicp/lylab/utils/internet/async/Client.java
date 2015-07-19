@@ -8,8 +8,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.SimpleMessage;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
-import net.vicp.lylab.utils.internet.impl.SimpleMessage;
 
 public class Client {
 	Protocol protocol = new LYLabProtocol();
@@ -62,14 +62,14 @@ public class Client {
 
 	public static void main(String[] args) throws IOException {
 		Client client = new Client("localhost", 8888);
-
-		Protocol protocol= new LYLabProtocol();
-		SimpleMessage msg = new SimpleMessage();
-		client.sendMsg(protocol.encode(msg));
-		client.sendMsg(protocol.encode(msg));
-		client.sendMsg(protocol.encode(msg));
-		client.sendMsg(protocol.encode(msg));
-		client.sendMsg(protocol.encode(msg));
+//
+//		Protocol protocol= new LYLabProtocol();
+//		SimpleMessage msg = new SimpleMessage();
+//		client.sendMsg(protocol.encode(msg));
+//		client.sendMsg(protocol.encode(msg));
+//		client.sendMsg(protocol.encode(msg));
+//		client.sendMsg(protocol.encode(msg));
+//		client.sendMsg(protocol.encode(msg));
 	}
 //	  
 //    public void exec() {

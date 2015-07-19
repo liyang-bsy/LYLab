@@ -157,7 +157,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 * Initialize procedure
 	 */
 	@Override
-	public void start() {
+	public void initialize() {
 		closed.set(false);
 		File file = new File(permanentFileName);
 		if (file.exists()) {

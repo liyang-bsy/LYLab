@@ -6,13 +6,13 @@ import java.util.List;
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.ToClientLongSocket;
 import net.vicp.lylab.utils.internet.async.BaseSocket;
-import net.vicp.lylab.utils.internet.impl.SimpleMessage;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -33,18 +33,18 @@ public class DoActionLong extends ToClientLongSocket implements Aop {
 	
 	@Override
 	public byte[] enterAction(Protocol protocol, BaseSocket client, byte[] request) {
-		SimpleMessage msg = null;
-		SimpleMessage response = null;
+		Message msg = null;
+		Message response = null;
 		try {
 			Object obj = protocol.decode(request);
 			if(obj instanceof HeartBeat)
 				return protocol.encode(heartBeat);
-			msg = (SimpleMessage) obj;
+			msg = (Message) obj;
 		} catch (Exception e) {
 			log.debug(Utils.getStringFromException(e));
 		}
 		if(msg == null) {
-			response = new SimpleMessage();
+			response = new Message();
 			response.setCode(0x00001);
 			response.setMessage("Message not found");
 		}
@@ -54,16 +54,16 @@ public class DoActionLong extends ToClientLongSocket implements Aop {
 	}
 
 	@Override
-	public SimpleMessage doAction(BaseSocket client, SimpleMessage request) {
+	public Message doAction(BaseSocket client, Message request) {
 		String key = null;
 		BaseAction action = null;
-		SimpleMessage response = null;
+		Message response = null;
 		// do start filter
 		if (filterChain != null && filterChain.size() != 0)
 			for (Filter filter : filterChain)
 				if ((response = filter.doFilter(client, request)) != null)
 					return response;
-		response = new SimpleMessage();
+		response = new Message();
 		try {
 			do {
 				// gain key from request

@@ -20,5 +20,5 @@ public interface DoResponse {
 	 * 		if success response to client
 	 */
 	public byte[] response(byte[] request);
-	
+
 }

@@ -64,7 +64,6 @@ public class AsyncSocket extends BaseSocket implements LifeCycle, InitializeConf
 			ServerSocket serverSocket = serverSocketChannel.socket();
 			serverSocket.bind(new InetSocketAddress(port));
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-			selectorPool = new SelectorPool(CoreDef.DEFAULT_CONTAINER_TIMEOUT,CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 			this.aop = aop;
 			setIsServer(true);
 		} catch (Exception e) {
@@ -88,11 +87,11 @@ public class AsyncSocket extends BaseSocket implements LifeCycle, InitializeConf
 		} else if (selectionKey.isReadable()) {
 			try {
 				SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
-				if (receive(socketChannel) == null) {
-					socketChannel.close();
-					return;
-				}
-				byte[] response = doResponse(buffer.array());
+//				if (receive(socketChannel) == null) {
+//					socketChannel.close();
+//					return;
+//				}
+				byte[] response = doResponse(null);//buffer.array());
 				socketChannel.write(ByteBuffer.wrap(response));
 			} catch (Exception e) {
 				throw new LYException("Close failed", e);
@@ -204,8 +203,7 @@ public class AsyncSocket extends BaseSocket implements LifeCycle, InitializeConf
 		try {
 			if (isClosed())
 				return false;
-			if (socketChannel != null) {
-				flushChannel(socketChannel, msg, CoreDef.DEFAULT_READ_TTIMEOUT);
+			if (socketChannel != null && flushChannel(socketChannel, msg, CoreDef.DEFAULT_READ_TTIMEOUT)>0) {
 				return true;
 			}
 			return false;
@@ -245,16 +243,22 @@ public class AsyncSocket extends BaseSocket implements LifeCycle, InitializeConf
 	}
 
 	@Override
-	public void start() {
-		selectorPool = new RecyclePool<Selector>(16);
-		for (int i = 0; i < config.getInteger("maxSize"); i++) {
-			try {
-				selectorPool.add(Selector.open());
-			} catch (Exception e) {
-				log.error(Utils.getStringFromException(e));
+	public void initialize() {
+		if(config == null)
+		{
+			selectorPool = new SelectorPool(CoreDef.DEFAULT_CONTAINER_TIMEOUT,CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
+		}
+		else {
+			selectorPool = new RecyclePool<Selector>(config.getInteger("maxSelectorPool"));
+			for (int i = 0; i < config.getInteger("maxSelectorPool"); i++) {
+				try {
+					selectorPool.add(Selector.open());
+				} catch (Exception e) {
+					log.error(Utils.getStringFromException(e));
+				}
 			}
 		}
-		this.begin("AsyncServer");
+		begin("AsyncServer");
 	}
 
 	@Override

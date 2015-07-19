@@ -34,11 +34,11 @@ public final class LYPlan extends NonCloneableBaseObject implements ApplicationL
 	@Override
 	public void onApplicationEvent(ApplicationEvent arg0) {
 		log.info("LYPlan - Initialization started");
-		start();
+		initialize();
 	}
 	
 	@Override
-	public void start() {
+	public void initialize() {
 		BeginSchedule();
 	}
 

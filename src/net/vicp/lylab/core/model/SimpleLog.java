@@ -1,4 +1,4 @@
-package net.vicp.lylab.utils.internet.impl;
+package net.vicp.lylab.core.model;
 
 /**
  * Simple log data structure

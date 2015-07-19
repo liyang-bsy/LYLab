@@ -5,11 +5,11 @@ import java.io.File;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.GlobalInitializer;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.Message;
+import net.vicp.lylab.core.model.SimpleMessage;
 import net.vicp.lylab.server.aop.AsyncDoAction;
 import net.vicp.lylab.utils.config.TreeConfig;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
-import net.vicp.lylab.utils.internet.impl.Message;
-import net.vicp.lylab.utils.internet.impl.SimpleMessage;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 import net.vicp.lylab.utils.tq.Task;
 
@@ -25,19 +25,22 @@ public class Server extends Task {
 		ProtocolUtils.setConfig(CoreDef.config.getConfig("protocol"));
 		GlobalInitializer.createInstance(CoreDef.config.getConfig("init"), (TreeConfig) CoreDef.config);
 		as = new AsyncSocket(8888, new AsyncDoAction());
-		as.begin("AsyncServer");
+		as.initialize();
+		//selectorPool = new SelectorPool(CoreDef.DEFAULT_CONTAINER_TIMEOUT,CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
+//		as.begin("AsyncServer");
 		new Server().begin();
 	}
 
 	@Override
 	public void exec() {
 		Message msg = new Message();
-		for (int i = 0; i < 100000; i++) {
+		for (int i = 0; i < 100002; i++) {
 			msg.setMsgId(i);
-			if(i%500==0)
+//			if(i%8000==0)
 			{
+//				System.out.println(i);
 //				try {
-//					Thread.sleep(1000);
+//					Thread.sleep(1);
 //				} catch (InterruptedException e) {
 //					// TODO Auto-generated catch block
 //					e.printStackTrace();

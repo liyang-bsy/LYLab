@@ -47,7 +47,7 @@ public interface Protocol {
      * } </pre>
      * 
 	 * @param bytes source
-	 * @param len read length
+	 * @param len the maximum number of bytes to validate
 	 * @return
 	 * 0 not enough data<br>>0 index of the end position and of course validate passed
 	 * @throws LYException If data is corrupt
@@ -58,7 +58,7 @@ public interface Protocol {
 	 * Validate from bytes if a specific position contains a protocol
 	 * @param bytes source
 	 * @param offset validate from offset
-	 * @param len read length
+	 * @param len the maximum number of bytes to validate
 	 * @return
 	 * 0 not enough data<br>>0 index of the end position and of course validate passed
 	 * @throws LYException If data is corrupt

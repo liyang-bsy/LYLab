@@ -6,6 +6,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.SimpleMessage;
 import net.vicp.lylab.utils.Algorithm;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;

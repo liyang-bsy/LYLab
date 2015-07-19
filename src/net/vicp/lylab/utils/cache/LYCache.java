@@ -36,7 +36,7 @@ public final class LYCache extends NonCloneableBaseObject implements LifeCycle, 
 	}
 
 	@Override
-	public synchronized void start() {
+	public synchronized void initialize() {
 		ArrayList<CacheContainer> list = new ArrayList<CacheContainer>();
 		for (int i = 0; i < 16; i++)
 			list.add(new CacheContainer());

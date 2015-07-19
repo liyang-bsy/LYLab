@@ -16,7 +16,7 @@ public class AopInitializer extends NonCloneableBaseObject implements LifeCycle,
 	protected List<Filter> filterChain;
 
 	@Override
-	public void start() {
+	public void initialize() {
 		if(config == null) return;
 		filterChain = new ArrayList<Filter>();
 

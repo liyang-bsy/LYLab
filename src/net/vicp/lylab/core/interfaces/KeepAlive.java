@@ -9,7 +9,7 @@ package net.vicp.lylab.core.interfaces;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public interface KeepAlive extends Start{
+public interface KeepAlive extends Initializable{
 	public void setInterval(long interval);
 	public boolean isAlive();
 	public boolean isDying();

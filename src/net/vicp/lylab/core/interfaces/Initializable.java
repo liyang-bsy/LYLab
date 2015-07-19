@@ -1,9 +1,9 @@
 package net.vicp.lylab.core.interfaces;
 
-public interface Start {
+public interface Initializable {
 	/**
 	 * Call this when life cycle started
 	 */
-	public void start();
+	public void initialize();
 
 }

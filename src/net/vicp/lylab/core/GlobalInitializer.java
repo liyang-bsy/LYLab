@@ -26,11 +26,11 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 	private GlobalInitializer(Config config, TreeConfig rootConfig) {
 		GlobalInitializer.config = config;
 		GlobalInitializer.rootConfig = rootConfig;
-		start();
+		initialize();
 	}
 
 	@Override
-	public void start() {
+	public void initialize() {
 		if(inited.getAndSet(true) == true)
 			return;
 		log.info("Initializer - Initialization started");
@@ -45,7 +45,7 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 					((InitializeConfig) tmp).obtainConfig(rootConfig.getConfig(key));
 				}
 				if (tmp instanceof LifeCycle) {
-					((LifeCycle) tmp).start();
+					((LifeCycle) tmp).initialize();
 					log.info(tmp.getClass().getSimpleName() + " - Started");
 				}
 				singletonManager.put(key, tmp);

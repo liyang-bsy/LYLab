@@ -120,7 +120,7 @@ public class TaskSocket extends BaseSocket implements Recyclable, Transmission {
 	}
 	
 	@Override
-	public void start() {
+	public void initialize() {
 		// do nothing
 	}
 	
