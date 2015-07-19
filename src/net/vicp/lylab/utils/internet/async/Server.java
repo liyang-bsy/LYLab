@@ -34,7 +34,7 @@ public class Server extends Task {
 	@Override
 	public void exec() {
 		Message msg = new Message();
-		for (int i = 0; i < 100002; i++) {
+		for (int i = 0; i < 10002; i++) {
 			msg.setMsgId(i);
 //			if(i%8000==0)
 			{

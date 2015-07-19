@@ -62,58 +62,57 @@ public class ClientRead extends Task {
 
 	private void receiveBasedAopDrive(SocketChannel socketChannel) throws IOException {
 		if (socketChannel != null) {
-			buffer.clear();
-			int len = socketChannel.read(buffer);
-
-			len += reservedLen;
-			byte[] ret = useReserved(buffer.array());
-			int start = 0, next = 0;
-			while ((next = protocol.validate(ret, start, len)) != 0) {
-				
-				// receive-based aop drive
-				Message msg = null;
-				Message response = null;
-				try {
-
-					Object obj = protocol.decode(ret, start);
-					// TODO
-					if(obj instanceof HeartBeat) {
-						send(socketChannel, ByteBuffer.wrap(protocol.encode(null))); //heartBeat);
+			while(true)
+			{
+				buffer.clear();
+				int len = socketChannel.read(buffer);
+	
+				len += reservedLen;
+				byte[] ret = useReserved(buffer.array());
+				int start = 0, next = 0;
+				while ((next = protocol.validate(ret, start, len)) != 0) {
+					// receive-based aop drive
+					Message requestMsg = null;
+					Message responseMsg = null;
+					try {
+						Object obj = protocol.decode(ret, start);
+						// TODO
+						if(obj instanceof HeartBeat) {
+							send(socketChannel, ByteBuffer.wrap(protocol.encode(null))); //heartBeat);
+						}
+						requestMsg = (Message) obj;
+					} catch (Exception e) {
+						log.debug(Utils.getStringFromException(e));
 					}
-					msg = (Message) obj;
-				} catch (Exception e) {
-					log.debug(Utils.getStringFromException(e));
+					if(requestMsg == null) {
+						responseMsg = new Message();
+						responseMsg.setCode(0x00001);
+						responseMsg.setMessage("Message not found");
+					}
+					else
+					{
+						//TODO
+						responseMsg = new Message();
+						responseMsg.setMsgId(requestMsg.getMsgId());
+						id++;
+						//response = aop.doAction(null, msg);
+					}
+					byte[] response = (protocol == null ? null : protocol.encode(responseMsg));
+					
+					send(socketChannel, ByteBuffer.wrap(response));
+					start = next;
 				}
-				if(msg == null) {
-					response = new Message();
-					response.setCode(0x00001);
-					response.setMessage("Message not found");
+				if (start == len) {
+					break;
 				}
-				else
-				{
-					response = new Message();
-					response.setMsgId(msg.getMsgId());
-					id++;
-					//response = aop.doAction(null, msg);
-				}
-				byte[] resp = (protocol == null ? null : protocol.encode(response));
-				
-				send(socketChannel, ByteBuffer.wrap(resp));
-				start = next;
-			}
-			if (start < len) {
 				reserve(ret, start, len);
 			}
 		}
 	}
-	int id=0;
+	int id=0;	//TODO
 	private void send(SocketChannel socketChannel, ByteBuffer wrap) {
 		// TODO Auto-generated method stub
 		
-	}
-
-	public byte[] enterAction(Protocol protocol, BaseSocket client, byte[] request) {
-		return null;
 	}
 
 	public void exec() {

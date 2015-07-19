@@ -7,13 +7,18 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
+import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.model.SimpleMessage;
+import net.vicp.lylab.core.model.Message;
+import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
+import net.vicp.lylab.utils.tq.Task;
 
-public class Client {
+public class Client extends Task {
+	private static final long serialVersionUID = -2269033856733289392L;
+
 	Protocol protocol = new LYLabProtocol();
-
 	// 信道选择器
 	private Selector selector;
 	// 与服务器通信的信道
@@ -46,7 +51,7 @@ public class Client {
 		socketChannel.register(selector, SelectionKey.OP_READ);
 
 		// 启动读取线程
-		new ClientRead(selector);
+		begin();
 	}
 
 	/**
@@ -61,8 +66,9 @@ public class Client {
 	}
 
 	public static void main(String[] args) throws IOException {
+		@SuppressWarnings("unused")
 		Client client = new Client("localhost", 8888);
-//
+		
 //		Protocol protocol= new LYLabProtocol();
 //		SimpleMessage msg = new SimpleMessage();
 //		client.sendMsg(protocol.encode(msg));
@@ -71,50 +77,110 @@ public class Client {
 //		client.sendMsg(protocol.encode(msg));
 //		client.sendMsg(protocol.encode(msg));
 	}
-//	  
-//    public void exec() {
-//        try {
-//            SocketAddress address = new InetSocketAddress("localhost", 8888);
-//            SocketChannel client = SocketChannel.open(address);
-//            client.configureBlocking(false);
-//            Message msg = new Message();
-//            ByteBuffer buffer = ByteBuffer.wrap(protocol.encode(msg));
-//            int d = client.write(buffer);
-//            System.out.println("发送数据("+d+"): " + new String(buffer.array()));
-//            while (true) {
-//                int i = client.read(buffer);
-//                if (i > 0) {
-//                    byte[] b = buffer.array();
-//                    System.out.println("接收数据: " + new String(b));
-//                    client.close();
-//                    System.out.println("连接关闭!");
-//                    break;
-//                }
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-//    
-//    public static void main(String args[]){
-//    	LYTaskQueue tq = new LYTaskQueue();
-//    	tq.start();
-//        tq.addTask(new Client());
-//        tq.addTask(new Client());
-//        tq.addTask(new Client());
-//        tq.addTask(new Client());
-//        tq.addTask(new Client());
-//        tq.addTask(new Client());
-//        tq.addTask(new Client());
-//        tq.addTask(new Client());
-//        tq.addTask(new Client());
-//        tq.addTask(new Client());
-//        tq.addTask(new Client());
-//        tq.addTask(new Client());
-////        try {
-////			tq.close();
-////		} catch (Exception e) {
-////			e.printStackTrace();
-////		}
-//    }
+    
+	ByteBuffer buffer = ByteBuffer.allocate(1024);
+	private Object heartBeat;
+
+	
+	private byte[] readTail = new byte[2000];
+	private int readTailLen = 0;
+
+	private void reserve(byte[] last, int start, int len) {
+		readTailLen = len - start;
+		for (int i = start; i < len; i++) {
+			readTail[i - start] = last[i];
+		}
+	}
+
+	private byte[] useReserved(byte[] bb) {
+		byte[] out = byteCat(readTail, 0, readTailLen, bb, 0, bb.length);
+		readTailLen = 0;
+		return out;
+	}
+
+	private byte[] byteCat(byte[] pre, int preOffset, int preCopyLenth, byte[] suf, int sufOffset, int sufCopyLenth) {
+		byte[] out = new byte[preCopyLenth - preOffset - sufOffset + sufCopyLenth];
+		int i;
+		for (i = preOffset; i < preCopyLenth; i++)
+			out[i - preOffset] = pre[i];
+		for (int j = sufOffset; j < sufCopyLenth; j++)
+			out[i - preOffset - sufOffset + j] = suf[j];
+		return out;
+	}
+
+	private void receiveBasedAopDrive(SocketChannel socketChannel) throws IOException {
+		if (socketChannel != null) {
+			while(true)
+			{
+				buffer.clear();
+				int len = socketChannel.read(buffer);
+	
+				len += readTailLen;
+				byte[] ret = useReserved(buffer.array());
+				int start = 0, next = 0;
+				while ((next = protocol.validate(ret, start, len)) != 0) {
+					// receive-based aop drive
+					Message requestMsg = null;
+					Message responseMsg = null;
+					try {
+						Object obj = protocol.decode(ret, start);
+						if(obj instanceof HeartBeat) {
+							send(socketChannel, ByteBuffer.wrap(protocol.encode(heartBeat)));
+							continue;
+						}
+						requestMsg = (Message) obj;
+					} catch (Exception e) {
+						log.debug(Utils.getStringFromException(e));
+					}
+					if(requestMsg == null) {
+						responseMsg = new Message();
+						responseMsg.setCode(0x00001);
+						responseMsg.setMessage("Message not found");
+					}
+					else
+					{
+						//TODO
+						responseMsg = new Message();
+						responseMsg.setMsgId(requestMsg.getMsgId());
+						id++;
+						//response = aop.doAction(null, msg);
+					}
+					byte[] response = (protocol == null ? null : protocol.encode(responseMsg));
+					
+					send(socketChannel, ByteBuffer.wrap(response));
+					start = next;
+				}
+				if (start == len) {
+					break;
+				}
+				reserve(ret, start, len);
+			}
+		}
+	}
+	int id=0;	//TODO
+	private void send(SocketChannel socketChannel, ByteBuffer wrap) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void exec() {
+		try {
+			while (selector.select() > 0) {
+				// 遍历每个有可用IO操作Channel对应的SelectionKey
+				for (SelectionKey sk : selector.selectedKeys()) {
+					// 如果该SelectionKey对应的Channel中有可读的数据
+					if (sk.isReadable()) {
+						// 使用NIO读取Channel中的数据
+						SocketChannel sc = (SocketChannel) sk.channel();
+						receiveBasedAopDrive(sc);
+					}
+					// 删除正在处理的SelectionKey
+					selector.selectedKeys().remove(sk);
+				}
+			}
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+		System.out.println("请求总数:"+id);
+	}
 }
