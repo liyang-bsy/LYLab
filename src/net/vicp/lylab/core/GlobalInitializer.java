@@ -9,7 +9,6 @@ import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.config.Config;
-import net.vicp.lylab.utils.config.TreeConfig;
 
 /**
  * Initializer is used to initial LifeCycle registered with config
@@ -18,12 +17,12 @@ import net.vicp.lylab.utils.config.TreeConfig;
  */
 public final class GlobalInitializer extends NonCloneableBaseObject implements LifeCycle {
 	private static Config config;
-	private static TreeConfig rootConfig;
+	private static Config rootConfig;
 	private static Map<String, Object> singletonManager;
 	private static AtomicBoolean inited = new AtomicBoolean(false);
 	private static GlobalInitializer instance = null;
 
-	private GlobalInitializer(Config config, TreeConfig rootConfig) {
+	private GlobalInitializer(Config config, Config rootConfig) {
 		GlobalInitializer.config = config;
 		GlobalInitializer.rootConfig = rootConfig;
 		initialize();
@@ -77,7 +76,7 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 		return singletonManager.get(key);
 	}
 	
-	public synchronized static void createInstance(Config config, TreeConfig rootConfig) {
+	public synchronized static void createInstance(Config config, Config rootConfig) {
 		if(instance == null)
 			instance = new GlobalInitializer(config, rootConfig);
 	}
@@ -92,7 +91,7 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 		GlobalInitializer.config = config;
 	}
 
-	public static void setRootConfig(TreeConfig rootConfig) {
+	public static void setRootConfig(Config rootConfig) {
 		GlobalInitializer.rootConfig = rootConfig;
 	}
 

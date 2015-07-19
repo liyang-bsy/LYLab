@@ -16,7 +16,7 @@ import net.vicp.lylab.utils.Utils;
 public class Config extends NonCloneableBaseObject {
 	public static void main(String[] arg)
 	{
-		String s=System.getProperty("user.dir")+"\\config\\config.txt";
+		String s=System.getProperty("user.dir")+"\\config\\c1";
 		Config config=new Config(s);
 		System.out.println(config);
 	}
@@ -45,12 +45,11 @@ public class Config extends NonCloneableBaseObject {
 				String propertyName = property.getLeft().trim();
 				if (propertyName.equals("") || propertyName.startsWith("#"))
 					continue;
-				if(i == 0 && propertyName.equals("[TREE]")) {
-					mode = 0;
-					continue;
-				}
-				if(i == 0 && propertyName.equals("[PLAIN]")) {
-					mode = 1;
+				if(i == 0 && property.getRight() == null) {
+					if(propertyName.equals("[TREE]"))
+						mode = 0;
+					if(propertyName.equals("[PLAIN]"))
+						mode = 1;
 					continue;
 				}
 				String propertyValue = property.getRight().trim();
@@ -67,18 +66,16 @@ public class Config extends NonCloneableBaseObject {
 						throw new LYException("It looks like there was a reference circle in config file[" + realFileName + "]");
 					switch (mode) {
 					case 0:
-						config = new TreeConfig(realFileName, fileNameTrace, this);
+						config = new Config(realFileName, fileNameTrace, this);
 						tmp.put(propertyRealName, config);
 						break;
 					case 1:
-						config = new PlainConfig(realFileName, fileNameTrace);
+						config = new Config(realFileName, fileNameTrace, this);
 						readFromConfig(tmp, config);
 						break;
 					default:
 						break;
 					}
-					config = new TreeConfig(realFileName, fileNameTrace, this);
-					tmp.put(propertyRealName, config);
 				} else
 					tmp.put(propertyName, propertyValue);
 			} catch (Exception e) {
@@ -104,7 +101,7 @@ public class Config extends NonCloneableBaseObject {
 			String rawPair = rawList.get(i);
 			String[] pair = rawPair.split("=");
 			if (i == 0 && pair.length == 1) {
-				if (pair[0].startsWith("[") && pair[0].startsWith("]")) {
+				if (pair[0].startsWith("[") && pair[0].endsWith("]")) {
 					pairs.add(new Pair<String, String>(pair[0], null));
 					continue;
 				}
@@ -221,8 +218,8 @@ public class Config extends NonCloneableBaseObject {
 
 	@Override
 	public String toString() {
-		return "Config [fileName=" + fileName + ", dataMap=" + dataMap
-				+ ", mode=" + mode + "]";
+		return "Config [fileName=" + fileName + ", mode=" + mode + "]"
+				 + ", dataMap=" + dataMap;
 	}
 
 }
