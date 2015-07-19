@@ -85,18 +85,18 @@ public class Client extends Task {
 	private byte[] readTail = new byte[2000];
 	private int readTailLen = 0;
 
-	private void reserve(byte[] last, int start, int len) {
-		readTailLen = len - start;
-		for (int i = start; i < len; i++) {
-			readTail[i - start] = last[i];
-		}
-	}
+//	private void reserve(byte[] last, int start, int len) {
+//		readTailLen = len - start;
+//		for (int i = start; i < len; i++) {
+//			readTail[i - start] = last[i];
+//		}
+//	}
 
-	private byte[] useReserved(byte[] bb) {
-		byte[] out = byteCat(readTail, 0, readTailLen, bb, 0, bb.length);
-		readTailLen = 0;
-		return out;
-	}
+//	private byte[] useReserved(byte[] bb) {
+//		byte[] out = byteCat(readTail, 0, readTailLen, bb, 0, bb.length);
+//		readTailLen = 0;
+//		return out;
+//	}
 
 	private byte[] byteCat(byte[] pre, int preOffset, int preCopyLenth, byte[] suf, int sufOffset, int sufCopyLenth) {
 		byte[] out = new byte[preCopyLenth - preOffset - sufOffset + sufCopyLenth];
@@ -116,9 +116,13 @@ public class Client extends Task {
 				int len = socketChannel.read(buffer);
 	
 				len += readTailLen;
-				byte[] ret = useReserved(buffer.array());
+
+				byte[] ret = byteCat(readTail, 0, readTailLen, buffer.array(), 0, buffer.array().length);
+				readTailLen = 0;
+				
 				int start = 0, next = 0;
 				while ((next = protocol.validate(ret, start, len)) != 0) {
+					//<<--------------------------
 					// receive-based aop drive
 					Message requestMsg = null;
 					Message responseMsg = null;
@@ -148,12 +152,17 @@ public class Client extends Task {
 					byte[] response = (protocol == null ? null : protocol.encode(responseMsg));
 					
 					send(socketChannel, ByteBuffer.wrap(response));
+					//<<--------------------------
 					start = next;
 				}
 				if (start == len) {
 					break;
 				}
-				reserve(ret, start, len);
+				readTailLen = len - start;
+				for (int i = start; i < len; i++) {
+					readTail[i - start] = ret[i];
+				}
+//				reserve(ret, start, len);
 			}
 		}
 	}

@@ -76,7 +76,7 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 	public Object decode(byte[] bytes, int offset) {
 		if (bytes == null) return null;
 		if (!ProtocolUtils.checkHead(bytes, offset, head))
-			return null;
+			throw new LYException("Bad data package: mismatch head");
 
 		int headEndPosition = offset + head.length;
 		
@@ -99,8 +99,10 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 	@Override
 	public int validate(byte[] bytes, int offset, int len) {
 		if (bytes == null) throw new LYException("Parameter bytes is null");
-		if (!ProtocolUtils.checkHead(bytes, offset, head))
+		if (len - offset < head.length)
 			return 0;
+		if (!ProtocolUtils.checkHead(bytes, offset, head))
+			throw new LYException("Bad data package: mismatch head");
 		
 		int headEndPosition = offset + head.length;
 		int lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;

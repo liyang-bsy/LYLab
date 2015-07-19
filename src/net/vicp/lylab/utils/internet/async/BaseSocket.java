@@ -1,7 +1,7 @@
 package net.vicp.lylab.utils.internet.async;
 
+import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Callback;
-import net.vicp.lylab.core.interfaces.DoResponse;
 import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
@@ -18,7 +18,7 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public abstract class BaseSocket extends Task implements LifeCycle, InitializeConfig, DoResponse {
+public abstract class BaseSocket extends Task implements InitializeConfig {
 	private static final long serialVersionUID = 4493557570063372132L;
 	
 	// Some thing about this socket
@@ -28,6 +28,7 @@ public abstract class BaseSocket extends Task implements LifeCycle, InitializeCo
 	protected String host;
 	protected int port;
 	protected Config config;
+	protected static Aop aop;
 
 	// Protocol
 	protected Protocol protocol = null;
@@ -72,6 +73,14 @@ public abstract class BaseSocket extends Task implements LifeCycle, InitializeCo
 		return socketRetry.get();
 	}
 
+	public static Aop getAop() {
+		return aop;
+	}
+
+	public static void setAop(Aop aop) {
+		BaseSocket.aop = aop;
+	}
+
 	public Callback getBeforeConnect() {
 		return beforeConnect;
 	}
@@ -103,4 +112,5 @@ public abstract class BaseSocket extends Task implements LifeCycle, InitializeCo
 	public void setAfterTransmission(Callback afterTransmission) {
 		this.afterTransmission = afterTransmission;
 	}
+
 }

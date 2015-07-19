@@ -6,7 +6,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.GlobalInitializer;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
-import net.vicp.lylab.core.model.SimpleMessage;
+import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.server.aop.AsyncDoAction;
 import net.vicp.lylab.utils.config.TreeConfig;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
@@ -24,7 +24,7 @@ public class Server extends Task {
 //		LYTimer.setConfig(CoreDef.config.getConfig("timer"));
 		ProtocolUtils.setConfig(CoreDef.config.getConfig("protocol"));
 		GlobalInitializer.createInstance(CoreDef.config.getConfig("init"), (TreeConfig) CoreDef.config);
-		as = new AsyncSocket(8888, new AsyncDoAction());
+		as = new AsyncSocket(8888, new AsyncDoAction(), new SimpleHeartBeat());
 		as.initialize();
 		//selectorPool = new SelectorPool(CoreDef.DEFAULT_CONTAINER_TIMEOUT,CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 //		as.begin("AsyncServer");
@@ -47,7 +47,7 @@ public class Server extends Task {
 //				}
 			}
 			msg.setMessage("i=" + i);
-			as.push("127.0.0.1", p.encode(msg));
+			as.request("127.0.0.1", p.encode(msg));
 		}
 		try {
 			Thread.sleep(1000);

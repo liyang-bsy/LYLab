@@ -1,57 +1,21 @@
 package net.vicp.lylab.server.aop;
 
-import java.net.ServerSocket;
 import java.util.List;
 
 import net.vicp.lylab.core.BaseAction;
+import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.Aop;
-import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.config.Config;
-import net.vicp.lylab.utils.internet.HeartBeat;
-import net.vicp.lylab.utils.internet.ToClientLongSocket;
 import net.vicp.lylab.utils.internet.async.BaseSocket;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class DoActionLong extends ToClientLongSocket implements Aop {
-	private static final long serialVersionUID = -8400721992403701180L;
-
-	public DoActionLong(ServerSocket serverSocket, HeartBeat heartBeat) {
-		super(serverSocket, heartBeat);
-	}
-
+public class DoActionLong extends NonCloneableBaseObject implements Aop {
 	protected static Config config;
 	protected static List<Filter> filterChain;
-
-	@Override
-	public byte[] response(byte[] request) {
-		return enterAction(protocol, this, request);
-	}
-	
-	@Override
-	public byte[] enterAction(Protocol protocol, BaseSocket client, byte[] request) {
-		Message msg = null;
-		Message response = null;
-		try {
-			Object obj = protocol.decode(request);
-			if(obj instanceof HeartBeat)
-				return protocol.encode(heartBeat);
-			msg = (Message) obj;
-		} catch (Exception e) {
-			log.debug(Utils.getStringFromException(e));
-		}
-		if(msg == null) {
-			response = new Message();
-			response.setCode(0x00001);
-			response.setMessage("Message not found");
-		}
-		else
-			response = doAction(client, msg);
-		return protocol == null ? null : protocol.encode(response);
-	}
 
 	@Override
 	public Message doAction(BaseSocket client, Message request) {

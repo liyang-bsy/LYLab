@@ -6,6 +6,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.server.aop.DoActionLong;
+import net.vicp.lylab.utils.internet.ToClientLongSocket;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.Task;
 
@@ -38,11 +39,12 @@ public class SyncServer extends Task implements LifeCycle{
 
 	@Override
 	public void exec() {
+		ToClientLongSocket.setAop(new DoActionLong());
 		try {
 			int port = CoreDef.config.getInteger("port");
 			serverSocket = new ServerSocket(port);
 			while (running ) {
-				tq.addTask(new DoActionLong(serverSocket, new SimpleHeartBeat()));
+				tq.addTask(new ToClientLongSocket(serverSocket, new SimpleHeartBeat()));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -57,6 +57,8 @@ public class CoreDef {
 	public static final long TB = 1024*GB;
 
 	public static final int ZERO = 0;
+	public static final double HALF = 0.5;
+	public static final double QUARTER = 0.25;
 	public static final int ONE = 1;
 	public static final int TWO = 2;
 	public static final int THREE = 3;
@@ -112,14 +114,14 @@ public class CoreDef {
 
 	public static final int DEFAULT_PERMANENT_MAX_SIZE = HUNDRED*THOUSAND;
 	public static final int DEFAULT_PERMANENT_TICK = SIX*TEN;
-	public static final long DEFAULT_TERMINATE_TIMEOUT = FIVE*MINUTE;
-	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = ONE*MINUTE;
+	public static final long DEFAULT_TERMINATE_TIMEOUT = TWO*MINUTE;
+	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = MINUTE/TWO;
 
 	public static final long ONE_TIME_TASK = ZERO;
 	
 	public static final int SOCKET_MAX_BUFFER = TWO * KB;
-	public static final int DEFAULT_SOCKET_TTIMEOUT = (int) (TWENTY*SECOND);
-	public static final int DEFAULT_READ_TTIMEOUT = (int) (TWO*SECOND);
+	public static final int DEFAULT_SOCKET_TTIMEOUT = (int) (FIVE*MINUTE);
+	public static final int DEFAULT_READ_TTIMEOUT = (int) (TWELVE*SECOND);
 
 	public static final long DEFAULT_LYCACHE_EXPIRE_TIME = FIFTEEN*TWO*MINUTE;
 	public static final long DEFAULT_LYCACHE_MEMORY_LIMITATION = ONE * GB;

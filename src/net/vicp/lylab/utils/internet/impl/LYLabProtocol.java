@@ -99,7 +99,7 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 	public Object decode(byte[] bytes, int offset) {
 		if (bytes == null) return null;
 		if (!ProtocolUtils.checkHead(bytes, offset, head))
-			return null;
+			throw new LYException("Bad data package: mismatch head");
 		String sInfo = null, sData = null;
 		int headEndPosition = 0, lengthEndPosition = 0, infoEndPosition = 0;
 		try {
@@ -135,9 +135,10 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 	@Override
 	public int validate(byte[] bytes, int offset, int len) {
 		if (bytes == null) throw new LYException("Parameter bytes is null");
-		if (!ProtocolUtils.checkHead(bytes, offset, head))
+		if (len - offset < head.length)
 			return 0;
-			//throw new LYException("Bad data package: mismatch head");
+		if (!ProtocolUtils.checkHead(bytes, offset, head))
+			throw new LYException("Bad data package: mismatch head");
 		
 		int headEndPosition = head.length + offset;
 		

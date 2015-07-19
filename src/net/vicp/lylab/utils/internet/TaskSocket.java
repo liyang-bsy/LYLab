@@ -8,9 +8,11 @@ import java.util.Arrays;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
+import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.async.BaseSocket;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
@@ -24,7 +26,7 @@ import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class TaskSocket extends BaseSocket implements Recyclable, Transmission {
+public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Transmission {
 	private static final long serialVersionUID = 883892527805494627L;
 	
 	// Raw data source
@@ -94,9 +96,24 @@ public class TaskSocket extends BaseSocket implements Recyclable, Transmission {
 	}
 
 	@Override
-	public byte[] response(byte[] request) {
-		// do something
-		return null;
+	public byte[] response(byte[] request, int offset) {
+		if(aop == null)
+			return null;
+		Message requestMsg = null;
+		Message responseMsg = null;
+		try {
+			requestMsg = (Message) protocol.decode(request, offset);
+		} catch (Exception e) {
+			log.debug(Utils.getStringFromException(e));
+		}
+		if(requestMsg == null) {
+			responseMsg = new Message();
+			responseMsg.setCode(0x00001);
+			responseMsg.setMessage("Message not found");
+		}
+		else
+			responseMsg = aop.doAction(this, requestMsg);
+		return protocol == null ? null : protocol.encode(responseMsg);
 	}
 	
 	public byte[] doRequest(byte[] request) {
@@ -113,7 +130,7 @@ public class TaskSocket extends BaseSocket implements Recyclable, Transmission {
 		if(beforeTransmission != null)
 			beforeTransmission.callback(request);
 		if(!isServer()) throw new LYException("Do response is forbidden to a client socket");
-		byte[] ret = response(request);
+		byte[] ret = response(request, 0);
 		if(afterTransmission != null)
 			afterTransmission.callback(ret);
 		return ret;
@@ -139,7 +156,7 @@ public class TaskSocket extends BaseSocket implements Recyclable, Transmission {
 		}
 	}
 	
-	public boolean send(byte[] msg) {
+	protected boolean send(byte[] msg) {
 		if(isClosed()) return false;
 		try {
 			out.write(msg);
@@ -150,7 +167,7 @@ public class TaskSocket extends BaseSocket implements Recyclable, Transmission {
 		return true;
 	}
 	
-	public byte[] receive() {
+	protected byte[] receive() {
 		if(isClosed()) throw new LYException("Connection closed");
 		if (in != null) {
 			bufferLen = 0;

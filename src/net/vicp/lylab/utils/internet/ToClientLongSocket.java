@@ -12,14 +12,11 @@ import java.net.ServerSocket;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public abstract class ToClientLongSocket extends LongSocket {
+public class ToClientLongSocket extends LongSocket {
 	private static final long serialVersionUID = -1781713514926105187L;
 
 	public ToClientLongSocket(ServerSocket serverSocket, HeartBeat heartBeat) {
 		super(serverSocket, heartBeat);
 	}
-
-	@Override
-	abstract public byte[] response(byte[] request);
 
 }

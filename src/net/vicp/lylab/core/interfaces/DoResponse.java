@@ -19,6 +19,6 @@ public interface DoResponse {
 	 * @return
 	 * 		if success response to client
 	 */
-	public byte[] response(byte[] request);
+	public byte[] response(byte[] request, int offset);
 
 }

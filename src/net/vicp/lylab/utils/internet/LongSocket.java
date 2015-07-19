@@ -6,6 +6,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 
@@ -21,6 +22,8 @@ import net.vicp.lylab.utils.Utils;
 public class LongSocket extends TaskSocket implements KeepAlive {
 	private static final long serialVersionUID = -4542553667467771646L;
 	protected SequenceTemporaryPool<byte[]> dataPool = new SequenceTemporaryPool<byte[]>();
+	
+	// Long socket keep alive
 	protected HeartBeat heartBeat;
 	protected long lastActivity = 0L;
 	protected long interval = CoreDef.DEFAULT_SOCKET_TTIMEOUT/4;
@@ -58,7 +61,18 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 				}
 			} else {
 				connect();
-				while (doRequest(null) != null);
+				while (true) {
+					byte[] request = dataPool.accessOne();
+					if (request == null) {
+						if (!keepAlive())
+							break;
+						await(CoreDef.WAITING_LONG);
+						continue;
+					}
+					signalAll();
+					if (doRequest(request) == null)
+						break;
+				}
 			}
 		} catch (Throwable t) {
 			lastWord = t.getMessage();
@@ -82,6 +96,30 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 		log.info(isServer()?"Lost connection to client":"Lost connection to server");
 	}
 
+	@Override
+	public byte[] response(byte[] request, int offset) {
+		if(aop == null)
+			return null;
+		Message requestMsg = null;
+		Message responseMsg = null;
+		try {
+			Object obj = protocol.decode(request, offset);
+			if(obj instanceof HeartBeat)
+				return protocol.encode(heartBeat);
+			requestMsg = (Message) obj;
+		} catch (Exception e) {
+			log.debug(Utils.getStringFromException(e));
+		}
+		if(requestMsg == null) {
+			responseMsg = new Message();
+			responseMsg.setCode(0x00001);
+			responseMsg.setMessage("Message not found");
+		}
+		else
+			responseMsg = aop.doAction(this, requestMsg);
+		return protocol == null ? null : protocol.encode(responseMsg);
+	}
+	
 	@Override
 	public byte[] request(byte[] request) {
 		if (isServer())
@@ -108,19 +146,9 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 			beforeTransmission.callback(request);
 		byte[] result = null;
 		try {
-			do {
-				byte[] tmp = dataPool.accessOne();
-				if (tmp == null) {
-					if(!keepAlive()) return null;
-					await(CoreDef.WAITING_LONG);
-					continue;
-				}
-				signalAll();
-				result = request(tmp);
-				if (result == null)
-					dataPool.add(0, tmp);
-				break;
-			} while (true);
+			result = request(request);
+			if (result == null)
+				dataPool.add(0, request);
 			if(afterTransmission != null)
 				afterTransmission.callback(result);
 		} catch (Exception e) {
@@ -198,7 +226,9 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 					else
 						log.error("Send heartbeat failed\n" + obj.toString());
 				}
-			} catch (Exception e) { }
+			} catch (Exception e) {
+				log.error("This socket may be dead" + Utils.getStringFromException(e));
+			}
 			return false;
 		}
 	}
