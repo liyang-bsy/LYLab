@@ -4,7 +4,6 @@ import java.util.List;
 
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
@@ -13,12 +12,11 @@ import net.vicp.lylab.utils.internet.BaseSocket;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class DoAction extends NonCloneableBaseObject implements Aop {
+public class Aop extends NonCloneableBaseObject {
 	protected static Config config;
 	protected static List<Filter> filterChain;
 
-	@Override
-	public Message doAction(BaseSocket client, Message request) {
+	public static Message doAction(BaseSocket client, Message request) {
 		String key = null;
 		BaseAction action = null;
 		Message response = null;
@@ -71,7 +69,7 @@ public class DoAction extends NonCloneableBaseObject implements Aop {
 	}
 
 	public static void setConfig(Config config) {
-		DoAction.config = config;
+		Aop.config = config;
 	}
 
 	public static List<Filter> getFilterChain() {
@@ -79,7 +77,7 @@ public class DoAction extends NonCloneableBaseObject implements Aop {
 	}
 
 	public static void setFilterChain(List<Filter> filterChain) {
-		DoAction.filterChain = filterChain;
+		Aop.filterChain = filterChain;
 	}
 
 }

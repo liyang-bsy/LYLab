@@ -8,6 +8,7 @@ import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
+import net.vicp.lylab.server.aop.Aop;
 import net.vicp.lylab.utils.Utils;
 
 /**
@@ -98,8 +99,6 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 
 	@Override
 	public byte[] response(byte[] request, int offset) {
-		if(aop == null)
-			return null;
 		Message requestMsg = null;
 		Message responseMsg = null;
 		try {
@@ -116,7 +115,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 			responseMsg.setMessage("Message not found");
 		}
 		else
-			responseMsg = aop.doAction(this, requestMsg);
+			responseMsg = Aop.doAction(this, requestMsg);
 		return protocol == null ? null : protocol.encode(responseMsg);
 	}
 	

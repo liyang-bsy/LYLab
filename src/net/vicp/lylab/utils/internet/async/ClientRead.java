@@ -7,13 +7,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 //import java.util.Arrays;
 
-
-
-
-
-
-
-import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.utils.Utils;
@@ -22,8 +15,9 @@ import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
 import net.vicp.lylab.utils.tq.Task;
 
 public class ClientRead extends Task {
+	private static final long serialVersionUID = 3014558469534681463L;
+	
 	private Selector selector;
-	private Aop aop;
 
 	public ClientRead(Selector selector) {
 		this.selector = selector;
@@ -95,7 +89,7 @@ public class ClientRead extends Task {
 						responseMsg = new Message();
 						responseMsg.setMsgId(requestMsg.getMsgId());
 						id++;
-						//response = aop.doAction(null, msg);
+						//response = Aop.doAction(null, msg);
 					}
 					byte[] response = (protocol == null ? null : protocol.encode(responseMsg));
 					

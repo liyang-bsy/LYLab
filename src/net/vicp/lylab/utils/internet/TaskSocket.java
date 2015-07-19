@@ -13,6 +13,7 @@ import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.core.model.Message;
+import net.vicp.lylab.server.aop.Aop;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
@@ -96,8 +97,6 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 
 	@Override
 	public byte[] response(byte[] request, int offset) {
-		if(aop == null)
-			return null;
 		Message requestMsg = null;
 		Message responseMsg = null;
 		try {
@@ -111,7 +110,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 			responseMsg.setMessage("Message not found");
 		}
 		else
-			responseMsg = aop.doAction(this, requestMsg);
+			responseMsg = Aop.doAction(this, requestMsg);
 		return protocol == null ? null : protocol.encode(responseMsg);
 	}
 	

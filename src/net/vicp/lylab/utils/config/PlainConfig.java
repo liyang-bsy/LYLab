@@ -1,14 +1,13 @@
 package net.vicp.lylab.utils.config;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.model.Pair;
 
 public final class PlainConfig extends Config {
 
@@ -25,24 +24,16 @@ public final class PlainConfig extends Config {
 			return;
 		fileNameTrace.push(fileName);
 		int line = 0;
-		File file = new File(fileName);
-		Properties p = new Properties();
-		try {
-			InputStream inputStream = new FileInputStream(file);
-			p.load(inputStream);
-			inputStream.close();
-		} catch (Exception e) {
-			throw new LYException("Failed to load config file with below path:\n" + fileName, e);
-		}
+		List<Pair<String, String>> pairs = loader();
 		Map<String, Object> tmp = new ConcurrentHashMap<String, Object>();
-		for (String propertyName : p.stringPropertyNames()) {
+		for (Pair<String, String> property : pairs) {
 			try {
-				propertyName = propertyName.trim();
+				String propertyName = property.getLeft().trim();
 				if (propertyName.equals("") || propertyName.startsWith("#"))
 					continue;
-				String propertyValue = p.getProperty(propertyName).trim();
+				String propertyValue = property.getRight().trim();
 				if (propertyName.startsWith("$")) {
-//					String propertyRealName = propertyName.substring(1);
+//					String propertyRealName = propertyName.substring(1).trim();
 					String realFileName = propertyValue;
 					PlainConfig config = null;
 					if(!realFileName.contains(File.separator)) {

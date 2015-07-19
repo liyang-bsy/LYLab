@@ -1,6 +1,5 @@
 package net.vicp.lylab.utils.internet;
 
-import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Callback;
 import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.Protocol;
@@ -27,7 +26,6 @@ public abstract class BaseSocket extends Task implements InitializeConfig {
 	protected String host;
 	protected int port;
 	protected Config config;
-	protected static Aop aop;
 
 	// Protocol
 	protected Protocol protocol = null;
@@ -70,14 +68,6 @@ public abstract class BaseSocket extends Task implements InitializeConfig {
 
 	public int getSocketRetry() {
 		return socketRetry.get();
-	}
-
-	public static Aop getAop() {
-		return aop;
-	}
-
-	public static void setAop(Aop aop) {
-		BaseSocket.aop = aop;
 	}
 
 	public Callback getBeforeConnect() {

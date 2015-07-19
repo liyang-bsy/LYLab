@@ -17,12 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.DoResponse;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.pool.RecyclePool;
+import net.vicp.lylab.server.aop.Aop;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.internet.BaseSocket;
@@ -46,7 +46,6 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, DoR
 	protected Selector selector = null;
 	protected SelectionKey selectionKey = null;
 	protected SocketChannel socketChannel = null;
-	protected Aop aop = null;
 	// Token mapping
 	protected Map<String, SocketChannel> ipMap = new ConcurrentHashMap<String, SocketChannel>();
 	protected RecyclePool<Selector> selectorPool;
@@ -63,7 +62,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, DoR
 	 * Server mode
 	 * @param port
 	 */
-	public AsyncSocket(int port, Aop aop, HeartBeat heartBeat) {
+	public AsyncSocket(int port, HeartBeat heartBeat) {
 		try {
 			selector = Selector.open();
 			ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
@@ -71,7 +70,6 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, DoR
 			ServerSocket serverSocket = serverSocketChannel.socket();
 			serverSocket.bind(new InetSocketAddress(port));
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-			this.aop = aop;
 			this.heartBeat = heartBeat;
 			setIsServer(true);
 		} catch (Exception e) {
@@ -149,8 +147,6 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, DoR
 
 	@Override
 	public byte[] response(byte[] request, int offset) {
-		if(aop == null)
-			return null;
 		Message requestMsg = null;
 		Message responseMsg = null;
 		try {
@@ -167,7 +163,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, DoR
 			responseMsg.setMessage("Message not found");
 		}
 		else
-			responseMsg = aop.doAction(new InfoSocket(socketChannel .socket()), requestMsg);
+			responseMsg = Aop.doAction(new InfoSocket(socketChannel .socket()), requestMsg);
 		byte[] response = null;
 		if(protocol != null) {
 			response = protocol.encode(responseMsg);
