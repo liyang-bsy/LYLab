@@ -183,6 +183,10 @@ public class Utils extends NonCloneableBaseObject {
 	public static List<String> readFileByLines(String fileName) {
 		List<String> ret = new ArrayList<String>();
 		File file = new File(fileName);
+		if(!file.exists())
+			throw new LYException("File not found:" + fileName);
+		if(!file.isFile())
+			throw new LYException("Given path is not a file:" + fileName);
 		try (FileInputStream in = new FileInputStream(file);
 				BufferedReader reader = new BufferedReader(
 						new InputStreamReader(in, CoreDef.CHARSET()));) {

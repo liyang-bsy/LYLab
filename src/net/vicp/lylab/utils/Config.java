@@ -56,10 +56,16 @@ public class Config extends NonCloneableBaseObject {
 					String propertyRealName = propertyName.substring(1).replaceAll("[\u0000-\u0020]", "");//.trim();
 					String realFileName = propertyValue;
 					Config config = null;
-					if(!realFileName.contains(File.separator)) {
+					testfile: {
+						File testExist = null;
+						testExist = new File(realFileName);
+						if(testExist.exists() && testExist.isFile())
+							break testfile;
 						int index = fileName.lastIndexOf(File.separator);
 						String filePath = fileName.substring(0, index + 1);
-						realFileName = filePath + realFileName;
+						testExist = new File(filePath + realFileName);
+						if(testExist.exists() && testExist.isFile())
+							realFileName = filePath + realFileName;
 					}
 					if(fileNameTrace.contains(realFileName))
 						throw new LYException("It looks like there was a reference circle in config file[" + realFileName + "]");
