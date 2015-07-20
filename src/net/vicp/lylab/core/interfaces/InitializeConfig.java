@@ -1,6 +1,6 @@
 package net.vicp.lylab.core.interfaces;
 
-import net.vicp.lylab.utils.config.Config;
+import net.vicp.lylab.utils.Config;
 
 public interface InitializeConfig {
 	/**

@@ -1,6 +1,7 @@
 package net.vicp.lylab.utils.internet;
 
 import java.net.ServerSocket;
+import java.net.Socket;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
@@ -8,6 +9,7 @@ import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
+import net.vicp.lylab.core.pool.TimeoutSequenceTemporaryPool;
 import net.vicp.lylab.server.aop.Aop;
 import net.vicp.lylab.utils.Utils;
 
@@ -23,6 +25,7 @@ import net.vicp.lylab.utils.Utils;
 public class LongSocket extends TaskSocket implements KeepAlive {
 	private static final long serialVersionUID = -4542553667467771646L;
 	protected SequenceTemporaryPool<byte[]> dataPool = new SequenceTemporaryPool<byte[]>();
+	protected TimeoutSequenceTemporaryPool<byte[]> responsePool = new TimeoutSequenceTemporaryPool<byte[]>();
 	
 	// Long socket keep alive
 	protected HeartBeat heartBeat;
@@ -71,8 +74,10 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 						continue;
 					}
 					signalAll();
-					if (doRequest(request) == null)
+					byte[] response = doRequest(request);
+					if (response == null)
 						break;
+					responsePool.add(response);
 				}
 			}
 		} catch (Throwable t) {
@@ -98,7 +103,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 	}
 
 	@Override
-	public byte[] response(byte[] request, int offset) {
+	public byte[] response(Socket client, byte[] request, int offset) {
 		Message requestMsg = null;
 		Message responseMsg = null;
 		try {
@@ -115,7 +120,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 			responseMsg.setMessage("Message not found");
 		}
 		else
-			responseMsg = Aop.doAction(this, requestMsg);
+			responseMsg = Aop.doAction(client, requestMsg);
 		return protocol == null ? null : protocol.encode(responseMsg);
 	}
 	

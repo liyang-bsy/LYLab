@@ -1,7 +1,8 @@
-package net.vicp.lylab.utils.config;
+package net.vicp.lylab.utils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,15 +12,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.model.Pair;
-import net.vicp.lylab.utils.Utils;
 
 public class Config extends NonCloneableBaseObject {
-	public static void main(String[] arg)
-	{
-		String s=System.getProperty("user.dir")+"\\config\\c1";
-		Config config=new Config(s);
-		System.out.println(config);
-	}
+	protected String fileName;
+	protected Map<String, Object> dataMap;
+	protected transient Config parent;
+	protected int mode = 0;
+	protected transient Stack<String> fileNameTrace;
 	
 	public Config(String fileName) {
 		this(fileName, new Stack<String>(), null);
@@ -42,7 +41,7 @@ public class Config extends NonCloneableBaseObject {
 		for (int i = 0; i < pairs.size(); i++) {
 			Pair<String, String> property = pairs.get(i);
 			try {
-				String propertyName = property.getLeft().trim();
+				String propertyName = property.getLeft().replaceAll("[\u0000-\u0020]", "");//.trim();
 				if (propertyName.equals("") || propertyName.startsWith("#"))
 					continue;
 				if(i == 0 && property.getRight() == null) {
@@ -52,9 +51,9 @@ public class Config extends NonCloneableBaseObject {
 						mode = 1;
 					continue;
 				}
-				String propertyValue = property.getRight().trim();
+				String propertyValue = property.getRight().replaceAll("[\u0000-\u0020]", "");//.trim();
 				if (propertyName.startsWith("$")) {
-					String propertyRealName = propertyName.substring(1).trim();
+					String propertyRealName = propertyName.substring(1).replaceAll("[\u0000-\u0020]", "");//.trim();
 					String realFileName = propertyValue;
 					Config config = null;
 					if(!realFileName.contains(File.separator)) {
@@ -88,12 +87,6 @@ public class Config extends NonCloneableBaseObject {
 		fileNameTrace.pop();
 	}
 	
-	protected String fileName;
-	protected Map<String, Object> dataMap;
-	protected transient Config parent;
-	protected int mode = 0;
-	protected transient Stack<String> fileNameTrace;
-	
 	protected List<Pair<String, String>> loader() {
 		List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>();
 		List<String> rawList = Utils.readFileByLines(fileName);
@@ -105,11 +98,11 @@ public class Config extends NonCloneableBaseObject {
 					pairs.add(new Pair<String, String>(pair[0], null));
 					continue;
 				}
-				log.error("Bad key/value" + pair.toString());
+				log.error("Bad key/value" + Arrays.deepToString(pair));
 				continue;
 			}
 			if (pair.length != 2) {
-				log.error("Bad key/value" + pair.toString());
+				log.error("Bad key/value" + Arrays.deepToString(pair));
 				continue;
 			}
 			pairs.add(new Pair<String, String>(pair[0], pair[1]));
@@ -218,8 +211,8 @@ public class Config extends NonCloneableBaseObject {
 
 	@Override
 	public String toString() {
-		return "Config [fileName=" + fileName + ", mode=" + mode + "]"
-				 + ", dataMap=" + dataMap;
+		return "Config [fileName=" + fileName + ", dataMap=" + dataMap
+				+ ", mode=" + mode + "]";
 	}
 
 }

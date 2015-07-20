@@ -74,8 +74,8 @@ public class AutoGeneratePool<T> extends TimeoutRecyclePool<Selector> {
 	public void recycle() {
 		synchronized (lock) {
 			for (Long id : startTime.keySet()) {
-				Date start = startTime.get(id);
-				if (new Date().getTime() - start.getTime() > timeout) {
+				long start = startTime.get(id);
+				if (System.currentTimeMillis() - start > timeout) {
 					Selector tmp = busyContainer.get(id);
 					if (tmp != null) {
 						try {

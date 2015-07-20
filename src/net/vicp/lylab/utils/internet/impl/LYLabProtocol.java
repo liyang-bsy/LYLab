@@ -138,7 +138,10 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 		if (len - offset < head.length)
 			return 0;
 		if (!ProtocolUtils.checkHead(bytes, offset, head))
-			throw new LYException("Bad data package: mismatch head");
+			throw new LYException("Bad data package: mismatch head\n"
+					+ new String(bytes, offset, len-offset).trim()
+					+ "\nOriginal(start from " + offset + "):\n"
+					+ new String(bytes).trim());
 		
 		int headEndPosition = head.length + offset;
 		

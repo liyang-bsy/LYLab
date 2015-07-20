@@ -13,14 +13,12 @@ public class SimpleMessage extends SimpleConfirm {
 	protected String message;
 	protected String key;
 	protected Map<String, Object> body;
-	protected int total;
 
 	public SimpleMessage() {
 		super(-1);
 		key = "Invalid";
 		message = "Unknow";
 		body = new HashMap<String, Object>();
-		total = 0;
 	}
 
 	public String getMessage() {
@@ -47,14 +45,6 @@ public class SimpleMessage extends SimpleConfirm {
 		this.body = body;
 	}
 
-	public int getTotal() {
-		return total;
-	}
-
-	public void setTotal(int total) {
-		this.total = total;
-	}
-	
 	public void success()
 	{
 		this.setCode(0);
@@ -64,7 +54,7 @@ public class SimpleMessage extends SimpleConfirm {
 	@Override
 	public String toString() {
 		return "Message [message=" + message + ", key=" + key + ", body="
-				+ body + ", total=" + total + ", code=" + code + "]";
+				+ body + ", code=" + code + "]";
 	}
 	
 }

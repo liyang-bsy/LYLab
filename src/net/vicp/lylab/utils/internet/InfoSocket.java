@@ -29,10 +29,4 @@ public class InfoSocket extends BaseSocket {
 		// do nothing
 	}
 
-	@Override
-	public byte[] doResponse(byte[] request) {
-		// do nothing
-		return null;
-	}
-
 }

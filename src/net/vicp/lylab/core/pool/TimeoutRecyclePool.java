@@ -16,7 +16,7 @@ import net.vicp.lylab.utils.controller.TimeoutController;
  *
  */
 public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable {
-	protected Map<Long, Date> startTime;
+	protected Map<Long, Long> startTime;
 	protected Long timeout;
 
 	/**
@@ -40,7 +40,7 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 	public TimeoutRecyclePool(long timeout, int maxSize)
 	{
 		super(maxSize);
-		startTime = new ConcurrentHashMap<Long, Date>();
+		startTime = new ConcurrentHashMap<Long, Long>();
 		this.timeout = timeout;
 		TimeoutController.addToWatch(this);
 	}
@@ -62,7 +62,7 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 			if (tmp != null)
 			{
 				busyContainer.put(objId, tmp);
-				startTime.put(objId, new Date());
+				startTime.put(objId, System.currentTimeMillis());
 			}
 			return tmp;
 		}
@@ -73,8 +73,8 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 	public void recycle() {
 		synchronized (lock) {
 			for (Long id : startTime.keySet()) {
-				Date start = startTime.get(id);
-				if (new Date().getTime() - start.getTime() > timeout) {
+				long start = startTime.get(id);
+				if (new Date().getTime() - start > timeout) {
 					T tmp = busyContainer.get(id);
 					if (tmp != null) {
 						try {

@@ -147,21 +147,23 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 * Try to call off the task, but can't ensure it will be end after calling this
 	 */
 	public final void callStop() {
-		state.compareAndSet(STOPPED, STOPPED);
-		state.compareAndSet(CANCELLED, STOPPED);
-		state.compareAndSet(FAILED, STOPPED);
-		state.compareAndSet(BEGAN, CANCELLED);
-		state.compareAndSet(STARTED, STOPPED);
-//		state.compareAndSet(COMPLETED, COMPLETED);		// non-sense
-		if (thread != null)
-			thread.interrupt();
-		if (this instanceof AutoCloseable)
-			try {
-				((AutoCloseable) this).close();
-			} catch (Exception e) {
-				log.error("Call stop AutoCloseable, but close failed"
-						+ Utils.getStringFromException(e));
-			}
+		synchronized (lock) {
+			state.compareAndSet(STOPPED, STOPPED);
+			state.compareAndSet(CANCELLED, STOPPED);
+			state.compareAndSet(FAILED, STOPPED);
+			state.compareAndSet(BEGAN, CANCELLED);
+			state.compareAndSet(STARTED, STOPPED);
+//			state.compareAndSet(COMPLETED, COMPLETED);		// non-sense
+			if (thread != null)
+				thread.interrupt();
+			if (this instanceof AutoCloseable)
+				try {
+					((AutoCloseable) this).close();
+				} catch (Exception e) {
+					log.error("Call stop AutoCloseable, but close failed"
+							+ Utils.getStringFromException(e));
+				}
+		}
 	}
 
 	/**

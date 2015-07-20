@@ -8,8 +8,8 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.server.filter.Filter;
+import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.config.Config;
 
 public class AopInitializer extends NonCloneableBaseObject implements LifeCycle, InitializeConfig {
 	protected Config config;

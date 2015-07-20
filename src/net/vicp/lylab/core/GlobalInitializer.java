@@ -6,9 +6,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.LifeCycle;
+import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
-import net.vicp.lylab.utils.config.Config;
 
 /**
  * Initializer is used to initial LifeCycle registered with config

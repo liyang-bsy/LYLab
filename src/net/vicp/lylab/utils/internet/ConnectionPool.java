@@ -1,7 +1,6 @@
 package net.vicp.lylab.utils.internet;
 
 import java.lang.reflect.Constructor;
-import java.util.Date;
 import java.util.List;
 
 import net.vicp.lylab.core.exception.LYException;
@@ -106,8 +105,8 @@ public class ConnectionPool<T> extends TimeoutRecyclePool<T> {
 	public void recycle() {
 		synchronized (lock) {
 			for (Long id : startTime.keySet()) {
-				Date start = startTime.get(id);
-				if (new Date().getTime() - start.getTime() > timeout) {
+				long start = startTime.get(id);
+				if (System.currentTimeMillis() - start > timeout) {
 					T tmp = busyContainer.get(id);
 					if (tmp != null) {
 						try {

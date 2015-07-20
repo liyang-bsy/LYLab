@@ -9,8 +9,8 @@ import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.DoHash;
 import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.LifeCycle;
+import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
-import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.hash.MD5Hash;
 
 /**

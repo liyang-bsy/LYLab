@@ -4,7 +4,7 @@ import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.utils.config.Config;
+import net.vicp.lylab.utils.Config;
 
 /**
  * Protocol Utils, offer a serial essential utilities function about

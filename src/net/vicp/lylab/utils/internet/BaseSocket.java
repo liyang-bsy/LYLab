@@ -3,8 +3,8 @@ package net.vicp.lylab.utils.internet;
 import net.vicp.lylab.core.interfaces.Callback;
 import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
-import net.vicp.lylab.utils.config.Config;
 import net.vicp.lylab.utils.tq.Task;
 
 /**
@@ -36,8 +36,6 @@ public abstract class BaseSocket extends Task implements InitializeConfig {
 	protected Callback beforeTransmission = null;
 	protected Callback afterTransmission = null;
 	
-	public abstract byte[] doResponse(byte[] request);
-
 	@Override
 	public void obtainConfig(Config config) {
 		this.config = config;

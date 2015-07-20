@@ -19,7 +19,7 @@ public class SequencePool<T> extends IndexedPool<T> {
 	public SequencePool(int maxSize) {
 		super(new LinkedList<Long>(), maxSize);
 	}
-
+	
 	public Long add(int index, T t) {
 		synchronized (lock) {
 			safeCheck();

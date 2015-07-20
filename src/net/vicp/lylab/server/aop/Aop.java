@@ -1,14 +1,14 @@
 package net.vicp.lylab.server.aop;
 
+import java.net.Socket;
 import java.util.List;
 
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.server.filter.Filter;
+import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.config.Config;
-import net.vicp.lylab.utils.internet.BaseSocket;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -16,7 +16,7 @@ public class Aop extends NonCloneableBaseObject {
 	protected static Config config;
 	protected static List<Filter> filterChain;
 
-	public static Message doAction(BaseSocket client, Message request) {
+	public static Message doAction(Socket client, Message request) {
 		String key = null;
 		BaseAction action = null;
 		Message response = null;

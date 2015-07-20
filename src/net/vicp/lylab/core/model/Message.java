@@ -8,12 +8,14 @@ package net.vicp.lylab.core.model;
  */
 public class Message extends SimpleMessage {
 	protected String token;
-	protected int msgId;
+	protected String uuid;
+	protected Long time;
 
 	public Message() {
 		super();
 		token = "";
-		msgId = 0;
+		uuid = "";
+		time = System.currentTimeMillis();
 	}
 
 	public String getToken() {
@@ -24,19 +26,27 @@ public class Message extends SimpleMessage {
 		this.token = token;
 	}
 
-	public int getMsgId() {
-		return msgId;
+	public String getUuid() {
+		return uuid;
 	}
 
-	public void setMsgId(int msgId) {
-		this.msgId = msgId;
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
+	}
+
+	public Long getTime() {
+		return time;
+	}
+
+	public void setTime(Long time) {
+		this.time = time;
 	}
 
 	@Override
 	public String toString() {
-		return "Message [token=" + token + ", msgId=" + msgId + ", message="
-				+ message + ", key=" + key + ", body=" + body + ", total="
-				+ total + ", code=" + code + "]";
+		return "Message [token=" + token + ", uuid=" + uuid + ", time="
+				+ time + ", message=" + message + ", key=" + key + ", body="
+				+ body + ", code=" + code + "]";
 	}
 
 }

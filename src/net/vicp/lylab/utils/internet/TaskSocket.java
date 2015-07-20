@@ -96,7 +96,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 	}
 
 	@Override
-	public byte[] response(byte[] request, int offset) {
+	public byte[] response(Socket client, byte[] request, int offset) {
 		Message requestMsg = null;
 		Message responseMsg = null;
 		try {
@@ -110,7 +110,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 			responseMsg.setMessage("Message not found");
 		}
 		else
-			responseMsg = Aop.doAction(this, requestMsg);
+			responseMsg = Aop.doAction(client, requestMsg);
 		return protocol == null ? null : protocol.encode(responseMsg);
 	}
 	
@@ -128,7 +128,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 		if(beforeTransmission != null)
 			beforeTransmission.callback(request);
 		if(!isServer()) throw new LYException("Do response is forbidden to a client socket");
-		byte[] ret = response(request, 0);
+		byte[] ret = response(socket, request, 0);
 		if(afterTransmission != null)
 			afterTransmission.callback(ret);
 		return ret;

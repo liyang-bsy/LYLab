@@ -1,5 +1,7 @@
 package net.vicp.lylab.core.interfaces;
 
+import java.net.Socket;
+
 /**
  * General Transmission interface for all classes.<br>
  * Implements this means it could be used to communication with clients on Internet<br>
@@ -19,6 +21,6 @@ public interface DoResponse {
 	 * @return
 	 * 		if success response to client
 	 */
-	public byte[] response(byte[] request, int offset);
+	public byte[] response(Socket client, byte[] request, int offset);
 
 }

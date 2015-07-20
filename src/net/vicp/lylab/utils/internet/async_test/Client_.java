@@ -1,4 +1,4 @@
-package net.vicp.lylab.utils.internet.async;
+package net.vicp.lylab.utils.internet.async_test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -7,14 +7,16 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
+import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
+import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
 import net.vicp.lylab.utils.tq.Task;
 
-public class Client extends Task {
+public class Client_ extends Task {
 	private static final long serialVersionUID = -2269033856733289392L;
 
 	Protocol protocol = new LYLabProtocol();
@@ -27,7 +29,7 @@ public class Client extends Task {
 	// 要连接的远程服务器在监听的端口
 	private int hostListenningPort;
 
-	public Client(String HostIp, int HostListenningPort) throws IOException {
+	public Client_(String HostIp, int HostListenningPort) throws IOException {
 		this.hostIp = HostIp;
 		this.hostListenningPort = HostListenningPort;
 
@@ -66,7 +68,7 @@ public class Client extends Task {
 
 	public static void main(String[] args) throws IOException {
 		@SuppressWarnings("unused")
-		Client client = new Client("localhost", 8888);
+		Client_ client = new Client_("localhost", 8888);
 		
 //		Protocol protocol= new LYLabProtocol();
 //		SimpleMessage msg = new SimpleMessage();
@@ -97,63 +99,92 @@ public class Client extends Task {
 //		return out;
 //	}
 
-	private byte[] byteCat(byte[] pre, int preOffset, int preCopyLenth, byte[] suf, int sufOffset, int sufCopyLenth) {
+	private byte[] bytecat(byte[] pre, int preOffset, int preCopyLenth, byte[] suf, int sufOffset, int sufCopyLenth) {
 		byte[] out = new byte[preCopyLenth - preOffset - sufOffset + sufCopyLenth];
 		int i;
 		for (i = preOffset; i < preCopyLenth; i++)
 			out[i - preOffset] = pre[i];
 		for (int j = sufOffset; j < sufCopyLenth; j++)
-			out[i - preOffset - sufOffset + j] = suf[j];
+			try {
+				out[i - preOffset - sufOffset + j] = suf[j];
+			} catch (Exception e) {
+				System.err.print("ilen/i/preOffset/sufOffset/sufCopyLenth/j/suf.len" + "\t"+(preCopyLenth - preOffset - sufOffset + sufCopyLenth) + "\t" + i + "\t"
+						+ preOffset + "\t" + sufOffset + "\t" + sufCopyLenth + "\t" + j + "\t" + suf.length);
+				throw new LYException(e);
+			}
 		return out;
 	}
 
-	private void receiveBasedAopDrive(SocketChannel socketChannel) throws IOException {
+	private void receiveBasedAopDrive(SocketChannel socketChannel) throws Exception {
 		if (socketChannel != null) {
-			while(true)
-			{
+			int len;
+			boolean notFinished = true;
+			int attempts = 0;
+			while (notFinished) {
 				buffer.clear();
-				int len = socketChannel.read(buffer);
-	
+				len = socketChannel.read(buffer);
+				if (len == 0) {
+					if (attempts > 3) {
+						try {
+							socketChannel.close();
+						} catch (Exception e) {
+							throw new LYException(
+									"Lost connection to client, and close socket channel failed",
+									e);
+						}
+						throw new LYException("Lost connection to client");
+					}
+					attempts++;
+					continue;
+				}
+				if (len == -1)
+				{
+					socketChannel.write(ByteBuffer.wrap(protocol.encode(new SimpleHeartBeat())));
+					break;
+				}
 				len += readTailLen;
 
-				byte[] ret = byteCat(readTail, 0, readTailLen, buffer.array(), 0, buffer.array().length);
+				byte[] ret = bytecat(readTail, 0, readTailLen, buffer.array(),
+						0, buffer.array().length);
 				readTailLen = 0;
-				
+
 				int start = 0, next = 0;
 				while ((next = protocol.validate(ret, start, len)) != 0) {
-					//<<--------------------------
+					// <<--------------------------
 					// receive-based aop drive
 					Message requestMsg = null;
 					Message responseMsg = null;
 					try {
 						Object obj = protocol.decode(ret, start);
-						if(obj instanceof HeartBeat) {
-							send(socketChannel, ByteBuffer.wrap(protocol.encode(heartBeat)));
+						if (obj instanceof HeartBeat) {
+							send(socketChannel,
+									ByteBuffer.wrap(protocol.encode(heartBeat)));
 							continue;
 						}
 						requestMsg = (Message) obj;
 					} catch (Exception e) {
 						log.debug(Utils.getStringFromException(e));
 					}
-					if(requestMsg == null) {
+					if (requestMsg == null) {
 						responseMsg = new Message();
 						responseMsg.setCode(0x00001);
 						responseMsg.setMessage("Message not found");
-					}
-					else
-					{
-						//TODO
+					} else {
+						// TODO
 						responseMsg = new Message();
-						responseMsg.setMsgId(requestMsg.getMsgId());
+						responseMsg.setUuid(requestMsg.getUuid());
 						id++;
-						//response = aop.doAction(null, msg);
+						// response = aop.doAction(null, msg);
 					}
-					byte[] response = (protocol == null ? null : protocol.encode(responseMsg));
-					
+					byte[] response = (protocol == null ? null : protocol
+							.encode(responseMsg));
+
 					send(socketChannel, ByteBuffer.wrap(response));
-					//<<--------------------------
+					// <<--------------------------
 					start = next;
 				}
+				System.out.println(len + "\t" + start);
+				
 				if (start == len) {
 					break;
 				}
@@ -161,8 +192,8 @@ public class Client extends Task {
 				for (int i = start; i < len; i++) {
 					readTail[i - start] = ret[i];
 				}
-//				reserve(ret, start, len);
 			}
+//				reserve(ret, start, len);
 		}
 	}
 	int id=0;	//TODO
@@ -186,8 +217,14 @@ public class Client extends Task {
 					selector.selectedKeys().remove(sk);
 				}
 			}
-		} catch (IOException ex) {
+		} catch (Exception ex) {
 			ex.printStackTrace();
+		} finally {
+			try {
+				selector.close();
+			} catch (Exception ex) {
+				log.info(Utils.getStringFromException(ex));
+			}
 		}
 		System.out.println("请求总数:"+id);
 	}

@@ -6,7 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 
-import net.vicp.lylab.utils.config.Config;
+import net.vicp.lylab.utils.Config;
 
 /**
  * LYLab - powered by Young Lee's Lab.
@@ -107,10 +107,13 @@ public class CoreDef {
 	public static final long INTERVAL_LONG = FIVE*SECOND;				// 5 second
 	
 	public static final long WAITING_TOLERANCE = TWO*MINUTE;			// 5 min
+	public static final int REQUEST_TTIMEOUT = (int) MINUTE;	// 60 second
+	
 	public static final long DEFAULT_TASK_TTIMEOUT = TEN*MINUTE;		// 10 minutes
 
 	public static final long DEFAULT_CONTAINER_TIMEOUT = 2*MINUTE;
-	public static final int DEFAULT_CONTAINER_MAX_SIZE = FIVE*TEN;
+	public static final int DEFAULT_CONTAINER_MAX_SIZE = HUNDRED;
+	public static final int MASSIVE_CONTAINER_MAX_SIZE = Integer.MAX_VALUE;
 
 	public static final int DEFAULT_PERMANENT_MAX_SIZE = HUNDRED*THOUSAND;
 	public static final int DEFAULT_PERMANENT_TICK = SIX*TEN;
@@ -120,8 +123,8 @@ public class CoreDef {
 	public static final long ONE_TIME_TASK = ZERO;
 	
 	public static final int SOCKET_MAX_BUFFER = TWO * KB;
-	public static final int DEFAULT_SOCKET_TTIMEOUT = (int) (FIVE*MINUTE);
-	public static final int DEFAULT_READ_TTIMEOUT = (int) (TWELVE*SECOND);
+	public static final int DEFAULT_SOCKET_TTIMEOUT = (int) (MINUTE);
+	public static final int DEFAULT_READ_TTIMEOUT = (int) (TWENTY*SECOND);
 
 	public static final long DEFAULT_LYCACHE_EXPIRE_TIME = FIFTEEN*TWO*MINUTE;
 	public static final long DEFAULT_LYCACHE_MEMORY_LIMITATION = ONE * GB;
