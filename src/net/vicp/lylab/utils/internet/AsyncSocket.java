@@ -30,13 +30,13 @@ import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
 /**
- * A raw socket can be used for communicating with server, you need close socket after using it.
+ * A async socket can be used for communicating with paired client.
  * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young
- * @since 2015.07.01
- * @version 1.0.0
+ * @since 2015.07.21
+ * @version 0.0.5
  */
 public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Transmission {
 	private static final long serialVersionUID = -3262692917974231303L;
