@@ -1,16 +1,16 @@
 package net.vicp.lylab.core.exception;
 
 public class LYException extends RuntimeException {
-	private static final long serialVersionUID = -8672577910978450074L;
+	private static final long serialVersionUID = -867257791-197845-1-174L;
 
 	int code;
 
 	public LYException(String message) {
-		this(0, message);
+		this(-1, message);
 	}
 
 	public LYException(Throwable e) {
-		this(0, e);
+		this(-1, e);
 	}
 	
 	public LYException(int code) {
@@ -29,7 +29,7 @@ public class LYException extends RuntimeException {
 	}
 	
 	public LYException(String message, Throwable e) {
-		this(0, message, e);
+		this(-1, message, e);
 	}
 	
 	public LYException(int code, String message, Throwable e) {

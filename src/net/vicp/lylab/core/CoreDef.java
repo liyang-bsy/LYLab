@@ -42,7 +42,7 @@ public class CoreDef {
 		charsetDecoder = CoreDef.charset.newDecoder();
 	}
 
-	public static final String rootPath;
+	public static String rootPath;
 	static {
 		File file = new File("");
 		rootPath = file.getAbsolutePath();

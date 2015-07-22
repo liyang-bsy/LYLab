@@ -8,12 +8,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.model.Pair;
 
-public class Config extends NonCloneableBaseObject {
+public final class Config extends NonCloneableBaseObject {
+	// grammar, start with any thing except '[', and end with '[number]'
+	// may used for future array/switch support
+	//Pattern.compile("^[^\\[]+[\\[][0-9]*[\\]]$").matcher("65435632[554234]").find()
+	
 	protected String fileName;
 	protected Map<String, Object> dataMap;
 	protected transient Config parent;
@@ -51,6 +56,8 @@ public class Config extends NonCloneableBaseObject {
 						mode = 1;
 					continue;
 				}
+				Pattern.compile("[\\[][0-9]*[\\]]$").matcher(propertyName).find();
+				
 				String propertyValue = property.getRight().replaceAll("[\u0000-\u0020]", "");//.trim();
 				if (propertyName.startsWith("$")) {
 					String propertyRealName = propertyName.substring(1).replaceAll("[\u0000-\u0020]", "");//.trim();

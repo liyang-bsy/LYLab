@@ -3,7 +3,7 @@ package net.vicp.lylab.core;
 import java.net.Socket;
 
 import net.vicp.lylab.core.interfaces.Executor;
-import net.vicp.lylab.core.model.SimpleMessage;
+import net.vicp.lylab.core.model.Message;
 
 /**
  * BaseAction is a abstract Action, Override exec() to do your service
@@ -13,12 +13,12 @@ import net.vicp.lylab.core.model.SimpleMessage;
 public abstract class BaseAction extends CloneableBaseObject implements Executor {
 	
 	protected Socket clientSocket;
-	protected SimpleMessage request;
-	protected SimpleMessage response;
+	protected Message request;
+	protected Message response;
 
 	public BaseAction() { }
 	
-	public BaseAction(SimpleMessage request, SimpleMessage response)
+	public BaseAction(Message request, Message response)
 	{
 		this.request = request;
 		this.response = response;
@@ -29,19 +29,19 @@ public abstract class BaseAction extends CloneableBaseObject implements Executor
 		this(batonPass.getRequest(), batonPass.getResponse());
 	}
 
-	public SimpleMessage getRequest() {
+	public Message getRequest() {
 		return request;
 	}
 
-	public void setRequest(SimpleMessage request) {
+	public void setRequest(Message request) {
 		this.request = request;
 	}
 
-	public SimpleMessage getResponse() {
+	public Message getResponse() {
 		return response;
 	}
 
-	public void setResponse(SimpleMessage response) {
+	public void setResponse(Message response) {
 		this.response = response;
 	}
 

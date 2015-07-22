@@ -6,7 +6,7 @@ public class LYError extends RuntimeException {
 	int code;
 
 	public LYError(String message) {
-		this(0, message);
+		this(-1, message);
 	}
 	
 	public LYError(int code, String message) {
