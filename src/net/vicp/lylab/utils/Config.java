@@ -1,6 +1,8 @@
 package net.vicp.lylab.utils;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,6 +12,7 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.model.Pair;
@@ -17,7 +20,12 @@ import net.vicp.lylab.core.model.Pair;
 public final class Config extends NonCloneableBaseObject {
 	// grammar, start with any thing except '[', and end with '[number]'
 	// may used for future array/switch support
-	//Pattern.compile("^[^\\[]+[\\[][0-9]*[\\]]$").matcher("65435632[554234]").find()
+	// Pattern.compile("^[^\\[]+[\\[][0-9]*[\\]]$").matcher("65435632[554234]").find()
+	
+	public static void main(String[] arg)
+	{
+		System.out.println(new Config(CoreDef.rootPath + "\\config\\A.txt"));;
+	}
 	
 	protected String fileName;
 	protected Map<String, Object> dataMap;
@@ -41,6 +49,7 @@ public final class Config extends NonCloneableBaseObject {
 			return;
 		fileNameTrace.push(fileName);
 		int line = 0;
+		Object lastObject = null;
 		List<Pair<String, String>> pairs = loader();
 		Map<String, Object> tmp = new ConcurrentHashMap<String, Object>();
 		for (int i = 0; i < pairs.size(); i++) {
@@ -88,6 +97,20 @@ public final class Config extends NonCloneableBaseObject {
 					default:
 						break;
 					}
+				} else if (propertyName.startsWith("*")) {
+					String propertyRealName = propertyName.substring(1);
+					Object target = Class.forName(propertyValue).newInstance();
+					tmp.put(propertyRealName, target);
+					lastObject = target;
+				} else if (propertyName.startsWith("^")) {
+					String propertyRealName = propertyName.substring(1);
+					if(propertyValue.startsWith("&")) {
+						String propertyRealValue = propertyValue.substring(1);
+						Object obj = tmp.get(propertyRealValue);
+						setter(lastObject, propertyRealName, obj);
+					}
+					else
+						setter(lastObject, propertyRealName, propertyValue);
 				} else
 					tmp.put(propertyName, propertyValue);
 			} catch (Exception e) {
@@ -98,6 +121,14 @@ public final class Config extends NonCloneableBaseObject {
 		dataMap = tmp;
 		tmp = null;
 		fileNameTrace.pop();
+	}
+	
+	private void setter(Object owner, String fieldName, Object param) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		if(owner == null) throw new NullPointerException("Owner is null for setter[" + fieldName + "]");
+		if(param == null) throw new NullPointerException("Parameter is null for setter[" + fieldName + "]");
+		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+		Method m = owner.getClass().getDeclaredMethod(setter, param.getClass());
+		m.invoke(owner, param);
 	}
 	
 	protected List<Pair<String, String>> loader() {
@@ -143,6 +174,10 @@ public final class Config extends NonCloneableBaseObject {
 			throw new LYException("Follow entry[" + key
 					+ "] not found, check your config file[" + fileName + "]");
 		return tmp;
+	}
+	
+	public Object getObject(String key) {
+		return getProperty(key);
 	}
 
 	public Object getInstance(String key) {
