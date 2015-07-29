@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
+
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
@@ -216,7 +218,7 @@ public final class Config extends NonCloneableBaseObject {
 
 			String[] pair = rawPair.split("=");
 			if (pair.length == 1) {
-				if (pair[0].equals("") || pair[0].startsWith("#") || (i == 0 && pair[0].startsWith("[") && pair[0].endsWith("]"))) {
+				if (StringUtils.isBlank(pair[0]) || pair[0].startsWith("#") || (i == 0 && pair[0].startsWith("[") && pair[0].endsWith("]"))) {
 					pairs.add(new Pair<String, String>(pair[0], null));
 				} else {
 					log.error("Bad key/value at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
@@ -258,7 +260,7 @@ public final class Config extends NonCloneableBaseObject {
 	}
 
 	/**
-	 * Get raw object from config
+	 * Get singleton object from config, it may also be a singleton-{@link String} or sub-config
 	 * @param key
 	 * @return
 	 */
@@ -267,7 +269,7 @@ public final class Config extends NonCloneableBaseObject {
 	}
 
 	/**
-	 * Get new instance from config, entry with key <b>MUST</b> be a class name, and it <b>MUST</b> have a default constructor
+	 * Create a new instance from config, entry with key <b>MUST</b> be a class name, and it <b>MUST</b> have a default constructor
 	 * @param key
 	 * @return
 	 */
@@ -284,8 +286,7 @@ public final class Config extends NonCloneableBaseObject {
 	 * Get sub-config from this config.
 	 * <br><b>[!]</b>If this is a plain config, invoke it will surely result in an exception
 	 * @param key
-	 * @return
-	 * A sub config
+	 * @return A sub config
 	 * @throws
 	 * LYExceptin This entry is not a {@link Config}, this entry is not existed
 	 */
@@ -301,10 +302,40 @@ public final class Config extends NonCloneableBaseObject {
 		return getProperty(key).toString();
 	}
 
+	public Short getShort(String key) {
+		String value = getString(key);
+		try {
+			return Short.valueOf(value);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value
+					+ "] failed");
+		}
+	}
+	
 	public Integer getInteger(String key) {
 		String value = getString(key);
 		try {
 			return Integer.valueOf(value);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value
+					+ "] failed");
+		}
+	}
+
+	public Long getLong(String key) {
+		String value = getString(key);
+		try {
+			return Long.valueOf(value);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value
+					+ "] failed");
+		}
+	}
+
+	public Float getFloat(String key) {
+		String value = getString(key);
+		try {
+			return Float.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed");
@@ -331,10 +362,20 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public Long getLong(String key) {
+	public Byte getByte(String key) {
 		String value = getString(key);
 		try {
-			return Long.valueOf(value);
+			return Byte.valueOf(value);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value
+					+ "] failed");
+		}
+	}
+
+	public Character getCharacter(String key) {
+		String value = getString(key);
+		try {
+			return Character.valueOf(value.charAt(0));
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed");
