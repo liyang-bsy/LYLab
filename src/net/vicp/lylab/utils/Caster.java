@@ -5,6 +5,15 @@ import net.vicp.lylab.core.exception.LYException;
 
 public final class Caster extends NonCloneableBaseObject {
 
+	/**
+	 * String-based simple cast, from basic types to another basic types
+	 * @param originalObject
+	 * @param targetClass
+	 * @return
+	 * Object of convert result
+	 * @throws
+	 * LYException If convert failed
+	 */
 	public static Object simpleCast(Object originalObject, Class<?> targetClass) {
 		if(originalObject == null)
 			throw new NullPointerException("Parameter originalObject is null");
@@ -13,53 +22,47 @@ public final class Caster extends NonCloneableBaseObject {
 		if(targetClass == originalObject.getClass())
 			return originalObject;
 
-		Object result = null;
-		if(originalObject.getClass() == String.class) {
-			try {
-				if(targetClass == String.class)
-					result = new String((String) originalObject);
-				else if(targetClass == Short.class)
-					result = Short.valueOf((String) originalObject);
-				else if(targetClass == Integer.class)
-					result = Integer.valueOf((String) originalObject);
-				else if(targetClass == Long.class)
-					result = Long.valueOf((String) originalObject);
-				else if(targetClass == Double.class)
-					result = Double.valueOf((String) originalObject);
-				else if(targetClass == Float.class)
-					result = Float.valueOf((String) originalObject);
-				else if(targetClass == Boolean.class)
-					result = Boolean.valueOf((String) originalObject);
-				else if(targetClass == Byte.class)
-					result = Byte.valueOf((String) originalObject);
-				else if(targetClass == Character.class)
-					result = Character.valueOf(((String) originalObject).charAt(0));
-				else if(targetClass.getName() == "short")
-					result = Short.valueOf((String) originalObject);
-				else if(targetClass.getName() == "int")
-					result = Integer.valueOf((String) originalObject);
-				else if(targetClass.getName() == "long")
-					result = Long.valueOf((String) originalObject);
-				else if(targetClass.getName() == "double")
-					result = Double.valueOf((String) originalObject);
-				else if(targetClass.getName() == "float")
-					result = Float.valueOf((String) originalObject);
-				else if(targetClass.getName() == "boolean")
-					result = Boolean.valueOf((String) originalObject);
-				else if(targetClass.getName() == "byte")
-					result = Byte.valueOf((String) originalObject);
-				else if(targetClass.getName() == "char")
-					result = Character.valueOf(((String) originalObject).charAt(0));
-				else
-					throw new LYException("Unsupport target type:" + targetClass.getName());
-			} catch (Exception e) {
-				throw new LYException("Cast failed from String [" + originalObject + "] to " + targetClass.getName(), e);
-			}
-		} else if(targetClass == String.class) {
-			result = originalObject.toString();
-		} else
-			throw new LYException("Unsupport target type:" + targetClass.getName());
-		return result;
+		String originalString = originalObject.toString();
+		try {
+			if(targetClass == String.class)
+				return originalString;
+			else if(targetClass == Short.class)
+				return Short.valueOf(originalString);
+			else if(targetClass == Integer.class)
+				return Integer.valueOf(originalString);
+			else if(targetClass == Long.class)
+				return Long.valueOf(originalString);
+			else if(targetClass == Double.class)
+				return Double.valueOf(originalString);
+			else if(targetClass == Float.class)
+				return Float.valueOf(originalString);
+			else if(targetClass == Boolean.class)
+				return Boolean.valueOf(originalString);
+			else if(targetClass == Byte.class)
+				return Byte.valueOf(originalString);
+			else if(targetClass == Character.class)
+				return Character.valueOf((originalString).charAt(0));
+			else if(targetClass.getName() == "short")
+				return Short.valueOf(originalString);
+			else if(targetClass.getName() == "int")
+				return Integer.valueOf(originalString);
+			else if(targetClass.getName() == "long")
+				return Long.valueOf(originalString);
+			else if(targetClass.getName() == "double")
+				return Double.valueOf(originalString);
+			else if(targetClass.getName() == "float")
+				return Float.valueOf(originalString);
+			else if(targetClass.getName() == "boolean")
+				return Boolean.valueOf(originalString);
+			else if(targetClass.getName() == "byte")
+				return Byte.valueOf(originalString);
+			else if(targetClass.getName() == "char")
+				return Character.valueOf((originalString).charAt(0));
+			else
+				throw new LYException("Unsupport target type:" + targetClass.getName());
+		} catch (Exception e) {
+			throw new LYException("Cast failed from String [" + originalString + "] to " + targetClass.getName(), e);
+		}
 	}
 
 }
