@@ -17,6 +17,15 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.model.Pair;
 
+/**
+ * Powerful configuration object for global uses
+ * 
+ * <br>Support follow mark
+ * <br>
+ * 
+ * @author Young
+ *
+ */
 public class Config extends NonCloneableBaseObject {
 	// grammar, start with any thing except '[', and end with '[number]'
 	// may used for future array/switch value support
@@ -128,7 +137,7 @@ public class Config extends NonCloneableBaseObject {
 					tmp.put(propertyName, propertyValue);
 			} catch (Exception e) {
 				throw new LYException("Failed to load config file[" + fileName
-						+ "] at line " + line, e);
+						+ "] at line [" + line + "]", e);
 			}
 			line++;
 		}
@@ -163,22 +172,22 @@ public class Config extends NonCloneableBaseObject {
 
 	protected List<Pair<String, String>> loader() {
 		List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>();
-		List<String> rawList = Utils.readFileByLines(fileName);
+		List<String> rawList = Utils.readFileByLines(fileName, false);
 		for (int i = 0; i < rawList.size(); i++) {
 			// trim
 			String rawPair = rawList.get(i).replaceAll("[\u0000-\u0020]", "");
 
 			String[] pair = rawPair.split("=");
-			if (i == 0 && pair.length == 1) {
-				if (pair[0].startsWith("&") || (pair[0].startsWith("[") && pair[0].endsWith("]"))) {
+			if (pair.length == 1) {
+				if (pair[0].equals("") || pair[0].startsWith("#") || (i == 0 && pair[0].startsWith("[") && pair[0].endsWith("]"))) {
 					pairs.add(new Pair<String, String>(pair[0], null));
 					continue;
 				}
-				log.error("Bad key/value" + Arrays.deepToString(pair));
+				log.error("Bad key/value at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
 				continue;
 			}
 			if (pair.length != 2) {
-				log.error("Bad key/value" + Arrays.deepToString(pair));
+				log.error("Bad key/value at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
 				continue;
 			}
 			pairs.add(new Pair<String, String>(pair[0], pair[1]));

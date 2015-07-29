@@ -180,7 +180,14 @@ public class Utils extends NonCloneableBaseObject {
 	/**
 	 * 以行为单位读取文件，常用于读面向行的格式化文件
 	 */
-	public static List<String> readFileByLines(String fileName) {
+	public static List<String> readFileByLines(String fileName)
+	{
+		return readFileByLines(fileName, true);
+	}
+	/**
+	 * 以行为单位读取文件，常用于读面向行的格式化文件
+	 */
+	public static List<String> readFileByLines(String fileName, boolean ignoreEmptyLine) {
 		List<String> ret = new ArrayList<String>();
 		File file = new File(fileName);
 		if(!file.exists())
@@ -194,14 +201,14 @@ public class Utils extends NonCloneableBaseObject {
 			// 一次读入一行，直到读入null为文件结束
 			while ((tempString = reader.readLine()) != null) {
 				// 忽略空行
-				if (tempString.equals(""))
+				if (ignoreEmptyLine && tempString.equals(""))
 					continue;
 				// 移除BOM头
 				byte[] b = tempString.getBytes();
-				if (b[0] == -17 && b[1] == -69 && b[2] == -65)
+				if (b.length > 3 && b[0] == -17 && b[1] == -69 && b[2] == -65)
 					tempString = tempString.substring(1);
 				// 忽略空行
-				if (tempString.trim().equals(""))
+				if (ignoreEmptyLine && tempString.trim().equals(""))
 					continue;
 				ret.add(tempString.trim());
 			}
