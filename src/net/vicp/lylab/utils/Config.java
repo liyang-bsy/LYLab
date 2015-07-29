@@ -181,16 +181,16 @@ public class Config extends NonCloneableBaseObject {
 			if (pair.length == 1) {
 				if (pair[0].equals("") || pair[0].startsWith("#") || (i == 0 && pair[0].startsWith("[") && pair[0].endsWith("]"))) {
 					pairs.add(new Pair<String, String>(pair[0], null));
-					continue;
+				} else {
+					log.error("Bad key/value at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
+					pairs.add(new Pair<String, String>("#", null));
 				}
-				log.error("Bad key/value at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
-				continue;
 			}
-			if (pair.length != 2) {
+			else if (pair.length != 2) {
 				log.error("Bad key/value at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
-				continue;
+				pairs.add(new Pair<String, String>("#", null));
 			}
-			pairs.add(new Pair<String, String>(pair[0], pair[1]));
+			else pairs.add(new Pair<String, String>(pair[0], pair[1]));
 		}
 		return pairs;
 	}
