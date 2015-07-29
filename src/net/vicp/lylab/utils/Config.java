@@ -5,7 +5,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +44,7 @@ public class Config extends NonCloneableBaseObject {
 	 *  Create an empty config
 	 */
 	public Config() {
-		dataMap = new HashMap<String, Object>();
+		this(null, null, null);
 	}
 
 	public Config(String fileName) {
@@ -56,6 +55,7 @@ public class Config extends NonCloneableBaseObject {
 		this.fileName = fileName;
 		this.fileNameTrace = fileNameTrace;
 		this.parent = parent;
+		dataMap = new ConcurrentHashMap<String, Object>();
 		reload();
 	}
 
@@ -68,7 +68,6 @@ public class Config extends NonCloneableBaseObject {
 		Object lastObject = null;
 		// load key/value for loader
 		List<Pair<String, String>> pairs = loader();
-		Map<String, Object> tmp = new ConcurrentHashMap<String, Object>();
 		for (int i = 0; i < pairs.size(); i++) {
 			Pair<String, String> property = pairs.get(i);
 			try {
@@ -109,11 +108,11 @@ public class Config extends NonCloneableBaseObject {
 					switch (mode) {
 					case 0:
 						config = new Config(realFileName, fileNameTrace, this);
-						tmp.put(propertyRealName, config);
+						dataMap.put(propertyRealName, config);
 						break;
 					case 1:
 						config = new Config(realFileName, fileNameTrace, this);
-						readFromConfig(tmp, config);
+						readFromConfig(dataMap, config);
 						break;
 					default:
 						throw new LYException("Unknow config mode: " + mode);
@@ -122,27 +121,34 @@ public class Config extends NonCloneableBaseObject {
 					// object reference
 					String propertyRealName = propertyName.substring(1);
 					Object target = Class.forName(propertyValue).newInstance();
-					tmp.put(propertyRealName, target);
+					dataMap.put(propertyRealName, target);
 					lastObject = target;
 				} else if (propertyName.startsWith("^")) {
 					// object parameter reference
 					String propertyRealName = propertyName.substring(1);
 					if (propertyValue.startsWith("&")) {
 						String propertyRealValue = propertyValue.substring(1);
-						Object obj = tmp.get(propertyRealValue);
+						Object obj = null;
+						Map<String, Object> root = dataMap;
+						while(root != null && obj == null)
+						{
+							if(root.containsKey(propertyRealValue))
+								obj = root.get(propertyRealValue);
+							root = parent.dataMap;
+						}
+						if(obj == null)
+							throw new LYException("Cannot find reference [" + propertyRealValue + "] in this Config or parent Config");
 						setter(lastObject, propertyRealName, obj);
 					} else
 						setter(lastObject, propertyRealName, propertyValue);
 				} else
-					tmp.put(propertyName, propertyValue);
+					dataMap.put(propertyName, propertyValue);
 			} catch (Exception e) {
 				throw new LYException("Failed to load config file[" + fileName
 						+ "] at line [" + line + "]", e);
 			}
 			line++;
 		}
-		dataMap = tmp;
-		tmp = null;
 		fileNameTrace.pop();
 	}
 
@@ -224,7 +230,7 @@ public class Config extends NonCloneableBaseObject {
 		return getProperty(key);
 	}
 
-	public Object getInstance(String key) {
+	public Object getNewInstance(String key) {
 		try {
 			String className = (String) getProperty(key);
 			return Class.forName(className).newInstance();

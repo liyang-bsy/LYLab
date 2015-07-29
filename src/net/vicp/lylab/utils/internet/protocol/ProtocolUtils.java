@@ -99,7 +99,7 @@ public final class ProtocolUtils extends BaseObject implements InitializeConfig 
 		rawProtocols = new Protocol[configSize];
 		int i = 0;
 		for (String key : config.keySet()) {
-			rawProtocols[i] = (Protocol) config.getInstance(key);
+			rawProtocols[i] = (Protocol) config.getNewInstance(key);
 			i++;
 		}
 	}

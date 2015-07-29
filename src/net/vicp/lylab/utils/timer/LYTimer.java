@@ -35,8 +35,11 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle, 
 			if(init.getAndSet(true)) return;
 			for (String key : config.keySet()) {
 				try {
-					jobs.add((TimerJob) Class.forName(config.getString(key))
-							.newInstance());
+					Object tmp = config.getObject(key);
+					if(tmp instanceof String)
+						jobs.add((TimerJob) config.getNewInstance(key));
+					if(tmp instanceof TimerJob)
+						jobs.add((TimerJob) tmp);
 				} catch (Exception e) {
 					log.error("Failed to create timejob for key[" + key + "]"
 							+ Utils.getStringFromException(e));
