@@ -21,7 +21,7 @@ import net.vicp.lylab.utils.Config;
 public class CoreDef {
 	public static final String VERSION = "1.0.7";
 
-	public static Config config;
+	public static Config config = new Config();
 	public static Object[] dock = new Object[16];
 	
 	protected static String _charset = "UTF-8";

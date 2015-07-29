@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,22 +17,28 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.model.Pair;
 
-public final class Config extends NonCloneableBaseObject {
+public class Config extends NonCloneableBaseObject {
 	// grammar, start with any thing except '[', and end with '[number]'
 	// may used for future array/switch value support
 	// Pattern.compile("^[^\\[]+[\\[][0-9]*[\\]]$").matcher("65435632[554234]").find()
-	
-	public static void main(String[] arg)
-	{
+
+	public static void main(String[] arg) {
 		System.out.println(new Config(CoreDef.rootPath + "\\config\\A.txt"));
 	}
-	
-	protected String fileName;
+
+	protected transient String fileName;
 	protected Map<String, Object> dataMap;
 	protected transient Config parent;
 	protected int mode = 0;
 	protected transient Stack<String> fileNameTrace;
-	
+
+	/**
+	 *  Create an empty config
+	 */
+	public Config() {
+		dataMap = new HashMap<String, Object>();
+	}
+
 	public Config(String fileName) {
 		this(fileName, new Stack<String>(), null);
 	}
@@ -61,35 +68,35 @@ public final class Config extends NonCloneableBaseObject {
 				if (propertyName.equals("") || propertyName.startsWith("#"))
 					continue;
 				// mode define
-				if(i == 0 && property.getRight() == null) {
-					if(propertyName.equals("[TREE]"))
+				if (i == 0 && property.getRight() == null) {
+					if (propertyName.equals("[TREE]"))
 						mode = 0;
-					if(propertyName.equals("[PLAIN]"))
+					if (propertyName.equals("[PLAIN]"))
 						mode = 1;
 					continue;
 				}
 				String propertyValue = property.getRight();
 				if (propertyName.startsWith("$")) {
-				// sub-configuration reference
+					// sub-configuration reference
 					String propertyRealName = propertyName.substring(1);
 					String realFileName = propertyValue;
 					Config config = null;
-					testfile: {
+					testfilepath: {
 						// absolute path
 						File testExist = null;
 						testExist = new File(realFileName);
-						if(testExist.exists() && testExist.isFile())
-							break testfile;
+						if (testExist.exists() && testExist.isFile())
+							break testfilepath;
 						// canonical path
 						int index = fileName.lastIndexOf(File.separator);
 						String filePath = fileName.substring(0, index + 1);
 						testExist = new File(filePath + realFileName);
-						if(testExist.exists() && testExist.isFile())
+						if (testExist.exists() && testExist.isFile())
 							realFileName = filePath + realFileName;
 					}
 					// if exist circle
-					if(fileNameTrace.contains(realFileName))
-						throw new LYException("It looks like there was a reference circle in config file[" + realFileName + "]");
+					if (fileNameTrace.contains(realFileName))
+						throw new LYException("Circle reference was found in config file[" + realFileName + "]");
 					switch (mode) {
 					case 0:
 						config = new Config(realFileName, fileNameTrace, this);
@@ -103,25 +110,25 @@ public final class Config extends NonCloneableBaseObject {
 						throw new LYException("Unknow config mode: " + mode);
 					}
 				} else if (propertyName.startsWith("*")) {
-				// object reference
+					// object reference
 					String propertyRealName = propertyName.substring(1);
 					Object target = Class.forName(propertyValue).newInstance();
 					tmp.put(propertyRealName, target);
 					lastObject = target;
 				} else if (propertyName.startsWith("^")) {
-				// object parameter reference
+					// object parameter reference
 					String propertyRealName = propertyName.substring(1);
-					if(propertyValue.startsWith("&")) {
+					if (propertyValue.startsWith("&")) {
 						String propertyRealValue = propertyValue.substring(1);
 						Object obj = tmp.get(propertyRealValue);
 						setter(lastObject, propertyRealName, obj);
-					}
-					else
+					} else
 						setter(lastObject, propertyRealName, propertyValue);
 				} else
 					tmp.put(propertyName, propertyValue);
 			} catch (Exception e) {
-				throw new LYException("Failed to load config file[" + fileName + "] at line " + line, e);
+				throw new LYException("Failed to load config file[" + fileName
+						+ "] at line " + line, e);
 			}
 			line++;
 		}
@@ -129,30 +136,38 @@ public final class Config extends NonCloneableBaseObject {
 		tmp = null;
 		fileNameTrace.pop();
 	}
-	
-	private void setter(Object owner, String fieldName, Object param) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		if(owner == null) throw new NullPointerException("Owner is null for setter[" + fieldName + "]");
-		if(param == null) throw new NullPointerException("Parameter is null for setter[" + fieldName + "]");
-		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-		for(Method method : owner.getClass().getDeclaredMethods()) {
-			if(method.getName().equals(setter)) {
+
+	private void setter(Object owner, String fieldName, Object param)
+			throws NoSuchMethodException, SecurityException,
+			IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException {
+		if (owner == null)
+			throw new NullPointerException("Owner is null for setter["
+					+ fieldName + "]");
+		if (param == null)
+			throw new NullPointerException("Parameter is null for setter["
+					+ fieldName + "]");
+		String setter = "set" + fieldName.substring(0, 1).toUpperCase()
+				+ fieldName.substring(1);
+		for (Method method : owner.getClass().getDeclaredMethods()) {
+			if (method.getName().equals(setter)) {
 				Class<?> parameterClass = method.getParameterTypes()[0];
-				if(param.getClass() != String.class)
+				if (param.getClass() != String.class)
 					method.invoke(owner, param);
 				else
-					method.invoke(owner, Caster.simpleCast(param, parameterClass));
+					method.invoke(owner,Caster.simpleCast(param, parameterClass));
 				break;
 			}
 		}
 	}
-	
+
 	protected List<Pair<String, String>> loader() {
 		List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>();
 		List<String> rawList = Utils.readFileByLines(fileName);
 		for (int i = 0; i < rawList.size(); i++) {
 			// trim
 			String rawPair = rawList.get(i).replaceAll("[\u0000-\u0020]", "");
-			
+
 			String[] pair = rawPair.split("=");
 			if (i == 0 && pair.length == 1) {
 				if (pair[0].startsWith("&") || (pair[0].startsWith("[") && pair[0].endsWith("]"))) {
@@ -170,29 +185,32 @@ public final class Config extends NonCloneableBaseObject {
 		}
 		return pairs;
 	}
-	
-	private void readFromConfig(Map<String, Object> container, Config other)
-	{
+
+	private void readFromConfig(Map<String, Object> container, Config other) {
 		for (String key : other.keySet()) {
 			container.put(key, other.getProperty(key));
 		}
 	}
-	
-	public Set<String> keySet()
-	{
+
+	public Set<String> keySet() {
 		return dataMap.keySet();
 	}
-	
-	public Object getProperty(String key) {
+
+	public boolean containsKey(String key) {
+		if (key == null)
+			throw new NullPointerException("Key is null");
+		return dataMap.containsKey(key);
+	}
+
+	private Object getProperty(String key) {
 		if (key == null)
 			throw new LYException("Key is null");
 		Object tmp = dataMap.get(key);
 		if (tmp == null)
-			throw new LYException("Follow entry[" + key
-					+ "] not found, check your config file[" + fileName + "]");
+			throw new LYException("Follow entry[" + key + "] not found, check your config file[" + fileName + "]");
 		return tmp;
 	}
-	
+
 	public Object getObject(String key) {
 		return getProperty(key);
 	}
@@ -205,7 +223,7 @@ public final class Config extends NonCloneableBaseObject {
 			throw new LYException("Can not make instance", e);
 		}
 	}
-	
+
 	public String getString(String key) {
 		return getProperty(key).toString();
 	}
@@ -258,26 +276,9 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public String getFileName() {
-		return fileName;
-	}
-
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
-	}
-
-	public Config getParent() {
-		return parent;
-	}
-
-	public void setParent(Config parent) {
-		this.parent = parent;
-	}
-
 	@Override
 	public String toString() {
-		return "Config [fileName=" + fileName + ", dataMap=" + dataMap
-				+ ", mode=" + mode + "]";
+		return "Config [dataMap=" + dataMap + ", mode=" + mode + "]";
 	}
 
 }
