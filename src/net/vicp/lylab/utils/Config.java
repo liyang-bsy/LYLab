@@ -17,28 +17,49 @@ import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.model.Pair;
 
 /**
- * Powerful configuration object for global uses
- * 
- * <br>Support follow mark
+ * Powerful config object for global uses, support specific program mark
  * <br>
+ * <br>Follow marks were supported
+ * <br><br><b>Mode mark(first line only):</b> {@code [TREE]} or {@code [PLAIN]}, {@code [TREE]} is default
+ * <br>Comment mark: key(start with #) or bad key/value will be regard as comment
+ * <br>Example:#comment = o(*≧▽≦)ツ
+ * <br>Well, it will be nothing...
+ * <br><br><b>Object mark:</b> the value of key(start with *) should be class name, stored its new instance
+ * <br>Example:*object1=net.vicp.lylab.utils.ExampleClass
+ * <br>You can access "object1" by {@link #getObject(String key)}: {@code config.getObject("object1")};
+ * <br><b>[!]</b>ExampleClass <b>MUST</b> have a default constructor
+ * <br><br><b>Parameter mark:</b> the value of key(start with ^) will be set to last Object(* mark), if value(start with &), will be regard as key and try to find any the key from itself or its parents.
+ * <br>Example:^value1=123.45
+ * <br>{@code exampleClass.setValue1(123.45);}
+ * <br>Its key will be finally dropped
+ * <br><br><b>Configuration mark:</b> key(start with $) will be regard as another {@link Config}
+ * <br>Example:$config1=dir/next_config.txt
+ * <br>You can access "object1" by {@link #getObject(String key)} or {@link #getConfig(String key)} : {@code config.getConfig("config1")};
+ * <br>If sub-config is [PLAIN], all config entry will be obtain into current config
+ * <br>
+ * <br>Different between Tree/Plain {@link Config}
+ * <br>Tree-Configuration {@link Config} could get it sub-config by {@link #getConfig(String key)}
+ * <br>Plain-Configuration will obtain all sub-config into itself
  * 
  * @author Young
+ * @since 2015.07.29
+ * @version 2.1.0
  *
  */
-public class Config extends NonCloneableBaseObject {
-	// grammar, start with any thing except '[', and end with '[number]'
-	// may used for future array/switch value support
+public final class Config extends NonCloneableBaseObject {
+	// Regular expression, start with any thing except '[', and end with '[number]'
+	// May used for future array/switch-value support
 	// Pattern.compile("^[^\\[]+[\\[][0-9]*[\\]]$").matcher("65435632[554234]").find()
 
 	public static void main(String[] arg) {
 		System.out.println(new Config(CoreDef.rootPath + "\\config\\A.txt"));
 	}
 
-	protected transient String fileName;
-	protected Map<String, Object> dataMap;
-	protected transient Config parent;
-	protected int mode = 0;
-	protected transient Stack<String> fileNameTrace;
+	private transient String fileName;
+	private Map<String, Object> dataMap;
+	private transient Config parent;
+	private int mode = 0;
+	private transient Stack<String> fileNameTrace;
 
 	/**
 	 *  Create an empty config
@@ -46,12 +67,16 @@ public class Config extends NonCloneableBaseObject {
 	public Config() {
 		this(null, null, null);
 	}
-
+	
+	/**
+	 * Create a config with specific file name
+	 * @param fileName
+	 */
 	public Config(String fileName) {
 		this(fileName, new Stack<String>(), null);
 	}
 
-	public Config(String fileName, Stack<String> fileNameTrace, Config parent) {
+	private Config(String fileName, Stack<String> fileNameTrace, Config parent) {
 		this.fileName = fileName;
 		this.fileNameTrace = fileNameTrace;
 		this.parent = parent;
@@ -59,6 +84,12 @@ public class Config extends NonCloneableBaseObject {
 		reload();
 	}
 
+	/**
+	 * You may reload your config manually
+	 * @param fileName
+	 * @param fileNameTrace
+	 * @param parent
+	 */
 	public synchronized void reload() {
 		if (fileName == null)
 			return;
@@ -85,7 +116,7 @@ public class Config extends NonCloneableBaseObject {
 				}
 				String propertyValue = property.getRight();
 				if (propertyName.startsWith("$")) {
-					// sub-configuration reference
+					// sub-config reference
 					String propertyRealName = propertyName.substring(1);
 					String realFileName = propertyValue;
 					Config config = null;
@@ -130,10 +161,10 @@ public class Config extends NonCloneableBaseObject {
 						String propertyRealValue = propertyValue.substring(1);
 						Object obj = null;
 						Map<String, Object> root = dataMap;
-						while(root != null && obj == null)
-						{
-							if(root.containsKey(propertyRealValue))
-								obj = root.get(propertyRealValue);
+						while(true) {
+							obj = root.get(propertyRealValue);
+							if(obj != null || parent == null)
+								break;
 							root = parent.dataMap;
 						}
 						if(obj == null)
@@ -176,7 +207,7 @@ public class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	protected List<Pair<String, String>> loader() {
+	private List<Pair<String, String>> loader() {
 		List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>();
 		List<String> rawList = Utils.readFileByLines(fileName, false);
 		for (int i = 0; i < rawList.size(); i++) {
@@ -226,16 +257,43 @@ public class Config extends NonCloneableBaseObject {
 		return tmp;
 	}
 
+	/**
+	 * Get raw object from config
+	 * @param key
+	 * @return
+	 */
 	public Object getObject(String key) {
 		return getProperty(key);
 	}
 
+	/**
+	 * Get new instance from config, entry with key <b>MUST</b> be a class name, and it <b>MUST</b> have a default constructor
+	 * @param key
+	 * @return
+	 */
 	public Object getNewInstance(String key) {
 		try {
 			String className = (String) getProperty(key);
 			return Class.forName(className).newInstance();
 		} catch (Exception e) {
 			throw new LYException("Can not make instance", e);
+		}
+	}
+	
+	/**
+	 * Get sub-config from this config.
+	 * <br><b>[!]</b>If this is a plain config, invoke it will surely result in an exception
+	 * @param key
+	 * @return
+	 * A sub config
+	 * @throws
+	 * LYExceptin This entry is not a {@link Config}, this entry is not existed
+	 */
+	public Config getConfig(String key) {
+		try {
+			return (Config) getProperty(key);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] into Config");
 		}
 	}
 
@@ -280,14 +338,6 @@ public class Config extends NonCloneableBaseObject {
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed");
-		}
-	}
-
-	public Config getConfig(String key) {
-		try {
-			return (Config) getProperty(key);
-		} catch (Exception e) {
-			throw new LYException("Convert entry[" + key + "] into Config");
 		}
 	}
 
