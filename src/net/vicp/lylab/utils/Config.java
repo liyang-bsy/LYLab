@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +24,7 @@ import net.vicp.lylab.core.model.Pair;
  * <br>
  * <br>Follow marks were supported
  * <br><br><b>Mode mark(first line only):</b> {@code [TREE]} or {@code [PLAIN]}, {@code [TREE]} is default
- * <br>Comment mark: key(start with #) or bad key/value will be regard as comment
+ * <br><br><b>Comment mark:</b> key(start with #) or bad key/value will be regard as comment
  * <br>Example:#comment = o(*≧▽≦)ツ
  * <br>Well, it will be nothing...
  * <br><br><b>Object mark:</b> the value of key(start with *) should be class name, stored its new instance
@@ -62,6 +63,16 @@ public final class Config extends NonCloneableBaseObject {
 	private transient Config parent;
 	private int mode = 0;
 	private transient Stack<String> fileNameTrace;
+	private transient List<Pair<String, String>> properties;
+	private transient List<Pair<String, String>> lazyLoad = new ArrayList<Pair<String,String>>();
+	
+	public static final Map<Character, Integer> sortRule = new HashMap<Character, Integer>();
+	
+	static {
+		sortRule.put('*', 0);
+		sortRule.put('^', 0);
+		sortRule.put('$', 10);
+	}
 
 	/**
 	 *  Create an empty config
@@ -97,8 +108,6 @@ public final class Config extends NonCloneableBaseObject {
 			return;
 		// file trace tree
 		fileNameTrace.push(fileName);
-		int line = 0;
-		Object lastObject = null;
 		// load key/value for loader
 		List<Pair<String, String>> pairs = loader();
 		for (int i = 0; i < pairs.size(); i++) {
@@ -116,6 +125,39 @@ public final class Config extends NonCloneableBaseObject {
 						mode = 1;
 					continue;
 				}
+				String propertyValue = property.getRight();
+				if (propertyName.startsWith("$")
+						|| propertyName.startsWith("*")
+						|| propertyName.startsWith("^"))
+					insert(property);
+				else
+					dataMap.put(propertyName, propertyValue);
+			} catch (Exception e) {
+				throw new LYException("Failed to load config file[" + fileName
+						+ "] at line [" + getLine(property) + "]", e);
+			}
+		}
+		if (!lazyLoad.isEmpty())
+			lazyLoad();
+		fileNameTrace.pop();
+	}
+	
+	private void insert(Pair<String, String> property)
+	{
+		int i=0;
+		for(;i<lazyLoad.size();i++)
+			if(sortRule.get(property.getLeft().charAt(0)) < sortRule.get(lazyLoad.get(i).getLeft().charAt(0)))
+				break;
+		lazyLoad.add(i,property);
+	}
+
+	private void lazyLoad() {
+		Object lastObject = null;
+		Pair<String, String> property = null;
+		try {
+			for(int i=0;i<lazyLoad.size();i++){
+				property = lazyLoad.get(i);
+				String propertyName = property.getLeft();
 				String propertyValue = property.getRight();
 				if (propertyName.startsWith("$")) {
 					// sub-config reference
@@ -137,7 +179,9 @@ public final class Config extends NonCloneableBaseObject {
 					}
 					// if exist circle
 					if (fileNameTrace.contains(realFileName))
-						throw new LYException("Circle reference was found in config file[" + realFileName + "]");
+						throw new LYException(
+								"Circle reference was found in config file["
+										+ realFileName + "]");
 					switch (mode) {
 					case 0:
 						config = new Config(realFileName, fileNameTrace, this);
@@ -162,29 +206,35 @@ public final class Config extends NonCloneableBaseObject {
 					if (propertyValue.startsWith("&")) {
 						String propertyRealValue = propertyValue.substring(1);
 						Object obj = null;
-						Map<String, Object> root = dataMap;
-						while(true) {
-							obj = root.get(propertyRealValue);
-							if(obj != null || parent == null)
+						Config root = this;
+						while (true) {
+							obj = root.dataMap.get(propertyRealValue);
+							if (obj != null || root.parent == null)
 								break;
-							root = parent.dataMap;
+							root = parent;
 						}
-						if(obj == null)
-							throw new LYException("Cannot find reference [" + propertyRealValue + "] in this Config or parent Config");
+						if (obj == null)
+							throw new LYException("Cannot find reference ["
+									+ propertyRealValue
+									+ "] in this Config or parent Config");
 						setter(lastObject, propertyRealName, obj);
 					} else
 						setter(lastObject, propertyRealName, propertyValue);
-				} else
-					dataMap.put(propertyName, propertyValue);
-			} catch (Exception e) {
-				throw new LYException("Failed to load config file[" + fileName
-						+ "] at line [" + line + "]", e);
+				}
 			}
-			line++;
+		} catch (Exception e) {
+			throw new LYException("Failed on lazy load config file[" + fileName
+					+ "] at line [" + getLine(property) + "]", e);
 		}
-		fileNameTrace.pop();
 	}
-
+	
+	private int getLine(Pair<String, String> property) {
+		for (int i = 0; i < properties.size(); i++)
+			if (property.equals(properties.get(i)))
+				return i;
+		return -1;
+	}
+	
 	private void setter(Object owner, String fieldName, Object param)
 			throws NoSuchMethodException, SecurityException,
 			IllegalAccessException, IllegalArgumentException,
@@ -210,7 +260,7 @@ public final class Config extends NonCloneableBaseObject {
 	}
 
 	private List<Pair<String, String>> loader() {
-		List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>();
+		properties = new ArrayList<Pair<String, String>>();
 		List<String> rawList = Utils.readFileByLines(fileName, false);
 		for (int i = 0; i < rawList.size(); i++) {
 			// trim
@@ -219,19 +269,19 @@ public final class Config extends NonCloneableBaseObject {
 			String[] pair = rawPair.split("=");
 			if (pair.length == 1) {
 				if (StringUtils.isBlank(pair[0]) || pair[0].startsWith("#") || (i == 0 && pair[0].startsWith("[") && pair[0].endsWith("]"))) {
-					pairs.add(new Pair<String, String>(pair[0], null));
+					properties.add(new Pair<String, String>(pair[0], null));
 				} else {
-					log.error("Bad key/value at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
-					pairs.add(new Pair<String, String>("#", null));
+					log.error("Bad key/value in file[" + fileName + "] at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
+					properties.add(new Pair<String, String>("#", null));
 				}
 			}
 			else if (pair.length != 2) {
-				log.error("Bad key/value at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
-				pairs.add(new Pair<String, String>("#", null));
+				log.error("Bad key/value in file[" + fileName + "] at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
+				properties.add(new Pair<String, String>("#", null));
 			}
-			else pairs.add(new Pair<String, String>(pair[0], pair[1]));
+			else properties.add(new Pair<String, String>(pair[0], pair[1]));
 		}
-		return pairs;
+		return properties;
 	}
 
 	private void readFromConfig(Map<String, Object> container, Config other) {

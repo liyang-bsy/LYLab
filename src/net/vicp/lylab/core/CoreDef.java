@@ -15,7 +15,7 @@ import net.vicp.lylab.utils.Config;
  * 
  * @author Young Lee
  * @since 2015.06.26
- * @version 1.0.0
+ * @version 1.0.7
  * 
  */
 public class CoreDef {
