@@ -28,17 +28,17 @@ import net.vicp.lylab.core.model.Pair;
  * <br>Example:#comment = o(*≧▽≦)ツ
  * <br>Well, it will be nothing...
  * <br><br><b>Object mark:</b> the value of key(start with *) should be class name, stored its new instance
- * <br>Example:*object1=net.vicp.lylab.utils.ExampleClass
+ * <br>Example:*object1=com.java.ExampleClass
  * <br>You can access "object1" by {@link #getObject(String key)}: {@code config.getObject("object1")};
  * <br><b>[!]</b>ExampleClass <b>MUST</b> have a default constructor
  * <br><br><b>Parameter mark:</b> the value of key(start with ^) will be set to last Object(* mark), if value(start with &), will be regard as key and try to find any the key from itself or its parents.
  * <br>Example:^value1=123.45
  * <br>{@code exampleClass.setValue1(123.45);}
- * <br>Its key will be finally dropped
+ * <br>Its key will finally be dropped, certainly never replace any existed keys
  * <br><br><b>Configuration mark:</b> key(start with $) will be regard as another {@link Config}
  * <br>Example:$config1=dir/next_config.txt
  * <br>You can access "object1" by {@link #getObject(String key)} or {@link #getConfig(String key)} : {@code config.getConfig("config1")};
- * <br>If sub-config is [PLAIN], all config entry will be obtain into current config
+ * <br>If sub-config is {@code [PLAIN]}, all its entry will be obtain into current config
  * <br>
  * <br>Different between Tree/Plain {@link Config}
  * <br>Tree-Configuration {@link Config} could get it sub-config by {@link #getConfig(String key)}
@@ -149,6 +149,8 @@ public final class Config extends NonCloneableBaseObject {
 			if(sortRule.get(property.getLeft().charAt(0)) < sortRule.get(lazyLoad.get(i).getLeft().charAt(0)))
 				break;
 		lazyLoad.add(i,property);
+		System.out.println(property);
+		
 	}
 
 	private void lazyLoad() {
@@ -157,6 +159,7 @@ public final class Config extends NonCloneableBaseObject {
 		try {
 			for(int i=0;i<lazyLoad.size();i++){
 				property = lazyLoad.get(i);
+				System.out.println(property);
 				String propertyName = property.getLeft();
 				String propertyValue = property.getRight();
 				if (propertyName.startsWith("$")) {
@@ -247,8 +250,10 @@ public final class Config extends NonCloneableBaseObject {
 					+ fieldName + "]");
 		String setter = "set" + fieldName.substring(0, 1).toUpperCase()
 				+ fieldName.substring(1);
+		boolean found = false;
 		for (Method method : owner.getClass().getDeclaredMethods()) {
 			if (method.getName().equals(setter)) {
+				found = true;
 				Class<?> parameterClass = method.getParameterTypes()[0];
 				if (param.getClass() != String.class)
 					method.invoke(owner, param);
@@ -257,6 +262,8 @@ public final class Config extends NonCloneableBaseObject {
 				break;
 			}
 		}
+		if(!found)
+			throw new LYException("No available setter[" + setter + "] was found for " + owner.getClass());
 	}
 
 	private List<Pair<String, String>> loader() {

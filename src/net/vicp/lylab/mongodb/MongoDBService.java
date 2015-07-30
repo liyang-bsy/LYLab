@@ -5,17 +5,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
-import org.mongodb.morphia.query.Criteria;
-import org.mongodb.morphia.query.CriteriaContainer;
-import org.mongodb.morphia.query.Query;
-
 import net.vicp.lylab.core.model.Pair;
-import net.vicp.lylab.utils.Page;
 import net.vicp.lylab.mongodb.transaction.AddBatchTransaction;
 import net.vicp.lylab.mongodb.transaction.AddTransaction;
 import net.vicp.lylab.mongodb.transaction.DeleteTransaction;
 import net.vicp.lylab.mongodb.transaction.Transaction;
 import net.vicp.lylab.mongodb.transaction.UpdateTransaction;
+
+import org.mongodb.morphia.query.Criteria;
+import org.mongodb.morphia.query.CriteriaContainer;
+import org.mongodb.morphia.query.Query;
 
 /**
  * MongoDBService for MongoDBOperation
@@ -143,15 +142,15 @@ public class MongoDBService<T> {
 	 * @param order		排序关键字
 	 * @throws SQLException
 	 */
-	public List<T> queryForList(Page page, String[] filter, Object[] value, String order) throws SQLException
-	{
-		if(filter == null || value == null)
-			return new ArrayList<T>();
-		Query<T> query = getDao().createQuery().disableValidation();
-		queryAnalasis(query, filter, value);
-		page.setTotal((int) query.countAll());
-		return query.limit(page.getLimit()).offset((page.getStart()-1)*page.getLimit()).order(order).asList();
-	}
+//	public List<T> queryForList(Page page, String[] filter, Object[] value, String order) throws SQLException
+//	{
+//		if(filter == null || value == null)
+//			return new ArrayList<T>();
+//		Query<T> query = getDao().createQuery().disableValidation();
+//		queryAnalasis(query, filter, value);
+//		page.setTotal((int) query.countAll());
+//		return query.limit(page.getLimit()).offset((page.getStart()-1)*page.getLimit()).order(order).asList();
+//	}
 	/**
 	 * 查询日志通用接口，查询多个对象的总数
 	 * @param filter	条件字符串组
