@@ -38,10 +38,14 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 		Object tmp;
 		for (String key : keySet) {
 			try {
-				Class<?> instanceClass = Class.forName(config.getString(key));
-				tmp = instanceClass.newInstance();
-				if (rootConfig != null && tmp instanceof InitializeConfig) {
+				tmp = config.getObject(key);
+				singletonManager.put(key, tmp);
+				if (tmp.getClass() == String.class)
+					tmp = config.getNewInstance(key);
+				if (rootConfig != null && tmp instanceof InitializeConfig
+						&& rootConfig.containsKey(key)) {
 					((InitializeConfig) tmp).obtainConfig(rootConfig.getConfig(key));
+					log.info(tmp.getClass().getSimpleName() + " - Obtained a config");
 				}
 				if (tmp instanceof LifeCycle) {
 					((LifeCycle) tmp).initialize();

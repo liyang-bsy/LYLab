@@ -6,7 +6,7 @@ import net.vicp.lylab.core.exception.LYException;
 public final class Caster extends NonCloneableBaseObject {
 
 	/**
-	 * String-based simple cast, from basic types to another basic types
+	 * String-based simple cast, from one basic type to another basic type
 	 * @param originalObject
 	 * @param targetClass
 	 * @return

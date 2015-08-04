@@ -12,7 +12,6 @@ import net.vicp.lylab.utils.tq.Task;
 
 /**
  * A raw socket can be used for communicating with server, you need close socket after using it.
- * Actually, this class is not as useful as I thought
  * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
@@ -20,17 +19,19 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class SyncServer extends Task implements LifeCycle, InitializeConfig {
+public class SyncServerSingleton extends Task implements LifeCycle, InitializeConfig {
 	private static final long serialVersionUID = 883892527805494627L;
 	protected volatile boolean running = true;
 	protected ServerSocket serverSocket;
-	protected LYTaskQueue lyTaskQueue = null;
+	protected LYTaskQueue tq;
 	protected Config config;
 	
+	protected static SyncServerSingleton instance;
+	
+	protected SyncServerSingleton() { }
+	
 	@Override
-	public void initialize() {
-		this.begin("Sync Server - Main Thread");
-	}
+	public void initialize() { }
 	
 	@Override
 	public void close() throws Exception {
@@ -40,32 +41,27 @@ public class SyncServer extends Task implements LifeCycle, InitializeConfig {
 	@Override
 	public void exec() {
 		try {
-			if(this.lyTaskQueue == null)
-				lyTaskQueue = new LYTaskQueue();
-			try {
-				lyTaskQueue.setMaxQueue(config.getInteger("maxQueue"));
-			} catch (Exception e) { }
-			try {
-				lyTaskQueue.setMaxThread(config.getInteger("maxThread"));
-			} catch (Exception e) { }
-			
 			serverSocket = new ServerSocket(config.getInteger("port"));
 			while (running) {
-				lyTaskQueue.addTask(new ToClientLongSocket(serverSocket, new SimpleHeartBeat()));
+				tq.addTask(new ToClientLongSocket(serverSocket, new SimpleHeartBeat()));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
+	public static SyncServerSingleton getInstance() {
+		if(instance == null)
+			synchronized (instance) {
+				if(instance == null)
+					instance = new SyncServerSingleton();
+			}
+		return instance;
+	}
+
 	@Override
 	public void obtainConfig(Config config) {
 		this.config = config;
-	}
-
-	public void setLyTaskQueue(LYTaskQueue lyTaskQueue) {
-		if(this.lyTaskQueue == null)
-			this.lyTaskQueue = lyTaskQueue;
 	}
 
 }

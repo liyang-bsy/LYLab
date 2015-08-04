@@ -65,13 +65,12 @@ public final class Config extends NonCloneableBaseObject {
 	private transient Stack<String> fileNameTrace;
 	private transient List<Pair<String, String>> properties;
 	private transient List<Pair<String, String>> lazyLoad = new ArrayList<Pair<String,String>>();
-	
+
 	public static final Map<Character, Integer> sortRule = new HashMap<Character, Integer>();
-	
 	static {
-		sortRule.put('*', 0);
-		sortRule.put('^', 0);
-		sortRule.put('$', 10);
+		sortRule.put('*', 50);
+		sortRule.put('^', 50);
+		sortRule.put('$', 100);
 	}
 
 	/**
@@ -142,14 +141,14 @@ public final class Config extends NonCloneableBaseObject {
 		fileNameTrace.pop();
 	}
 	
-	private void insert(Pair<String, String> property)
-	{
+	// Simulate a safely insert-sort
+	private void insert(Pair<String, String> property) {
 		int i=0;
 		for(;i<lazyLoad.size();i++)
 			if(sortRule.get(property.getLeft().charAt(0)) < sortRule.get(lazyLoad.get(i).getLeft().charAt(0)))
 				break;
 		lazyLoad.add(i,property);
-		System.out.println(property);
+		log.debug(property);
 		
 	}
 
@@ -159,7 +158,7 @@ public final class Config extends NonCloneableBaseObject {
 		try {
 			for(int i=0;i<lazyLoad.size();i++){
 				property = lazyLoad.get(i);
-				System.out.println(property);
+				log.debug(property);
 				String propertyName = property.getLeft();
 				String propertyValue = property.getRight();
 				if (propertyName.startsWith("$")) {
@@ -307,6 +306,12 @@ public final class Config extends NonCloneableBaseObject {
 		return dataMap.containsKey(key);
 	}
 
+	/**
+	 * Get raw value by key
+	 * @param key
+	 * @throws
+	 * LYException Generally means given key pairs no value.
+	 */
 	private Object getProperty(String key) {
 		if (key == null)
 			throw new LYException("Key is null");
@@ -314,6 +319,15 @@ public final class Config extends NonCloneableBaseObject {
 		if (tmp == null)
 			throw new LYException("Follow entry[" + key + "] not found, check your config file[" + fileName + "]");
 		return tmp;
+	}
+	
+	/**
+	 * Get value type of a key from config
+	 * @param key
+	 * @return
+	 */
+	public Class<?> getValueTypeByKey(String key) {
+		return getProperty(key).getClass();
 	}
 
 	/**

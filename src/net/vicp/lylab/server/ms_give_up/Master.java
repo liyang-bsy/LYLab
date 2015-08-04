@@ -1,4 +1,4 @@
-package net.vicp.lylab.server.ms;
+package net.vicp.lylab.server.ms_give_up;
 
 import java.util.Collection;
 import java.util.Map;
