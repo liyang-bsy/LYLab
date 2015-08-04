@@ -14,15 +14,14 @@ public final class Caster extends NonCloneableBaseObject {
 	 * @throws
 	 * LYException If convert failed
 	 */
-	public static Object simpleCast(Object originalObject, Class<?> targetClass) {
-		if(originalObject == null)
+	public static Object simpleCast(String originalString, Class<?> targetClass) {
+		if(originalString == null)
 			throw new NullPointerException("Parameter originalObject is null");
 		if(targetClass == null)
 			throw new NullPointerException("Parameter targetClass is null");
-		if(targetClass == originalObject.getClass())
-			return originalObject;
-
-		String originalString = originalObject.toString();
+		if(targetClass == String.class)
+			return originalString;
+		
 		try {
 			if(targetClass == String.class)
 				return originalString;

@@ -249,19 +249,31 @@ public final class Config extends NonCloneableBaseObject {
 					+ fieldName + "]");
 		String setter = "set" + fieldName.substring(0, 1).toUpperCase()
 				+ fieldName.substring(1);
-		boolean found = false;
-		for (Method method : owner.getClass().getDeclaredMethods()) {
-			if (method.getName().equals(setter)) {
-				found = true;
-				Class<?> parameterClass = method.getParameterTypes()[0];
-				if (param.getClass() != String.class)
-					method.invoke(owner, param);
-				else
-					method.invoke(owner,Caster.simpleCast(param, parameterClass));
-				break;
+		
+		Method setMethod = null;
+		Class<?> parameterClass = null;
+		try {
+			setMethod = owner.getClass().getDeclaredMethod(setter, String.class);
+			parameterClass = String.class;
+		} catch (Exception e) { }
+		if(setMethod == null)
+			for (Method method : owner.getClass().getDeclaredMethods()) {
+				if (method.getName().equals(setter)) {
+					Class<?>[] pts = method.getParameterTypes();
+					if (pts.length != 1)
+						continue;
+					parameterClass = pts[0];
+					setMethod = method;
+					break;
+				}
 			}
-		}
-		if(!found)
+		if (setMethod != null)
+			if (param.getClass() == String.class)
+				setMethod.invoke(owner,
+						Caster.simpleCast((String) param, parameterClass));
+			else
+				setMethod.invoke(owner, param);
+		else
 			throw new LYException("No available setter[" + setter + "] was found for " + owner.getClass());
 	}
 
