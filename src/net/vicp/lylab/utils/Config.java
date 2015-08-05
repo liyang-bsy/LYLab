@@ -169,7 +169,7 @@ public final class Config extends NonCloneableBaseObject {
 		Object lastObject = null;
 		Pair<String, String> property = null;
 		try {
-			for(int i=0;i<lazyLoad.size();i++){
+			for(int i=0;i<lazyLoad.size();i++) {
 				property = lazyLoad.get(i);
 				log.debug(property);
 				String propertyName = property.getLeft();
