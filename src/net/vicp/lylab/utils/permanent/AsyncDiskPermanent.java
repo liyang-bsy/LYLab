@@ -5,7 +5,7 @@ import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.utils.FileLineWriter;
+import net.vicp.lylab.utils.StringLineWriter;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.tq.LoneWolf;
@@ -13,7 +13,7 @@ import net.vicp.lylab.utils.tq.LoneWolf;
 public class AsyncDiskPermanent extends LoneWolf implements LifeCycle {
 	private static final long serialVersionUID = 6315043692230051343L;
 
-	FileLineWriter<String> writer;
+	StringLineWriter writer;
 	protected String caller;
 	protected String permanentFilePath;
 	protected String permanentFileSuffix;
@@ -26,10 +26,10 @@ public class AsyncDiskPermanent extends LoneWolf implements LifeCycle {
 		permanentFilePath = filePath;
 		permanentFileSuffix = fileSuffix;
 		this.caller = caller;
-		writer = new FileLineWriter<String>(filePath);
+		writer = new StringLineWriter(filePath);
 	}
 	
-	public boolean add(String entry) {
+	public boolean append(String entry) {
 		synchronized (lock) {
 			if(working.get())
 				return container.add(entry);
@@ -82,12 +82,8 @@ public class AsyncDiskPermanent extends LoneWolf implements LifeCycle {
 		writer.setPath(path);
 	}
 
-	public void setPostfix(String postfix) {
-		writer.setPostfix(postfix);
-	}
-
-	public int getMaxLine() {
-		return writer.getMaxLine();
+	public void setSuffix(String suffix) {
+		writer.setSuffix(suffix);
 	}
 
 	public void setMaxLine(int maxLine) {

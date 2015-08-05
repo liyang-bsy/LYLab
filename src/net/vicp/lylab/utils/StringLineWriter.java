@@ -8,7 +8,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 
-public final class FileLineWriter<T> extends NonCloneableBaseObject {
+public final class StringLineWriter extends NonCloneableBaseObject {
 	/**
 	 * 路径
 	 */
@@ -16,7 +16,7 @@ public final class FileLineWriter<T> extends NonCloneableBaseObject {
 	/**
 	 * 后缀
 	 */
-	private String postfix = "txt";
+	private String suffix = "txt";
 	/**
 	 * 最大输出条数
 	 */
@@ -34,40 +34,24 @@ public final class FileLineWriter<T> extends NonCloneableBaseObject {
 	 */
 	private int outCount = 0;
 
-	public FileLineWriter(String path) {
+	public StringLineWriter(String path) {
 		this.path = path;
 		Utils.createDirectory(path);
 	}
 
-	public void writeLine(List<T> lines) {
+	public void writeLine(List<String> lines) {
 		synchronized (lock) {
 			try {
-				for (T tmp : lines)
+				for (String line : lines)
 				{
 					if(isOpenFile() == false)
 						open();
-					fileOut.write(Utils.serialize(tmp).getBytes(CoreDef.CHARSET()));
+					fileOut.write((line + "\r\n").getBytes(CoreDef.CHARSET()));
 					fileOut.write("\r\n".getBytes());
 					outCount++;
 					if (maxLine <= outCount)
 						close();
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	public void writeLine(T data) {
-		synchronized (lock) {
-			try {
-				if(isOpenFile() == false)
-					open();
-				fileOut.write(Utils.serialize(data).getBytes(CoreDef.CHARSET()));
-				fileOut.write("\r\n".getBytes());
-				outCount++;
-				if (maxLine <= outCount)
-					close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -123,7 +107,7 @@ public final class FileLineWriter<T> extends NonCloneableBaseObject {
 					File file = new File(fileName);
 					String savedFileName = fileName.replaceFirst(
 							"(?s)" + ".temp" + "(?!.*?" + ".temp" + ")",
-							"." + postfix);
+							"." + suffix);
 					file.renameTo(new File(savedFileName));
 					outCount = 0;
 					fileName = "";
@@ -144,12 +128,12 @@ public final class FileLineWriter<T> extends NonCloneableBaseObject {
 		this.path = path;
 	}
 
-	public String getPostfix() {
-		return postfix;
+	public String getSuffix() {
+		return suffix;
 	}
 
-	public void setPostfix(String postfix) {
-		this.postfix = postfix;
+	public void setSuffix(String suffix) {
+		this.suffix = suffix;
 	}
 
 	public int getMaxLine() {
@@ -158,14 +142,6 @@ public final class FileLineWriter<T> extends NonCloneableBaseObject {
 
 	public void setMaxLine(int maxLine) {
 		this.maxLine = maxLine;
-	}
-
-	public String getFileName() {
-		return fileName;
-	}
-
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
 	}
 
 	public int getOutCount() {
