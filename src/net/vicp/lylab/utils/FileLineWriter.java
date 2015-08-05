@@ -168,4 +168,8 @@ public final class FileLineWriter<T> extends NonCloneableBaseObject {
 		this.fileName = fileName;
 	}
 
+	public int getOutCount() {
+		return outCount;
+	}
+
 }
