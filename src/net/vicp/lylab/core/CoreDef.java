@@ -36,10 +36,10 @@ public class CoreDef {
 	}
 
 	public static void setCharset(String charset) {
-		CoreDef._charset = charset;
-		CoreDef.charset = Charset.forName(CoreDef._charset);
+		CoreDef.charset = Charset.forName(charset);
 		charsetEncoder = CoreDef.charset.newEncoder();
 		charsetDecoder = CoreDef.charset.newDecoder();
+		CoreDef._charset = charset;
 	}
 
 	public static String rootPath;
