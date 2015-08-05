@@ -5,11 +5,10 @@ import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
-import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 
@@ -23,8 +22,7 @@ import net.vicp.lylab.utils.atomic.AtomicStrongReference;
  * @version 1.0.0
  * 
  */
-public final class LYTimer extends NonCloneableBaseObject implements LifeCycle, InitializeConfig {
-	private Config config;
+public final class LYTimer extends NonCloneableBaseObject implements LifeCycle {
 	private List<TimerJob> jobs = new ArrayList<TimerJob>();
 	private AutoInitialize<Timer> timer = new AtomicStrongReference<Timer>();
 	private AtomicBoolean init = new AtomicBoolean(false);
@@ -33,11 +31,11 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle, 
 	public void initialize() {
 		synchronized (lock) {
 			if(init.getAndSet(true)) return;
-			for (String key : config.keySet()) {
+			for (String key : CoreDef.config.getConfig("LYTimer").keySet()) {
 				try {
-					Object tmp = config.getObject(key);
+					Object tmp = CoreDef.config.getConfig("LYTimer").getObject(key);
 					if(tmp instanceof String)
-						jobs.add((TimerJob) config.getNewInstance(key));
+						jobs.add((TimerJob) CoreDef.config.getConfig("LYTimer").getNewInstance(key));
 					if(tmp instanceof TimerJob)
 						jobs.add((TimerJob) tmp);
 				} catch (Exception e) {
@@ -67,11 +65,6 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle, 
 		}
 	}
 
-	@Override
-	public void obtainConfig(Config config) {
-		setConfig(config);
-	}
-	
 	/**
 	 * TimeJob will be cancelled before start(if possible).
 	 * @param bj	TimeJob you want to start
@@ -97,10 +90,6 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle, 
 
 	public List<TimerJob> getJobs() {
 		return jobs;
-	}
-
-	public void setConfig(Config config) {
-		this.config = config;
 	}
 
 }

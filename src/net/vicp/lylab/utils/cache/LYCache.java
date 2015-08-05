@@ -7,9 +7,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.DoHash;
-import net.vicp.lylab.core.interfaces.InitializeConfig;
-import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.utils.Config;
+import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.hash.MD5Hash;
 
@@ -20,8 +18,7 @@ import net.vicp.lylab.utils.hash.MD5Hash;
  * @since 2015.07.01
  * @version 1.0.2
  */
-public final class LYCache extends NonCloneableBaseObject implements LifeCycle, InitializeConfig {
-	private Config config = null;
+public final class LYCache extends NonCloneableBaseObject implements Initializable {
 	private List<CacheContainer> bundles = null;
 	private long expireTime = CoreDef.DEFAULT_LYCACHE_EXPIRE_TIME;
 	private long memoryLimitation = CoreDef.DEFAULT_LYCACHE_MEMORY_LIMITATION;
@@ -31,28 +28,19 @@ public final class LYCache extends NonCloneableBaseObject implements LifeCycle, 
 	private static AutoInitialize<LYCache> instance = new AtomicStrongReference<LYCache>();
 
 	@Override
-	public void obtainConfig(Config config) {
-		this.config = config;
-	}
-
-	@Override
 	public synchronized void initialize() {
 		ArrayList<CacheContainer> list = new ArrayList<CacheContainer>();
 		for (int i = 0; i < 16; i++)
 			list.add(new CacheContainer());
 		getInstance().bundles = list;
-		if(config == null) {
-			setExpireTime(expireTime); // 30min = 60s*30min
-			LYCache.setMemoryControl(memoryLimitation, threshold); // 1GB
-		}
-		else {
-			setExpireTime(config.getLong("expireTime")); // 30min = 60s*30min
-			LYCache.setMemoryControl(config.getLong("memoryLimitation"), config.getDouble("threshold")); // 1GB
-		}
+		
+		setExpireTime(expireTime); // 30min = 60s*30min
+		LYCache.setMemoryControl(memoryLimitation, threshold); // 1GB
+		try {
+			setExpireTime(CoreDef.config.getConfig("LYCache").getLong("expireTime")); // 30min = 60s*30min
+			LYCache.setMemoryControl(CoreDef.config.getConfig("LYCache").getLong("memoryLimitation"), CoreDef.config.getConfig("LYCache").getDouble("threshold")); // 1GB
+		} catch (Exception e) { }
 	}
-
-	@Override
-	public synchronized void close() { }
 
 	public static void setMemoryControl(long memoryLimitation, double threshold) {
 		if (threshold > 1.0D)

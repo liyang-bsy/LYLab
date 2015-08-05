@@ -21,7 +21,7 @@ public class Client implements Callback {
 
 	public static void main(String[] args) throws IOException {
 		CoreDef.config = new Config(CoreDef.rootPath + File.separator + "config" + File.separator + "config.txt");
-		GlobalInitializer.createInstance(CoreDef.config.getConfig("init"), CoreDef.config);
+		GlobalInitializer.createInstance();
 		as = new AsyncSocket("localhost", 8888 , new SimpleHeartBeat());
 		as.setAfterTransmission(new Client());
 		as.initialize();

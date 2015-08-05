@@ -4,9 +4,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.vicp.lylab.core.interfaces.InitializeConfig;
+import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 
@@ -16,15 +15,11 @@ import net.vicp.lylab.utils.atomic.AtomicBoolean;
  *
  */
 public final class GlobalInitializer extends NonCloneableBaseObject implements LifeCycle {
-	private static Config config;
-	private static Config rootConfig;
 	private static Map<String, Object> singletonManager;
 	private static AtomicBoolean inited = new AtomicBoolean(false);
 	private static GlobalInitializer instance = null;
 
-	private GlobalInitializer(Config config, Config rootConfig) {
-		GlobalInitializer.config = config;
-		GlobalInitializer.rootConfig = rootConfig;
+	private GlobalInitializer() {
 		initialize();
 	}
 
@@ -33,23 +28,22 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 		if(inited.getAndSet(true) == true)
 			return;
 		log.info("Initializer - Initialization started");
-		Set<String> keySet = config.keySet();
+		Set<String> keySet = CoreDef.config.getConfig("GlobalInitializer").keySet();
 		singletonManager = new ConcurrentHashMap<String, Object>(keySet.size());
 		Object tmp;
 		for (String key : keySet) {
 			try {
-				tmp = config.getObject(key);
+				tmp = CoreDef.config.getConfig("GlobalInitializer").getObject(key);
 				singletonManager.put(key, tmp);
 				if (tmp.getClass() == String.class)
-					tmp = config.getNewInstance(key);
-				if (rootConfig != null && tmp instanceof InitializeConfig
-						&& rootConfig.containsKey(key)) {
-					((InitializeConfig) tmp).obtainConfig(rootConfig.getConfig(key));
-					log.info(tmp.getClass().getSimpleName() + " - Obtained a config");
-				}
-				if (tmp instanceof LifeCycle) {
-					((LifeCycle) tmp).initialize();
-					log.info(tmp.getClass().getSimpleName() + " - Started");
+					tmp = CoreDef.config.getConfig("GlobalInitializer").getNewInstance(key);
+				if (tmp instanceof Initializable) {
+					try {
+						((Initializable) tmp).initialize();
+						log.info(tmp.getClass().getSimpleName() + " - Started");
+					} catch (Throwable t) {
+						log.error(Utils.getStringFromThrowable(t));
+					}
 				}
 				singletonManager.put(key, tmp);
 			} catch (Exception e) {
@@ -65,9 +59,9 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 		Object obj;
 		for (String key : singletonManager.keySet()) {
 			obj = singletonManager.get(key);
-			if (obj instanceof LifeCycle) {
+			if (obj instanceof AutoCloseable) {
 				try {
-					((LifeCycle) obj).close();
+					((AutoCloseable) obj).close();
 					log.info(obj.getClass().getSimpleName() + " - Closed");
 				} catch (Exception e) {
 					log.info(obj.getClass().getSimpleName() + " - Close failed:" + Utils.getStringFromException(e));
@@ -80,23 +74,15 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 		return singletonManager.get(key);
 	}
 	
-	public synchronized static void createInstance(Config config, Config rootConfig) {
+	public synchronized static void createInstance() {
 		if(instance == null)
-			instance = new GlobalInitializer(config, rootConfig);
+			instance = new GlobalInitializer();
 	}
 	
 	public synchronized static void destroyInstance() {
 		if(instance != null)
 			instance.close();
 		instance = null;
-	}
-
-	public static void setConfig(Config config) {
-		GlobalInitializer.config = config;
-	}
-
-	public static void setRootConfig(Config rootConfig) {
-		GlobalInitializer.rootConfig = rootConfig;
 	}
 
 }

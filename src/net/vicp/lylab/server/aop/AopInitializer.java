@@ -4,26 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.interfaces.InitializeConfig;
-import net.vicp.lylab.core.interfaces.LifeCycle;
+import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.server.filter.Filter;
-import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.Utils;
 
-public class AopInitializer extends NonCloneableBaseObject implements LifeCycle, InitializeConfig {
-	protected Config config;
+public class AopInitializer extends NonCloneableBaseObject implements Initializable {
 	protected List<Filter> filterChain;
 
 	@Override
 	public void initialize() {
-		if(config == null) return;
 		filterChain = new ArrayList<Filter>();
 
-		Set<String> keySet = config.keySet();
+		Set<String> keySet = CoreDef.config.getConfig("AopInitializer").keySet();
 		for (String key : keySet) {
 			try {
-				Class<?> instanceClass = Class.forName(config.getString(key));
+				Class<?> instanceClass = Class.forName(CoreDef.config.getConfig("AopInitializer").getString(key));
 				Filter tmp = (Filter) instanceClass.newInstance();
 				filterChain.add(tmp);
 			} catch (Exception e) {
@@ -31,15 +28,6 @@ public class AopInitializer extends NonCloneableBaseObject implements LifeCycle,
 			}
 		}
 		Aop.setFilterChain(filterChain);
-	}
-
-	@Override
-	public void close() {
-	}
-
-	@Override
-	public void obtainConfig(Config config) {
-		this.config = config;
 	}
 
 }

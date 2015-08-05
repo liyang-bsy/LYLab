@@ -1,10 +1,9 @@
 package net.vicp.lylab.utils.internet.protocol;
 
 import net.vicp.lylab.core.BaseObject;
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.utils.Config;
 
 /**
  * Protocol Utils, offer a serial essential utilities function about
@@ -18,10 +17,13 @@ import net.vicp.lylab.utils.Config;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public final class ProtocolUtils extends BaseObject implements InitializeConfig {
+public final class ProtocolUtils extends BaseObject {
 	private static int configSize;
 
 	private static Protocol[] rawProtocols = new Protocol[0];
+	static {
+		reloadProtocols();
+	}
 
 	/**
 	 * Pair to protocol by head with protocol config
@@ -88,18 +90,13 @@ public final class ProtocolUtils extends BaseObject implements InitializeConfig 
 			return false;
 		return true;
 	}
-
-	@Override
-	public void obtainConfig(Config config) {
-		setConfig(config);
-	}
 	
-	public synchronized static void setConfig(Config config) {
-		configSize = config.keySet().size();
+	public synchronized static void reloadProtocols() {
+		configSize = CoreDef.config.getConfig("ProtocolUtils").keySet().size();
 		rawProtocols = new Protocol[configSize];
 		int i = 0;
-		for (String key : config.keySet()) {
-			rawProtocols[i] = (Protocol) config.getNewInstance(key);
+		for (String key : CoreDef.config.getConfig("ProtocolUtils").keySet()) {
+			rawProtocols[i] = (Protocol) CoreDef.config.getConfig("ProtocolUtils").getNewInstance(key);
 			i++;
 		}
 	}

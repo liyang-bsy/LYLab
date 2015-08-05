@@ -1,9 +1,7 @@
 package net.vicp.lylab.utils.internet;
 
 import net.vicp.lylab.core.interfaces.Callback;
-import net.vicp.lylab.core.interfaces.InitializeConfig;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.tq.Task;
 
@@ -16,7 +14,7 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public abstract class BaseSocket extends Task implements InitializeConfig {
+public abstract class BaseSocket extends Task {
 	private static final long serialVersionUID = 4493557570063372132L;
 	
 	// Some thing about this socket
@@ -25,7 +23,6 @@ public abstract class BaseSocket extends Task implements InitializeConfig {
 	protected int socketMaxRetry = Integer.MAX_VALUE;
 	protected String host;
 	protected int port;
-	protected Config config;
 
 	// Protocol
 	protected Protocol protocol = null;
@@ -36,11 +33,6 @@ public abstract class BaseSocket extends Task implements InitializeConfig {
 	protected Callback beforeTransmission = null;
 	protected Callback afterTransmission = null;
 	
-	@Override
-	public void obtainConfig(Config config) {
-		this.config = config;
-	}
-
 	public boolean isServer() {
 		return isServer;
 	}

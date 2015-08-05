@@ -63,14 +63,16 @@ public final class Config extends NonCloneableBaseObject {
 	private transient Config parent;
 	private int mode = 0;
 	private transient Stack<String> fileNameTrace;
-	private transient List<Pair<String, String>> properties;
+	private transient List<Pair<String, String>> properties = new ArrayList<Pair<String, String>>();
 	private transient List<Pair<String, String>> lazyLoad = new ArrayList<Pair<String,String>>();
 
 	public static final Map<Character, Integer> sortRule = new HashMap<Character, Integer>();
+	public static final Set<Character> lazyLoadSet;
 	static {
 		sortRule.put('*', 50);
 		sortRule.put('^', 50);
 		sortRule.put('$', 100);
+		lazyLoadSet = sortRule.keySet();
 	}
 
 	/**
@@ -92,7 +94,7 @@ public final class Config extends NonCloneableBaseObject {
 		this.fileName = fileName;
 		this.fileNameTrace = fileNameTrace;
 		this.parent = parent;
-		dataMap = new ConcurrentHashMap<String, Object>();
+		dataMap = null;
 		reload();
 	}
 
@@ -107,10 +109,15 @@ public final class Config extends NonCloneableBaseObject {
 			return;
 		// file trace tree
 		fileNameTrace.push(fileName);
+		// initial
+		dataMap = new ConcurrentHashMap<String, Object>();
+		// clear old data
+		lazyLoad.clear();
+		properties.clear();
 		// load key/value for loader
-		List<Pair<String, String>> pairs = loader();
-		for (int i = 0; i < pairs.size(); i++) {
-			Pair<String, String> property = pairs.get(i);
+		rawLoader();
+		for (int i = 0; i < properties.size(); i++) {
+			Pair<String, String> property = properties.get(i);
 			try {
 				String propertyName = property.getLeft();
 				// skip # and empty entry
@@ -125,10 +132,8 @@ public final class Config extends NonCloneableBaseObject {
 					continue;
 				}
 				String propertyValue = property.getRight();
-				if (propertyName.startsWith("$")
-						|| propertyName.startsWith("*")
-						|| propertyName.startsWith("^"))
-					insert(property);
+				if (isLazyLoad(propertyName))
+					insertLazyLoad(property);
 				else
 					dataMap.put(propertyName, propertyValue);
 			} catch (Exception e) {
@@ -140,9 +145,17 @@ public final class Config extends NonCloneableBaseObject {
 			lazyLoad();
 		fileNameTrace.pop();
 	}
+
+	private boolean isLazyLoad(String propertyName) {
+		for (char singal : lazyLoadSet) {
+			if (propertyName.charAt(0) == singal)
+				return true;
+		}
+		return false;
+	}
 	
 	// Simulate a safely insert-sort
-	private void insert(Pair<String, String> property) {
+	private void insertLazyLoad(Pair<String, String> property) {
 		int i=0;
 		for(;i<lazyLoad.size();i++)
 			if(sortRule.get(property.getLeft().charAt(0)) < sortRule.get(lazyLoad.get(i).getLeft().charAt(0)))
@@ -277,8 +290,7 @@ public final class Config extends NonCloneableBaseObject {
 			throw new LYException("No available setter[" + setter + "] was found for " + owner.getClass());
 	}
 
-	private List<Pair<String, String>> loader() {
-		properties = new ArrayList<Pair<String, String>>();
+	private void rawLoader() {
 		List<String> rawList = Utils.readFileByLines(fileName, false);
 		for (int i = 0; i < rawList.size(); i++) {
 			// trim
@@ -299,7 +311,6 @@ public final class Config extends NonCloneableBaseObject {
 			}
 			else properties.add(new Pair<String, String>(pair[0], pair[1]));
 		}
-		return properties;
 	}
 
 	private void readFromConfig(Map<String, Object> container, Config other) {

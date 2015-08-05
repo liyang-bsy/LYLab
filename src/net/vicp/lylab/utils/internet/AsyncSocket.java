@@ -25,7 +25,6 @@ import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.core.pool.RecyclePool;
 import net.vicp.lylab.server.aop.Aop;
 import net.vicp.lylab.server.transport.Transport;
-import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
@@ -394,13 +393,12 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 
 	@Override
 	public void initialize() {
-		if(config == null)
-		{
+		if(!CoreDef.config.containsKey("AsyncSocket")) {
 			selectorPool = new SelectorPool(CoreDef.DEFAULT_CONTAINER_TIMEOUT,CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 		}
 		else {
-			selectorPool = new RecyclePool<Selector>(config.getInteger("maxSelectorPool"));
-			for (int i = 0; i < config.getInteger("maxSelectorPool"); i++) {
+			selectorPool = new RecyclePool<Selector>(CoreDef.config.getConfig("AsyncSocket").getInteger("maxSelectorPool"));
+			for (int i = 0; i < CoreDef.config.getConfig("AsyncSocket").getInteger("maxSelectorPool"); i++) {
 				try {
 					selectorPool.add(Selector.open());
 				} catch (Exception e) {
@@ -409,11 +407,6 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 			}
 		}
 		begin("AsyncServer");
-	}
-
-	@Override
-	public void obtainConfig(Config config) {
-		this.config = config;
 	}
 	
 	@Override
