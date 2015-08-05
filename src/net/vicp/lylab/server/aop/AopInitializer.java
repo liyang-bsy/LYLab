@@ -6,11 +6,11 @@ import java.util.Set;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.interfaces.Initializable;
+import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 
-public class AopInitializer extends NonCloneableBaseObject implements Initializable {
+public class AopInitializer extends NonCloneableBaseObject implements LifeCycle {
 	protected List<Filter> filterChain;
 
 	@Override
@@ -28,6 +28,12 @@ public class AopInitializer extends NonCloneableBaseObject implements Initializa
 			}
 		}
 		Aop.setFilterChain(filterChain);
+	}
+
+	@Override
+	public void close() throws Exception {
+		for (Filter filter : filterChain)
+			filter.close();
 	}
 
 }

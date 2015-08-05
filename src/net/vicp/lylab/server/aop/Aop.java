@@ -4,16 +4,15 @@ import java.net.Socket;
 import java.util.List;
 
 import net.vicp.lylab.core.BaseAction;
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.server.filter.Filter;
-import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.Utils;
 
 import org.apache.commons.lang3.StringUtils;
 
 public class Aop extends NonCloneableBaseObject {
-	protected static Config config;
 	protected static List<Filter> filterChain;
 
 	public static Message doAction(Socket client, Message request) {
@@ -38,7 +37,7 @@ public class Aop extends NonCloneableBaseObject {
 				response.setKey(key);
 				// get action related to key
 				try {
-					action = (BaseAction) Class.forName(getConfig().getString(key + "Action")).newInstance();
+					action = (BaseAction) Class.forName(CoreDef.config.getConfig("Aop").getString(key + "Action")).newInstance();
 				} catch (Exception e) { }
 				if (action == null) {
 					response.setCode(0x00003);
@@ -62,14 +61,6 @@ public class Aop extends NonCloneableBaseObject {
 		// to logger
 		log.debug("Access key:" + key  + "\nBefore:" + request + "\nAfter:" + response);
 		return response;
-	}
-
-	public static Config getConfig() {
-		return config;
-	}
-
-	public static void setConfig(Config config) {
-		Aop.config = config;
 	}
 
 	public static List<Filter> getFilterChain() {
