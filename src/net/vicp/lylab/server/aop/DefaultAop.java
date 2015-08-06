@@ -1,21 +1,47 @@
 package net.vicp.lylab.server.aop;
 
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class Aop extends NonCloneableBaseObject {
-	protected static List<Filter> filterChain;
+public class DefaultAop extends NonCloneableBaseObject implements Aop {
+	protected List<Filter> filterChain;
 
-	public static Message doAction(Socket client, Message request) {
+	@Override
+	public void initialize() {
+		filterChain = new ArrayList<Filter>();
+
+		Set<String> keySet = CoreDef.config.getConfig("Filters").keySet();
+		for (String key : keySet) {
+			try {
+				Class<?> instanceClass = Class.forName(CoreDef.config.getConfig("Filters").getString(key));
+				Filter tmp = (Filter) instanceClass.newInstance();
+				filterChain.add(tmp);
+			} catch (Exception e) {
+				log.error(Utils.getStringFromException(e));
+			}
+		}
+	}
+
+	@Override
+	public void close() throws Exception {
+		for (Filter filter : filterChain)
+			filter.close();
+	}
+	
+	@Override
+	public Message doAction(Socket client, Message request) {
 		String key = null;
 		BaseAction action = null;
 		Message response = null;
@@ -61,14 +87,6 @@ public class Aop extends NonCloneableBaseObject {
 		// to logger
 		log.debug("Access key:" + key  + "\nBefore:" + request + "\nAfter:" + response);
 		return response;
-	}
-
-	public static List<Filter> getFilterChain() {
-		return filterChain;
-	}
-
-	public static void setFilterChain(List<Filter> filterChain) {
-		Aop.filterChain = filterChain;
 	}
 
 }

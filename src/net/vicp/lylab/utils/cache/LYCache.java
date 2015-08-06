@@ -8,6 +8,7 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.DoHash;
 import net.vicp.lylab.core.interfaces.Initializable;
+import net.vicp.lylab.core.model.CacheValue;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.hash.MD5Hash;
 
@@ -93,6 +94,13 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 	}
 
 	// function start
+	public static int setCacheValue(String key, CacheValue cv) {
+		CacheContainer cc = getContainer(key);
+		if (cc == null)
+			return 1;
+		return cc.setCacheValue(key, cv);
+	}
+	
 	public static int set(String key, byte[] value) {
 		CacheContainer cc = getContainer(key);
 		if (cc == null)

@@ -10,7 +10,6 @@ import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.core.pool.TimeoutSequenceTemporaryPool;
-import net.vicp.lylab.server.aop.Aop;
 import net.vicp.lylab.utils.Utils;
 
 /**
@@ -120,7 +119,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 			responseMsg.setMessage("Message not found");
 		}
 		else
-			responseMsg = Aop.doAction(client, requestMsg);
+			responseMsg = getAopLogic().doAction(client, requestMsg);
 		return protocol == null ? null : protocol.encode(responseMsg);
 	}
 	

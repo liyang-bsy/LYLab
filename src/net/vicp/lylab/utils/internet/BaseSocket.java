@@ -1,7 +1,9 @@
 package net.vicp.lylab.utils.internet;
 
+import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Callback;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.server.aop.DefaultAop;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.tq.Task;
 
@@ -23,6 +25,7 @@ public abstract class BaseSocket extends Task {
 	protected int socketMaxRetry = Integer.MAX_VALUE;
 	protected String host;
 	protected int port;
+	protected Aop aopLogic;
 
 	// Protocol
 	protected Protocol protocol = null;
@@ -90,6 +93,21 @@ public abstract class BaseSocket extends Task {
 
 	public void setAfterTransmission(Callback afterTransmission) {
 		this.afterTransmission = afterTransmission;
+	}
+
+	public Aop getAopLogic() {
+		if(aopLogic == null)
+			synchronized (lock) {
+				if (aopLogic == null) {
+					aopLogic = new DefaultAop();
+					aopLogic.initialize();
+				}
+			}
+		return aopLogic;
+	}
+
+	public void setAopLogic(Aop aopLogic) {
+		this.aopLogic = aopLogic;
 	}
 
 }

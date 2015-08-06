@@ -70,6 +70,34 @@ public final class CacheContainer extends NonCloneableBaseObject {
 		return 0;
 	}
 	
+	public int setCacheValue(String key, CacheValue cv) {
+		if (memoryLimitation - memoryUsage < cv.getValue().length)
+			return 2;
+		getContainer().put(key, cv);
+		memoryUsage += cv.getValue().length;
+		if (memoryUsage > memoryLimitation * threshold) {
+			new Task() {
+				private static final long serialVersionUID = 6661384694891274270L;
+				
+				CacheContainer c;
+				@Override
+				public void exec() {
+					double dec = 1.0;
+					do {
+						c.flush(dec);
+						dec /= 2;
+					} while (c.getMemoryUsage() > c.getMemoryLimitation()
+							* c.threshold / 2);
+				}
+				public Task setCacheContainer(CacheContainer cc) {
+					this.c = cc;
+					return this;
+				}
+			}.setCacheContainer(this).begin();
+		}
+		return 0;
+	}
+	
 	public CacheValue getCacheValue(String key) {
 		return getContainer().get(key);
 	}

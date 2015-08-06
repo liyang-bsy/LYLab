@@ -3,8 +3,10 @@ package net.vicp.lylab.server.runtime;
 import java.net.ServerSocket;
 
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.GlobalInitializer;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
+import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.internet.ToClientLongSocket;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.Task;
@@ -21,34 +23,39 @@ import net.vicp.lylab.utils.tq.Task;
  */
 public class SyncServer extends Task implements LifeCycle {
 	private static final long serialVersionUID = 883892527805494627L;
-	protected volatile boolean running = true;
+	protected AtomicBoolean isClosed = new AtomicBoolean(true);
 	protected ServerSocket serverSocket;
 	protected LYTaskQueue lyTaskQueue = null;
 	
 	@Override
 	public void initialize() {
+		if(!isClosed.compareAndSet(true, false))
+			return;
 		this.begin("Sync Server - Main Thread");
 	}
 	
 	@Override
 	public void close() throws Exception {
+		if(!isClosed.compareAndSet(false, true))
+			return;
+		this.callStop();
 		serverSocket.close();
 	}
 
 	@Override
 	public void exec() {
 		try {
-			if(this.lyTaskQueue == null)
+			if(this.lyTaskQueue == null) {
 				lyTaskQueue = new LYTaskQueue();
-			try {
-				lyTaskQueue.setMaxQueue(CoreDef.config.getConfig("SyncServer").getInteger("maxQueue"));
-			} catch (Exception e) { }
-			try {
-				lyTaskQueue.setMaxThread(CoreDef.config.getConfig("SyncServer").getInteger("maxThread"));
-			} catch (Exception e) { }
-			
+				try {
+					lyTaskQueue.setMaxQueue(CoreDef.config.getConfig("SyncServer").getInteger("maxQueue"));
+				} catch (Exception e) { }
+				try {
+					lyTaskQueue.setMaxThread(CoreDef.config.getConfig("SyncServer").getInteger("maxThread"));
+				} catch (Exception e) { }
+			}
 			serverSocket = new ServerSocket(CoreDef.config.getConfig("SyncServer").getInteger("port"));
-			while (running) {
+			while (!isClosed.get()) {
 				lyTaskQueue.addTask(new ToClientLongSocket(serverSocket, new SimpleHeartBeat()));
 			}
 		} catch (Exception e) {
@@ -59,6 +66,12 @@ public class SyncServer extends Task implements LifeCycle {
 	public void setLyTaskQueue(LYTaskQueue lyTaskQueue) {
 		if(this.lyTaskQueue == null)
 			this.lyTaskQueue = lyTaskQueue;
+	}
+	
+	@Override
+	protected void aftermath() {
+		GlobalInitializer.destroyInstance();
+		super.aftermath();
 	}
 
 }
