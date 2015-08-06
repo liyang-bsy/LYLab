@@ -1,7 +1,7 @@
 package net.vicp.lylab.core;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.interfaces.Initializable;
@@ -28,10 +28,10 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 		if(inited.getAndSet(true) == true)
 			return;
 		log.info("Initializer - Initialization started");
-		Set<String> keySet = CoreDef.config.getConfig("GlobalInitializer").keySet();
-		singletonManager = new ConcurrentHashMap<String, Object>(keySet.size());
+		List<String> keyList = CoreDef.config.getConfig("GlobalInitializer").keyList();
+		singletonManager = new ConcurrentHashMap<String, Object>(keyList.size());
 		Object tmp;
-		for (String key : keySet) {
+		for (String key : keyList) {
 			try {
 				tmp = CoreDef.config.getConfig("GlobalInitializer").getObject(key);
 				singletonManager.put(key, tmp);

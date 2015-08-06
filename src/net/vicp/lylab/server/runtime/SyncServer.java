@@ -3,7 +3,6 @@ package net.vicp.lylab.server.runtime;
 import java.net.ServerSocket;
 
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.GlobalInitializer;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
@@ -66,12 +65,6 @@ public class SyncServer extends Task implements LifeCycle {
 	public void setLyTaskQueue(LYTaskQueue lyTaskQueue) {
 		if(this.lyTaskQueue == null)
 			this.lyTaskQueue = lyTaskQueue;
-	}
-	
-	@Override
-	protected void aftermath() {
-		GlobalInitializer.destroyInstance();
-		super.aftermath();
 	}
 
 }

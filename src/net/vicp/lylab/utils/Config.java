@@ -43,6 +43,11 @@ import net.vicp.lylab.core.model.Pair;
  * <br>Different between Tree/Plain {@link Config}
  * <br>Tree-Configuration {@link Config} could get it sub-config by {@link #getConfig(String key)}
  * <br>Plain-Configuration will obtain all sub-config into itself
+ * <br>
+ * <br>Entry rule:
+ * <br>Entry start with '#' will be regard as comment and ignored for dataMap;
+ * <br>Key may start with function mark '$'/'*'/'^', itself contains underline, number or alphabet
+ * <br>value may start with function mark '&', itself contains underline, period, comma, number or alphabet
  * 
  * @author Young
  * @since 2015.07.29
@@ -60,12 +65,18 @@ public final class Config extends NonCloneableBaseObject {
 
 	private transient String fileName;
 	private Map<String, Object> dataMap;
+	private Map<String, Object> tmpMap;
+	private List<String> keyList = new ArrayList<String>();
 	private transient Config parent;
 	private int mode = 0;
 	private transient Stack<String> fileNameTrace;
 	private transient List<Pair<String, String>> properties = new ArrayList<Pair<String, String>>();
 	private transient List<Pair<String, String>> lazyLoad = new ArrayList<Pair<String,String>>();
 
+//	public static final String INVISIBLE_CHAR = "[\u0000-\u0020]";
+	public static final String VALID_NAME = "([$*^][_\\w]*)|([_\\w]*)";
+	public static final String VALID_VALUE = "([&][._,\\w]*)|([._,\\w]*)";
+	
 	public static final Map<Character, Integer> sortRule = new HashMap<Character, Integer>();
 	public static final Set<Character> lazyLoadSet;
 	static {
@@ -110,7 +121,7 @@ public final class Config extends NonCloneableBaseObject {
 		// file trace tree
 		fileNameTrace.push(fileName);
 		// initial
-		dataMap = new ConcurrentHashMap<String, Object>();
+		tmpMap = new ConcurrentHashMap<String, Object>();
 		// clear old data
 		lazyLoad.clear();
 		properties.clear();
@@ -131,11 +142,13 @@ public final class Config extends NonCloneableBaseObject {
 						mode = 1;
 					continue;
 				}
+				
 				String propertyValue = property.getRight();
 				if (isLazyLoad(propertyName))
 					insertLazyLoad(property);
-				else
-					dataMap.put(propertyName, propertyValue);
+				else {
+					putToMap(tmpMap, propertyName, propertyValue);
+				}
 			} catch (Exception e) {
 				throw new LYException("Failed to load config file[" + fileName
 						+ "] at line [" + getLine(property) + "]", e);
@@ -143,6 +156,8 @@ public final class Config extends NonCloneableBaseObject {
 		}
 		if (!lazyLoad.isEmpty())
 			lazyLoad();
+		dataMap = tmpMap;
+		tmpMap = null;
 		fileNameTrace.pop();
 	}
 
@@ -200,11 +215,11 @@ public final class Config extends NonCloneableBaseObject {
 					switch (mode) {
 					case 0:
 						config = new Config(realFileName, fileNameTrace, this);
-						dataMap.put(propertyRealName, config);
+						putToMap(tmpMap, propertyRealName, config);
 						break;
 					case 1:
 						config = new Config(realFileName, fileNameTrace, this);
-						readFromConfig(dataMap, config);
+						readFromConfig(tmpMap, config);
 						break;
 					default:
 						throw new LYException("Unknow config mode: " + mode);
@@ -213,7 +228,7 @@ public final class Config extends NonCloneableBaseObject {
 					// object reference
 					String propertyRealName = propertyName.substring(1);
 					Object target = Class.forName(propertyValue).newInstance();
-					dataMap.put(propertyRealName, target);
+					putToMap(tmpMap, propertyRealName, target);
 					lastObject = target;
 				} else if (propertyName.startsWith("^")) {
 					// object parameter reference
@@ -223,7 +238,7 @@ public final class Config extends NonCloneableBaseObject {
 						Object obj = null;
 						Config root = this;
 						while (true) {
-							obj = root.dataMap.get(propertyRealValue);
+							obj = root.tmpMap.get(propertyRealValue);
 							if (obj != null || root.parent == null)
 								break;
 							root = parent;
@@ -294,33 +309,44 @@ public final class Config extends NonCloneableBaseObject {
 		List<String> rawList = Utils.readFileByLines(fileName, false);
 		for (int i = 0; i < rawList.size(); i++) {
 			// trim
-			String rawPair = rawList.get(i).replaceAll("[\u0000-\u0020]", "");
-
+			String rawPair = rawList.get(i).replaceAll("([\\s]*)", "");
+			// remove comment
+			rawPair = rawPair.replaceAll("([#][\\S]*)", "");
+			
 			String[] pair = rawPair.split("=");
 			if (pair.length == 1) {
-				if (StringUtils.isBlank(pair[0]) || pair[0].startsWith("#") || (i == 0 && pair[0].startsWith("[") && pair[0].endsWith("]"))) {
+				if (i == 0 && pair[0].startsWith("[") && pair[0].endsWith("]"))
 					properties.add(new Pair<String, String>(pair[0], null));
-				} else {
+				else if(StringUtils.isBlank(pair[0]))
+					properties.add(new Pair<String, String>("", null));
+				else {
 					log.error("Bad key/value in file[" + fileName + "] at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
-					properties.add(new Pair<String, String>("#", null));
+					properties.add(new Pair<String, String>("", null));
 				}
-			}
-			else if (pair.length != 2) {
+			} else if (pair.length != 2) {
 				log.error("Bad key/value in file[" + fileName + "] at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
-				properties.add(new Pair<String, String>("#", null));
+				properties.add(new Pair<String, String>("", null));
+			} else {
+				if(pair[0].matches(VALID_NAME)
+						&& pair[1].matches(VALID_VALUE))
+					properties.add(new Pair<String, String>(pair[0], pair[1]));
+				else log.error("Property" + rawPair + " contains invalid character");
 			}
-			else properties.add(new Pair<String, String>(pair[0], pair[1]));
 		}
 	}
 
 	private void readFromConfig(Map<String, Object> container, Config other) {
-		for (String key : other.keySet()) {
-			container.put(key, other.getProperty(key));
-		}
+		for (String key : other.keyList())
+			putToMap(container, key, other.getProperty(key));
 	}
-
-	public Set<String> keySet() {
-		return dataMap.keySet();
+	
+	private void putToMap(Map<String, Object> map, String key, Object value) {
+		map.put(key, value);
+		keyList.add(key);
+	}
+	
+	public List<String> keyList() {
+		return new ArrayList<String>(keyList);
 	}
 
 	public boolean containsKey(String key) {
@@ -478,7 +504,8 @@ public final class Config extends NonCloneableBaseObject {
 
 	@Override
 	public String toString() {
-		return "Config [dataMap=" + dataMap + ", mode=" + mode + "]";
+		return "Config [dataMap=" + dataMap + ", keyList=" + keyList
+				+ ", mode=" + mode + "]";
 	}
 
 }

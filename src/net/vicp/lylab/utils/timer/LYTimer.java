@@ -31,7 +31,7 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle {
 	public void initialize() {
 		synchronized (lock) {
 			if(init.getAndSet(true)) return;
-			for (String key : CoreDef.config.getConfig("LYTimer").keySet()) {
+			for (String key : CoreDef.config.getConfig("LYTimer").keyList()) {
 				try {
 					Object tmp = CoreDef.config.getConfig("LYTimer").getObject(key);
 					if(tmp instanceof String)

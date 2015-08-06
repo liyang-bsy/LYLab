@@ -3,7 +3,6 @@ package net.vicp.lylab.server.aop;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.CoreDef;
@@ -22,8 +21,7 @@ public class DefaultAop extends NonCloneableBaseObject implements Aop {
 	public void initialize() {
 		filterChain = new ArrayList<Filter>();
 
-		Set<String> keySet = CoreDef.config.getConfig("Filters").keySet();
-		for (String key : keySet) {
+		for (String key : CoreDef.config.getConfig("Filters").keyList()) {
 			try {
 				Class<?> instanceClass = Class.forName(CoreDef.config.getConfig("Filters").getString(key));
 				Filter tmp = (Filter) instanceClass.newInstance();

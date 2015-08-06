@@ -92,10 +92,10 @@ public final class ProtocolUtils extends BaseObject {
 	}
 	
 	public synchronized static void reloadProtocols() {
-		configSize = CoreDef.config.getConfig("ProtocolUtils").keySet().size();
+		configSize = CoreDef.config.getConfig("ProtocolUtils").keyList().size();
 		rawProtocols = new Protocol[configSize];
 		int i = 0;
-		for (String key : CoreDef.config.getConfig("ProtocolUtils").keySet()) {
+		for (String key : CoreDef.config.getConfig("ProtocolUtils").keyList()) {
 			rawProtocols[i] = (Protocol) CoreDef.config.getConfig("ProtocolUtils").getNewInstance(key);
 			i++;
 		}
