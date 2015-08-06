@@ -40,15 +40,17 @@ public abstract class BaseSocket extends Task {
 		return isServer;
 	}
 
-	protected void setIsServer(boolean isServer) {
+	protected BaseSocket setIsServer(boolean isServer) {
 		this.isServer = isServer;
+		return this;
 	}
 	public int getSocketMaxRetry() {
 		return socketMaxRetry;
 	}
 
-	public void setSocketMaxRetry(int socketMaxRetry) {
+	public BaseSocket setSocketMaxRetry(int socketMaxRetry) {
 		this.socketMaxRetry = socketMaxRetry;
+		return this;
 	}
 
 	public String getHost() {
@@ -67,32 +69,36 @@ public abstract class BaseSocket extends Task {
 		return beforeConnect;
 	}
 
-	public void setBeforeConnect(Callback beforeConnect) {
+	public BaseSocket setBeforeConnect(Callback beforeConnect) {
 		this.beforeConnect = beforeConnect;
+		return this;
 	}
 
 	public Callback getAfterClose() {
 		return afterClose;
 	}
 
-	public void setAfterClose(Callback afterClose) {
+	public BaseSocket setAfterClose(Callback afterClose) {
 		this.afterClose = afterClose;
+		return this;
 	}
 
 	public Callback getBeforeTransmission() {
 		return beforeTransmission;
 	}
 
-	public void setBeforeTransmission(Callback beforeTransmission) {
+	public BaseSocket setBeforeTransmission(Callback beforeTransmission) {
 		this.beforeTransmission = beforeTransmission;
+		return this;
 	}
 
 	public Callback getAfterTransmission() {
 		return afterTransmission;
 	}
 
-	public void setAfterTransmission(Callback afterTransmission) {
+	public BaseSocket setAfterTransmission(Callback afterTransmission) {
 		this.afterTransmission = afterTransmission;
+		return this;
 	}
 
 	public Aop getAopLogic() {
@@ -106,8 +112,9 @@ public abstract class BaseSocket extends Task {
 		return aopLogic;
 	}
 
-	public void setAopLogic(Aop aopLogic) {
+	public BaseSocket setAopLogic(Aop aopLogic) {
 		this.aopLogic = aopLogic;
+		return this;
 	}
 
 }

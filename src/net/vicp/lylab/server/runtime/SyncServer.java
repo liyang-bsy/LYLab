@@ -3,8 +3,10 @@ package net.vicp.lylab.server.runtime;
 import java.net.ServerSocket;
 
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
+import net.vicp.lylab.server.aop.DefaultAop;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.internet.ToClientLongSocket;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
@@ -25,6 +27,15 @@ public class SyncServer extends Task implements LifeCycle {
 	protected AtomicBoolean isClosed = new AtomicBoolean(true);
 	protected ServerSocket serverSocket;
 	protected LYTaskQueue lyTaskQueue = null;
+	protected Aop aop;
+
+	public SyncServer() {
+		this(new DefaultAop());
+	}
+
+	public SyncServer(Aop aop) {
+		this.aop = aop;
+	}
 	
 	@Override
 	public void initialize() {
@@ -55,7 +66,7 @@ public class SyncServer extends Task implements LifeCycle {
 			}
 			serverSocket = new ServerSocket(CoreDef.config.getConfig("SyncServer").getInteger("port"));
 			while (!isClosed.get()) {
-				lyTaskQueue.addTask(new ToClientLongSocket(serverSocket, new SimpleHeartBeat()));
+				lyTaskQueue.addTask(new ToClientLongSocket(serverSocket, new SimpleHeartBeat()).setAopLogic(aop));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
