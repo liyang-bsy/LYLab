@@ -120,7 +120,7 @@ public class CoreDef {
 	public static final long DEFAULT_TERMINATE_TIMEOUT = TWO*MINUTE;
 	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = MINUTE/TWO;
 
-	public static final long DEFAULT_PERMANENT_INTERVAL = TWO*MINUTE;
+	public static final long DEFAULT_PERMANENT_INTERVAL = SIX*TEN;		// 60 times
 
 	public static final long ONE_TIME_TASK = ZERO;
 	

@@ -151,12 +151,33 @@ public class Utils extends NonCloneableBaseObject {
 	}
 
 	/**
-	 * 获取绝对路径
+	 * 读取目录下特定后缀的文件，并且以instanceClass生成该对象
+	 * @param instanceClass
 	 * @param filePath
-	 * @param filePostfix e.g. ".txt"
+	 * @param fileSuffix
 	 * @return
 	 */
-	public static List<String> getFileList(String filePath, String filePostfix) {
+	public static Object[] readJsonObjectFromFile(Class<?> instanceClass,
+			String filePath, String fileSuffix) {
+		List<String> fileNames = getFileList(filePath, fileSuffix);
+		List<Object> list = new ArrayList<Object>();
+		for (String fileName : fileNames) {
+			for (String json : Utils.readFileByLines(fileName))
+				list.add(deserialize(instanceClass, json));
+			deleteFile(fileName);
+		}
+		Object[] objects = new Object[list.size()];
+		list.toArray(objects);
+		return objects;
+	}
+	
+	/**
+	 * 根据路径和文件名后缀，获取文件列表的绝对路径
+	 * @param filePath
+	 * @param fileSuffix e.g. ".txt"
+	 * @return
+	 */
+	public static List<String> getFileList(String filePath, String fileSuffix) {
 		List<String> ret = new ArrayList<String>();
 		try {
 			File file = new File(filePath);
@@ -169,7 +190,7 @@ public class Utils extends NonCloneableBaseObject {
 						filename = filePath + filelist[i];
 					else filename = filePath + "\\" + filelist[i];
 					// 如果以该后缀结尾，假如不是，否则忽略该文件
-					if (filename.endsWith(filePostfix))
+					if (filename.endsWith(fileSuffix))
 						ret.add(filename);
 				}
 			}

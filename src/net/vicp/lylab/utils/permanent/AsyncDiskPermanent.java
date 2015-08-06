@@ -4,49 +4,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.utils.StringLineWriter;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.atomic.AtomicBoolean;
-import net.vicp.lylab.utils.tq.LoneWolf;
 
-public class AsyncDiskPermanent extends LoneWolf implements LifeCycle {
+public class AsyncDiskPermanent extends DiskPermanent {
 	private static final long serialVersionUID = 6315043692230051343L;
 
-	StringLineWriter writer;
 	protected String caller;
 	protected Long forceSaveInterval = CoreDef.DEFAULT_PERMANENT_INTERVAL;
-	protected AtomicBoolean working = new AtomicBoolean(false);
 	
 	protected List<String> container = new ArrayList<String>();
-	
+
 	public AsyncDiskPermanent(String filePath, String fileSuffix, String caller) {
+		super(filePath, fileSuffix);
 		this.caller = caller;
-		writer = new StringLineWriter(filePath);
-		writer.setSuffix(fileSuffix);
-	}
-	
-	public boolean appendLine(String entry) {
-		synchronized (lock) {
-			if(working.get())
-				return container.add(entry);
-			return false;
-		}
+		this.begin("AsyncDiskPermanent - " + caller);
 	}
 	
 	@Override
-	public void initialize() {
-		synchronized (lock) {
-			if(!working.compareAndSet(false, true)) return;
-			this.begin("AsyncDiskPermanent - " + caller);
-		}
+	public boolean appendLine(String entry) {
+		if (working.get())
+			synchronized (lock) {
+				return container.add(entry);
+			}
+		return false;
 	}
-
+	
 	@Override
 	public void close() throws Exception {
 		synchronized (lock) {
 			working.set(false);
-			Thread.sleep(1000);
+			long wait= 100L;
+			while (join(wait)) {
+				log.info("Waiting for finish, interval=" + wait);
+				wait*=2;
+			}
 			List<String> data = getContainer();
 			if(!data.isEmpty())
 				writer.writeLine(data);
@@ -64,7 +55,7 @@ public class AsyncDiskPermanent extends LoneWolf implements LifeCycle {
 					writer.writeLine(data);
 				else
 					circle++;
-				if (circle > 60) {
+				if (circle > forceSaveInterval) {
 					circle = 0;
 					writer.close();
 				}
@@ -73,10 +64,6 @@ public class AsyncDiskPermanent extends LoneWolf implements LifeCycle {
 				log.error("Permanent procedure got an exception:" + Utils.getStringFromException(e));
 			}
 		}
-	}
-
-	public void setMaxLine(int maxLine) {
-		writer.setMaxLine(maxLine);
 	}
 
 	protected List<String> getContainer() {
