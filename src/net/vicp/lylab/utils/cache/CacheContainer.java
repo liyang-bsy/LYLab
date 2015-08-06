@@ -26,13 +26,11 @@ public final class CacheContainer extends NonCloneableBaseObject {
 
 	private Map<String, CacheValue> getContainer() {
 		if (container == null)
-			initContainer();
+			synchronized (lock) {
+				if (container == null)
+					container = new ConcurrentHashMap<String, CacheValue>();
+			}
 		return container;
-	}
-
-	private synchronized void initContainer() {
-		if (container == null)
-			container = new ConcurrentHashMap<String, CacheValue>();
 	}
 
 	public long getMemoryUsage() {
@@ -70,6 +68,10 @@ public final class CacheContainer extends NonCloneableBaseObject {
 			}.setC(this).begin();
 		}
 		return 0;
+	}
+	
+	public CacheValue getCacheValue(String key) {
+		return getContainer().get(key);
 	}
 
 	public byte[] get(String key) {
