@@ -15,21 +15,18 @@ public class AsyncDiskPermanent extends LoneWolf implements LifeCycle {
 
 	StringLineWriter writer;
 	protected String caller;
-	protected String permanentFilePath;
-	protected String permanentFileSuffix;
 	protected Long forceSaveInterval = CoreDef.DEFAULT_PERMANENT_INTERVAL;
 	protected AtomicBoolean working = new AtomicBoolean(false);
 	
 	protected List<String> container = new ArrayList<String>();
 	
 	public AsyncDiskPermanent(String filePath, String fileSuffix, String caller) {
-		permanentFilePath = filePath;
-		permanentFileSuffix = fileSuffix;
 		this.caller = caller;
 		writer = new StringLineWriter(filePath);
+		writer.setSuffix(fileSuffix);
 	}
 	
-	public boolean append(String entry) {
+	public boolean appendLine(String entry) {
 		synchronized (lock) {
 			if(working.get())
 				return container.add(entry);
@@ -76,14 +73,6 @@ public class AsyncDiskPermanent extends LoneWolf implements LifeCycle {
 				log.error("Permanent procedure got an exception:" + Utils.getStringFromException(e));
 			}
 		}
-	}
-
-	public void setPath(String path) {
-		writer.setPath(path);
-	}
-
-	public void setSuffix(String suffix) {
-		writer.setSuffix(suffix);
 	}
 
 	public void setMaxLine(int maxLine) {

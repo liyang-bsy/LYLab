@@ -2,6 +2,7 @@ package net.vicp.lylab.utils.cache;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
@@ -131,6 +132,14 @@ public final class CacheContainer extends NonCloneableBaseObject {
 
 	public static String version() {
 		return version;
+	}
+
+	public boolean containsKey(Object key) {
+		return container.containsKey(key);
+	}
+
+	public Set<String> keySet() {
+		return container.keySet();
 	}
 
 	// getter & setter
