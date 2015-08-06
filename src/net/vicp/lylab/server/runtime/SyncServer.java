@@ -78,4 +78,12 @@ public class SyncServer extends Task implements LifeCycle {
 			this.lyTaskQueue = lyTaskQueue;
 	}
 
+	public void setAop(Aop aop) {
+		this.aop = aop;
+	}
+
+	public boolean isClosed() {
+		return isClosed.get();
+	}
+
 }
