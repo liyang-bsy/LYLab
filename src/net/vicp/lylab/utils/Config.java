@@ -142,13 +142,11 @@ public final class Config extends NonCloneableBaseObject {
 						mode = 1;
 					continue;
 				}
-				
-				String propertyValue = property.getRight();
+				// lazy load or instant load
 				if (isLazyLoad(propertyName))
 					insertLazyLoad(property);
-				else {
-					putToMap(tmpMap, propertyName, propertyValue);
-				}
+				else
+					putToMap(tmpMap, propertyName, property.getRight());
 			} catch (Exception e) {
 				throw new LYException("Failed to load config file[" + fileName
 						+ "] at line [" + getLine(property) + "]", e);
@@ -161,6 +159,11 @@ public final class Config extends NonCloneableBaseObject {
 		fileNameTrace.pop();
 	}
 
+	/**
+	 * Returns true if this property should do lazy load.
+	 * @return
+	 * true if this property should do lazy load
+	 */
 	private boolean isLazyLoad(String propertyName) {
 		for (char singal : lazyLoadSet) {
 			if (propertyName.charAt(0) == singal)
@@ -278,6 +281,7 @@ public final class Config extends NonCloneableBaseObject {
 		String setter = "set" + fieldName.substring(0, 1).toUpperCase()
 				+ fieldName.substring(1);
 		
+		// Get setter by java.lang.reflect.*
 		Method setMethod = null;
 		Class<?> parameterClass = null;
 		try {
@@ -295,8 +299,10 @@ public final class Config extends NonCloneableBaseObject {
 					break;
 				}
 			}
+		// If we got its setter, then invoke it
 		if (setMethod != null)
 			if (param.getClass() == String.class)
+				// But sometimes we may need casting parameter before invoking
 				setMethod.invoke(owner,
 						Caster.simpleCast((String) param, parameterClass));
 			else
@@ -308,9 +314,9 @@ public final class Config extends NonCloneableBaseObject {
 	private void rawLoader() {
 		List<String> rawList = Utils.readFileByLines(fileName, false);
 		for (int i = 0; i < rawList.size(); i++) {
-			// trim
+			// Trim
 			String rawPair = rawList.get(i).replaceAll("([\\s]*)", "");
-			// remove comment
+			// Remove comment
 			rawPair = rawPair.replaceAll("([#][\\S]*)", "");
 			
 			String[] pair = rawPair.split("=");
