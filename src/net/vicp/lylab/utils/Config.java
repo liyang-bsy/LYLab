@@ -47,7 +47,7 @@ import net.vicp.lylab.core.model.Pair;
  * <br>Entry rule:
  * <br>Entry start with '#' will be regard as comment and ignored for dataMap;
  * <br>Key may start with function mark '$'/'*'/'^', itself contains underline, number or alphabet
- * <br>value may start with function mark '&', itself contains underline, period, comma, number or alphabet
+ * <br>value may start with function mark '&', itself may contain any visible character except '&'
  * 
  * @author Young
  * @since 2015.07.29
@@ -75,7 +75,7 @@ public final class Config extends NonCloneableBaseObject {
 
 //	public static final String INVISIBLE_CHAR = "[\u0000-\u0020]";
 	public static final String VALID_NAME = "([$*^][_\\w]*)|([_\\w]*)";
-	public static final String VALID_VALUE = "([&][._,\\w]*)|([._,\\w]*)";
+	public static final String VALID_VALUE = "([&][^&]*)|([^&]*)";
 	
 	public static final Map<Character, Integer> sortRule = new HashMap<Character, Integer>();
 	public static final Set<Character> lazyLoadSet;
