@@ -74,8 +74,7 @@ public class RecyclePool<T> extends IndexedPool<T> {
 		synchronized (lock) {
 			if (isClosed())
 				return;
-			for(Long id:availableKeySet())
-			{
+			for(Long id:availableKeySet()) {
 				T tmp = availableContainer.get(id);
 				if(tmp instanceof AutoCloseable)
 					try {
@@ -84,8 +83,7 @@ public class RecyclePool<T> extends IndexedPool<T> {
 						log.error(Utils.getStringFromException(e));
 					}
 			}
-			for(Long id:busyKeySet())
-			{
+			for(Long id:busyKeySet()) {
 				T tmp = busyContainer.get(id);
 				if(tmp instanceof AutoCloseable)
 					try {
@@ -100,24 +98,34 @@ public class RecyclePool<T> extends IndexedPool<T> {
 		}
 	}
 
-	public Set<Long> busyKeySet()
-	{
+	public Set<Long> busyKeySet() {
 		return busyContainer.keySet();
 	}
 
+	public boolean recycle(T item) {
+		return recycle(item, false);
+	}
+
 	public boolean recycle(long objId) {
+		return recycle(objId, false);
+	}
+
+	public boolean recycle(long objId, boolean isBad) {
 		synchronized (lock) {
 			safeCheck();
 			T tmp = busyContainer.remove(objId);
 			if (tmp != null) {
-				addToContainer(tmp);
+				if(isBad)
+					keyContainer.remove(objId);
+				else
+					addToContainer(tmp);
 				return true;
 			}
 			return false;
 		}
 	}
 
-	public boolean recycle(T item) {
+	public boolean recycle(T item, boolean isBad) {
 		synchronized (lock) {
 			safeCheck();
 			long objId = 0L;
@@ -131,13 +139,8 @@ public class RecyclePool<T> extends IndexedPool<T> {
 					}
 				}
 			}
-			if (objId > 0) {
-				T tmp = busyContainer.remove(objId);
-				if (tmp != null) {
-					addToContainer(tmp);
-					return true;
-				}
-			}
+			if(objId > 0)
+				return recycle(objId, isBad);
 			return false;
 		}
 	}
@@ -147,6 +150,16 @@ public class RecyclePool<T> extends IndexedPool<T> {
 		synchronized (lock) {
 			safeCheck();
 			T tmp = removeFromContainer(objId);
+			if(tmp != null)
+				keyContainer.remove(objId);
+			return tmp;
+		}
+	}
+
+	protected T removeFromBusyContainer(long objId) {
+		synchronized (lock) {
+			safeCheck();
+			T tmp = busyContainer.remove(objId);
 			if(tmp != null)
 				keyContainer.remove(objId);
 			return tmp;
@@ -185,11 +198,13 @@ public class RecyclePool<T> extends IndexedPool<T> {
 			T tmp = null;
 			if (objId > 0) {
 				tmp = removeFromContainer(objId);
-				if (tmp == null)
-					tmp = busyContainer.remove(objId);
-				if (tmp != null)
-					keyContainer.remove(objId);
+				if(tmp == null)
+					removeFromBusyContainer(objId);
 			}
+			if(tmp instanceof AutoCloseable)
+				try {
+					((AutoCloseable) tmp).close();
+				} catch (Exception e) { }
 			return tmp;
 		}
 	}

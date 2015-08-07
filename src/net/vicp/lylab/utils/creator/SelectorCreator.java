@@ -4,14 +4,10 @@ import java.nio.channels.Selector;
 
 import net.vicp.lylab.core.exception.LYException;
 
-public class SelectorCreator extends AutoGenerate<Selector> {
-
-	public SelectorCreator(Class<Selector> instanceClass, Object[] params) {
-		super(instanceClass, params);
-	}
+public class SelectorCreator extends CustomCreator<Selector> {
 
 	@Override
-	public Selector newInstance() throws LYException {
+	public Selector newInstance() {
 		try {
 			return Selector.open();
 		} catch (Exception e) {

@@ -75,8 +75,19 @@ public class TimeoutSequenceTemporaryPool<T> extends SequenceTemporaryPool<T>
 	@Override
 	public void clear() {
 		synchronized (lock) {
+			if (isClosed())
+				return;
 			super.clear();
 			startTime.clear();
+		}
+	}
+
+	@Override
+	public void close() {
+		synchronized (lock) {
+			clear();
+			super.close();
+			startTime = null;
 		}
 	}
 

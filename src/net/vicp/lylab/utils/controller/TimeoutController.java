@@ -72,7 +72,7 @@ public final class TimeoutController extends LoneWolf implements LifeCycle {
 	/**
 	 * Major cycle to recycle every target is recyclable
 	 */
-	private void timeoutControl() {
+	private synchronized void timeoutControl() {
 		System.gc();
 		Iterator<WeakReference<Recyclable>> iterator = watchList.iterator();
 		while (iterator.hasNext()) {
@@ -110,8 +110,7 @@ public final class TimeoutController extends LoneWolf implements LifeCycle {
 			Recyclable tmp = iterator.next().get();
 			if (tmp == null)
 				iterator.remove();
-			else if (rec.equals(tmp))
-			{
+			else if (rec.equals(tmp)) {
 				iterator.remove();
 				break;
 			}

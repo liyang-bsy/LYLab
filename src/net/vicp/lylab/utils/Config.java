@@ -27,11 +27,11 @@ import net.vicp.lylab.core.model.Pair;
  * <br><br><b>Comment mark:</b> key(start with #) or bad key/value will be regard as comment
  * <br>Example:#comment = o(*≧▽≦)ツ
  * <br>Well, it will be nothing...
- * <br><br><b>Object mark:</b> the value of key(start with *) should be class name, stored its new instance
+ * <br><br><b>Object mark:</b> the value of key(start with *) should be class name, stored its new instance. If value(start with &), will be regard as key and try to find any the key from itself or its parents.
  * <br>Example:*object1=com.java.ExampleClass
  * <br>You can access "object1" by {@link #getObject(String key)}: {@code config.getObject("object1")};
  * <br><b>[!]</b>ExampleClass <b>MUST</b> have a default constructor
- * <br><br><b>Parameter mark:</b> the value of key(start with ^) will be set to last Object(* mark), if value(start with &), will be regard as key and try to find any the key from itself or its parents.
+ * <br><br><b>Parameter mark:</b> the value of key(start with ^) will be set to last Object(* mark). If value(start with &), will be regard as key and try to find any the key from itself or its parents.
  * <br>Example:^value1=123.45
  * <br>{@code exampleClass.setValue1(123.45);}
  * <br>Its key will finally be dropped, certainly never replace any existed keys
@@ -230,8 +230,26 @@ public final class Config extends NonCloneableBaseObject {
 				} else if (propertyName.startsWith("*")) {
 					// object reference
 					String propertyRealName = propertyName.substring(1);
-					Object target = Class.forName(propertyValue).newInstance();
-					putToMap(tmpMap, propertyRealName, target);
+					Object target = null;
+					if (propertyValue.startsWith("&")) {
+						String propertyRealValue = propertyValue.substring(1);
+						Object obj = null;
+						Config root = this;
+						while (true) {
+							obj = root.tmpMap.get(propertyRealValue);
+							if (obj != null || root.parent == null)
+								break;
+							root = parent;
+						}
+						if (obj == null)
+							throw new LYException("Cannot find reference ["
+									+ propertyRealValue
+									+ "] in this Config or parent Config");
+						target = obj;
+					} else {
+						target = Class.forName(propertyValue).newInstance();
+						putToMap(tmpMap, propertyRealName, target);
+					}
 					lastObject = target;
 				} else if (propertyName.startsWith("^")) {
 					// object parameter reference

@@ -1,6 +1,7 @@
 package net.vicp.lylab.core.pool;
 
 import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.interfaces.AdditionalOp;
 import net.vicp.lylab.utils.creator.AutoGenerate;
 
 /**
@@ -17,21 +18,30 @@ import net.vicp.lylab.utils.creator.AutoGenerate;
  */
 public class AutoGeneratePool<T> extends TimeoutRecyclePool<T> {
 	AutoGenerate<T> creator;
+	AdditionalOp<T> operator;
 
 	public AutoGeneratePool(AutoGenerate<T> creator) {
 		super();
 		this.creator = creator;
+		this.operator = null;
 	}
 
-	public AutoGeneratePool(AutoGenerate<T> creator, long timeout, int maxSize) {
+	public AutoGeneratePool(AutoGenerate<T> creator, AdditionalOp<T> operator) {
+		super();
+		this.creator = creator;
+		this.operator = operator;
+	}
+
+	public AutoGeneratePool(AutoGenerate<T> creator, AdditionalOp<T> operator, long timeout, int maxSize) {
 		super(timeout, maxSize);
 		this.creator = creator;
+		this.operator = operator;
 	}
 
 	protected T accessAndValidate() {
 		T tmp = null;
 		int attemptCount = 0;
-		do {
+		 while (true) {
 			tmp = getFromAvailableContainer();
 			if (tmp == null) {
 				if (size() > maxSize)
@@ -45,12 +55,21 @@ public class AutoGeneratePool<T> extends TimeoutRecyclePool<T> {
 				}
 				while ((id = add(passerby)) == null) {
 					attemptCount++;
-					if (attemptCount > 10)
+					if (attemptCount > 10) {
+						if(passerby instanceof AutoCloseable)
+							try {
+								((AutoCloseable) passerby).close();
+							} catch (Exception e) { }
 						throw new LYException("Attempt to add new instance to pool for 10 times, the container is full");
+					}
 				}
+				if(operator != null && !operator.operate(passerby))
+					continue;
+				//((Task) passerby).begin("Auto Generated - " + creator.getInstanceClass().getSimpleName());
 				tmp = getFromAvailableContainer(id);
 			}
-		} while (false);
+			break;
+		}
 		return tmp;
 	}
 
@@ -66,44 +85,5 @@ public class AutoGeneratePool<T> extends TimeoutRecyclePool<T> {
 			return tmp;
 		}
 	}
-
-	@Override
-	public void recycle() {
-		synchronized (lock) {
-			for (Long id : startTime.keySet()) {
-				long start = startTime.get(id);
-				if (System.currentTimeMillis() - start > timeout) {
-					T tmp = busyContainer.get(id);
-					if (tmp != null) {
-						try {
-							if (tmp instanceof AutoCloseable) {
-								((AutoCloseable) tmp).close();
-							}
-						} catch (Exception e) {
-							throw new LYException("Recycle failed", e);
-						}
-						busyContainer.remove(id);
-						keyContainer.remove(id);
-						startTime.remove(id);
-					}
-				}
-			}
-		}
-		// recover();
-		safeCheck();
-	}
-
-	// /**
-	// * Refill destroyed sockets
-	// */
-	// public void recover()
-	// {
-	// while (maxSize > size()) {
-	// int count = maxSize - size();
-	// for (int i = 0; i < count; i++) {
-	// add((T) user.refill());
-	// }
-	// }
-	// }
 
 }
