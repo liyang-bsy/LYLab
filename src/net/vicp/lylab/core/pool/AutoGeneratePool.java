@@ -63,11 +63,10 @@ public class AutoGeneratePool<T> extends TimeoutRecyclePool<T> {
 						throw new LYException("Attempt to add new instance to pool for 10 times, the container is full");
 					}
 				}
-				if(operator != null && !operator.operate(passerby))
-					continue;
-				//((Task) passerby).begin("Auto Generated - " + creator.getInstanceClass().getSimpleName());
 				tmp = getFromAvailableContainer(id);
 			}
+			if(operator != null && !operator.operate(passerby))
+				continue;
 			break;
 		}
 		return tmp;
