@@ -9,29 +9,11 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exception.LYException;
 
 public final class StringLineWriter extends NonCloneableBaseObject {
-	/**
-	 * 路径
-	 */
-	private String path;
-	/**
-	 * 后缀
-	 */
+	private String path = "";
 	private String suffix = "txt";
-	/**
-	 * 最大输出条数
-	 */
 	private int maxLine = 10000;
-	/**
-	 * 文件名
-	 */
 	private String fileName;
-	/**
-	 * 文件输出
-	 */
 	private FileOutputStream fileOut = null;
-	/**
-	 * 输出条数
-	 */
 	private int outCount = 0;
 
 	public StringLineWriter(String path) {
@@ -133,7 +115,7 @@ public final class StringLineWriter extends NonCloneableBaseObject {
 	}
 
 	public void setSuffix(String suffix) {
-		this.suffix = suffix;
+		this.suffix = suffix.replaceFirst("^\\.", "");
 	}
 
 	public int getMaxLine() {
