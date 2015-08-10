@@ -65,7 +65,7 @@ public class AutoGeneratePool<T> extends TimeoutRecyclePool<T> {
 				}
 				tmp = getFromAvailableContainer(id);
 			}
-			if(operator != null && !operator.operate(passerby))
+			if(operator != null && !operator.operate(tmp))
 				continue;
 			break;
 		}
