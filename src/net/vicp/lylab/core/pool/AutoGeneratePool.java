@@ -1,7 +1,8 @@
 package net.vicp.lylab.core.pool;
 
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.AdditionalOp;
+import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.utils.creator.AutoGenerate;
 
 /**
@@ -52,6 +53,12 @@ public class AutoGeneratePool<T> extends TimeoutRecyclePool<T> {
 					passerby = creator.newInstance();
 				} catch (Throwable e) {
 					throw new LYException("Create new instance failed", e);
+				}
+				try {
+					if(passerby instanceof Initializable)
+						((Initializable) passerby).initialize();
+				} catch (Throwable e) {
+					throw new LYException("Initialize new instance failed", e);
 				}
 				while ((id = add(passerby)) == null) {
 					attemptCount++;

@@ -1,7 +1,7 @@
 package net.vicp.lylab.utils;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 
 public final class Caster extends NonCloneableBaseObject {
 

@@ -1,6 +1,6 @@
 package net.vicp.lylab.core;
 
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 
 public class CloneableBaseObject extends BaseObject implements Cloneable {
 	@Override

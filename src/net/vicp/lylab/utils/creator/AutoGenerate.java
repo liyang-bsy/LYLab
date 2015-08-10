@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.vicp.lylab.core.CloneableBaseObject;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 
 public abstract class AutoGenerate<T> extends CloneableBaseObject implements AutoInitialize<T> {

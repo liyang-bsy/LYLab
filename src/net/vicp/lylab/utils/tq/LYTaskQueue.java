@@ -14,7 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.pool.Pool;

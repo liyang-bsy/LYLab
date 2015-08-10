@@ -2,7 +2,7 @@ package net.vicp.lylab.utils.internet.protocol;
 
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 
 /**

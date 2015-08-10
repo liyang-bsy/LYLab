@@ -2,7 +2,7 @@ package net.vicp.lylab.utils.creator;
 
 import java.nio.channels.Selector;
 
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 
 public class SelectorCreator extends CustomCreator<Selector> {
 

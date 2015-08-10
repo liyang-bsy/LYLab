@@ -16,14 +16,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.core.pool.RecyclePool;
-import net.vicp.lylab.server.transport.Transport;
+import net.vicp.lylab.server.transport_give_up.Transport;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 

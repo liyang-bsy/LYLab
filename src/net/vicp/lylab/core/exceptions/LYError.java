@@ -1,4 +1,4 @@
-package net.vicp.lylab.core.exception;
+package net.vicp.lylab.core.exceptions;
 
 public class LYError extends RuntimeException {
 	private static final long serialVersionUID = -8672577910978450074L;

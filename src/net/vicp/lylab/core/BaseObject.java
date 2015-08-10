@@ -1,6 +1,6 @@
 package net.vicp.lylab.core;
 
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

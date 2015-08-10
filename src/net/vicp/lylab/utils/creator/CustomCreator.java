@@ -1,6 +1,6 @@
 package net.vicp.lylab.utils.creator;
 
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 
 public abstract class CustomCreator<T> extends AutoGenerate<T> {
 

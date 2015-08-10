@@ -3,7 +3,7 @@ package net.vicp.lylab.utils.internet;
 import java.lang.reflect.Constructor;
 import java.util.List;
 
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Protocol;

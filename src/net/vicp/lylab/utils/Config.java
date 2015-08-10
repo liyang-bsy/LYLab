@@ -16,7 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.model.Pair;
 
 /**

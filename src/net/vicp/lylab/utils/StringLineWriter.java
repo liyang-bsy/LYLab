@@ -6,7 +6,7 @@ import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 
 public final class StringLineWriter extends NonCloneableBaseObject {
 	private String path = "";

@@ -2,7 +2,7 @@ package net.vicp.lylab.server.filter;
 
 import java.net.Socket;
 
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.model.Message;
 

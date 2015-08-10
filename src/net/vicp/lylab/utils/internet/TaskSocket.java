@@ -7,7 +7,7 @@ import java.net.Socket;
 import java.util.Arrays;
 
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Recyclable;

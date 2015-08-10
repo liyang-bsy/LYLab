@@ -5,7 +5,7 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 
 public abstract class AtomicReference<T> extends AtomicObject<Reference<T>> implements AutoInitialize<T> {

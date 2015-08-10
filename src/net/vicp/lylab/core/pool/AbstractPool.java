@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 
 /**
  * 抽象池

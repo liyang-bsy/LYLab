@@ -2,7 +2,7 @@ package net.vicp.lylab.utils.internet;
 
 import java.nio.channels.Selector;
 
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.pool.TimeoutRecyclePool;
 
 /**

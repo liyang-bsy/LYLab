@@ -13,7 +13,7 @@ import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 

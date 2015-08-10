@@ -1,4 +1,4 @@
-package net.vicp.lylab.server.transport;
+package net.vicp.lylab.server.transport_give_up;
 
 import java.util.Map;
 import java.util.UUID;
@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;

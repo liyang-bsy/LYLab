@@ -1,6 +1,6 @@
 package net.vicp.lylab.core.interfaces;
 
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 
 /**
  * General Auto Initialize Object interface for all classes.

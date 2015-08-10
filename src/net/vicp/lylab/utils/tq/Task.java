@@ -6,7 +6,7 @@ import java.util.Date;
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.exception.LYException;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Executor;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
