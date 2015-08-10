@@ -8,6 +8,7 @@ import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.server.aop.DefaultAop;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.internet.ToClientLongSocket;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
@@ -56,27 +57,34 @@ public class SyncServer extends Task implements LifeCycle {
 
 	@Override
 	public void exec() {
-		try {
-			if(this.lyTaskQueue == null) {
-				lyTaskQueue = new LYTaskQueue();
-				try {
-					lyTaskQueue.setMaxQueue(CoreDef.config.getConfig("SyncServer").getInteger("maxQueue"));
-				} catch (Exception e) { }
-				try {
-					lyTaskQueue.setMaxThread(CoreDef.config.getConfig("SyncServer").getInteger("maxThread"));
-				} catch (Exception e) { }
+		if (this.lyTaskQueue == null) {
+			lyTaskQueue = new LYTaskQueue();
+			try {
+				lyTaskQueue.setMaxQueue(CoreDef.config.getConfig("SyncServer")
+						.getInteger("maxQueue"));
+			} catch (Exception e) {
 			}
 			try {
-				port = CoreDef.config.getConfig("SyncServer").getInteger("port");
-			} catch (Exception e) { }
-			if (port == null)
-				throw new LYException("Parameter port is not defined");
-			serverSocket = new ServerSocket(port);
-			while (!isClosed.get()) {
-				lyTaskQueue.addTask(new ToClientLongSocket(serverSocket, new SimpleHeartBeat()).setAopLogic(aop));
+				lyTaskQueue.setMaxThread(CoreDef.config.getConfig("SyncServer")
+						.getInteger("maxThread"));
+			} catch (Exception e) {
 			}
+		}
+		try {
+			port = CoreDef.config.getConfig("SyncServer").getInteger("port");
 		} catch (Exception e) {
-			e.printStackTrace();
+		}
+		try {
+			serverSocket = new ServerSocket(port);
+		} catch (Exception e) {
+			throw new LYException("Server start failed", e);
+		}
+		while (!isClosed.get()) {
+			try {
+				lyTaskQueue.addTask(new ToClientLongSocket(serverSocket, new SimpleHeartBeat()).setAopLogic(aop));
+			} catch (Exception e) {
+				log.error(Utils.getStringFromException(e));
+			}
 		}
 	}
 
