@@ -15,12 +15,11 @@ import net.vicp.lylab.utils.Utils;
 import org.apache.commons.lang3.StringUtils;
 
 public class DefaultAop extends NonCloneableBaseObject implements Aop {
-	protected List<Filter> filterChain;
+	protected List<Filter> filterChain = new ArrayList<Filter>();
 
 	@Override
 	public void initialize() {
-		filterChain = new ArrayList<Filter>();
-
+		filterChain.clear();
 		for (String key : CoreDef.config.getConfig("Filters").keyList()) {
 			try {
 				Class<?> instanceClass = Class.forName(CoreDef.config.getConfig("Filters").getString(key));
