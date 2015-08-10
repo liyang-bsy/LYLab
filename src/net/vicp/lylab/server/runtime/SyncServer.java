@@ -3,6 +3,7 @@ package net.vicp.lylab.server.runtime;
 import java.net.ServerSocket;
 
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.exception.LYException;
 import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
@@ -28,6 +29,7 @@ public class SyncServer extends Task implements LifeCycle {
 	protected ServerSocket serverSocket;
 	protected LYTaskQueue lyTaskQueue = null;
 	protected Aop aop;
+	protected Integer port = null;
 
 	public SyncServer() {
 		this(new DefaultAop());
@@ -64,7 +66,12 @@ public class SyncServer extends Task implements LifeCycle {
 					lyTaskQueue.setMaxThread(CoreDef.config.getConfig("SyncServer").getInteger("maxThread"));
 				} catch (Exception e) { }
 			}
-			serverSocket = new ServerSocket(CoreDef.config.getConfig("SyncServer").getInteger("port"));
+			try {
+				port = CoreDef.config.getConfig("SyncServer").getInteger("port");
+			} catch (Exception e) { }
+			if (port == null)
+				throw new LYException("Parameter port is not defined");
+			serverSocket = new ServerSocket(port);
 			while (!isClosed.get()) {
 				lyTaskQueue.addTask(new ToClientLongSocket(serverSocket, new SimpleHeartBeat()).setAopLogic(aop));
 			}
@@ -84,6 +91,14 @@ public class SyncServer extends Task implements LifeCycle {
 
 	public boolean isClosed() {
 		return isClosed.get();
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
 	}
 
 }

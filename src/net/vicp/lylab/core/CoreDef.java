@@ -105,13 +105,15 @@ public class CoreDef {
 	public static final long INTERVAL = TWO*SECOND;					// 2 second
 	public static final long INTERVAL_SHORT = SECOND/TWO;				// half second
 	public static final long INTERVAL_LONG = FIVE*SECOND;				// 5 second
-	
+
 	public static final long WAITING_TOLERANCE = TWO*MINUTE;			// 5 min
-	public static final int REQUEST_TTIMEOUT = (int) MINUTE;	// 60 second
+	public static final int REQUEST_TTIMEOUT = (int) MINUTE;			// 60 second
+
+	public static final long ONE_TIME_TASK = ZERO;
 	
 	public static final long DEFAULT_TASK_TTIMEOUT = TEN*MINUTE;		// 10 minutes
 
-	public static final long DEFAULT_CONTAINER_TIMEOUT = 2*MINUTE;
+	public static final long DEFAULT_CONTAINER_TIMEOUT = 2*MINUTE;		// 2 min
 	public static final int DEFAULT_CONTAINER_MAX_SIZE = HUNDRED;
 	public static final int MASSIVE_CONTAINER_MAX_SIZE = Integer.MAX_VALUE;
 
@@ -121,8 +123,6 @@ public class CoreDef {
 	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = MINUTE/TWO;
 
 	public static final long DEFAULT_PERMANENT_INTERVAL = SIX*TEN;		// 60 times
-
-	public static final long ONE_TIME_TASK = ZERO;
 	
 	public static final int SOCKET_MAX_BUFFER = TWO * KB;
 	public static final int DEFAULT_SOCKET_TTIMEOUT = (int) (MINUTE);

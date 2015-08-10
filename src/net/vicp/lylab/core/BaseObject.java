@@ -1,7 +1,6 @@
 package net.vicp.lylab.core;
 
 import net.vicp.lylab.core.exception.LYException;
-import net.vicp.lylab.utils.tq.Task;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,7 +29,7 @@ public class BaseObject {
 	/**
 	 * Now every BaseObject may use this to log something
 	 */
-	protected transient static Log log = LogFactory.getLog(Task.class);
+	protected transient static Log log = LogFactory.getLog(BaseObject.class);
 
 	/**
 	 * Inner lock
