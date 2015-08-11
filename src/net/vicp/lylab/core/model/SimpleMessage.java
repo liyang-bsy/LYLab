@@ -45,10 +45,14 @@ public class SimpleMessage extends SimpleConfirm {
 		this.body = body;
 	}
 
-	public void success()
-	{
+	public void success() {
 		this.setCode(0);
 		this.setMessage("ok");
+	}
+
+	public void fail(String msg) {
+		this.setCode(1);
+		this.setMessage(msg);
 	}
 
 	@Override
@@ -56,5 +60,5 @@ public class SimpleMessage extends SimpleConfirm {
 		return "Message [message=" + message + ", key=" + key + ", body="
 				+ body + ", code=" + code + "]";
 	}
-	
+
 }
