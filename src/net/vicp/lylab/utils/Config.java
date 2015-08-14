@@ -390,7 +390,7 @@ public final class Config extends NonCloneableBaseObject {
 			throw new LYException("Key is null");
 		Object tmp = dataMap.get(key);
 		if (tmp == null)
-			throw new LYException("Follow entry[" + key + "] not found, check your config file[" + fileName + "]");
+			throw new LYException("Entry[" + key + "] not found in your config file[" + fileName + "]");
 		return tmp;
 	}
 	
