@@ -179,7 +179,7 @@ public final class Config extends NonCloneableBaseObject {
 			if(sortRule.get(property.getLeft().charAt(0)) < sortRule.get(lazyLoad.get(i).getLeft().charAt(0)))
 				break;
 		lazyLoad.add(i,property);
-		log.debug(property);
+		log.debug("[Insert]:" + property);
 		
 	}
 
@@ -189,7 +189,7 @@ public final class Config extends NonCloneableBaseObject {
 		try {
 			for(int i=0;i<lazyLoad.size();i++) {
 				property = lazyLoad.get(i);
-				log.debug(property);
+				log.debug("[Load]:" + property);
 				String propertyName = property.getLeft();
 				String propertyValue = property.getRight();
 				if (propertyName.startsWith("$")) {
