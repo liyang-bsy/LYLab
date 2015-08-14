@@ -3,7 +3,11 @@ package net.vicp.lylab.utils.timer;
 import java.util.Date;
 import java.util.TimerTask;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import net.vicp.lylab.core.interfaces.Executor;
+import net.vicp.lylab.utils.Utils;
 
 /**
  * Extends TimerJob and reference to Plan(manage class).<br>
@@ -19,6 +23,11 @@ import net.vicp.lylab.core.interfaces.Executor;
  */
 public abstract class TimerJob extends TimerTask implements Executor {
 
+	/**
+	 * Now every TimerJob may use this to log something
+	 */
+	protected transient static Log log = LogFactory.getLog(TimerJob.class);
+	
 	protected static final int ONE_TIME_TASK = 0;
 	protected static final int MILLISECOND = 1;
 	protected static final int SECOND = 1000 * MILLISECOND;
@@ -48,8 +57,8 @@ public abstract class TimerJob extends TimerTask implements Executor {
 	public final void run() {
 		try {
 			exec();
-		} catch (Throwable e) {
-			e.printStackTrace();
+		} catch (Throwable t) {
+			log.error(Utils.getStringFromThrowable(t));
 		}
 	}
 

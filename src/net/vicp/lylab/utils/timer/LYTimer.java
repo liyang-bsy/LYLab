@@ -48,7 +48,7 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle {
 					timer.get(Timer.class).schedule(bj, bj.getStartTime(), bj.getInterval());
 				else
 					timer.get(Timer.class).schedule(bj, bj.getStartTime());
-				log.info("LYPlan - Load scheduled job: " + bj.getClass().getName());
+				log.info("LYTimer - Load scheduled job: " + bj.getClass().getName());
 			}
 		}
 	}
@@ -58,7 +58,7 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle {
 		synchronized (lock) {
 			for (TimerJob tj : getJobs()) {
 				tj.cancel();
-				log.info("LYPlan - Cancel scheduled job: " + tj.getClass().getName());
+				log.info("LYTimer - Cancel scheduled job: " + tj.getClass().getName());
 			}
 			init.set(false);
 			timer.get(Timer.class).cancel();
@@ -79,7 +79,7 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle {
 					timer.get(Timer.class).schedule(bj, bj.getStartTime(), bj.getInterval());
 				else
 					timer.get(Timer.class).schedule(bj, bj.getStartTime());
-				log.info("LYPlan - Load new schedule job: " + bj.getClass().getName());
+				log.info("LYTimer - Load new schedule job: " + bj.getClass().getName());
 			} catch (Exception e) {
 				log.error(Utils.getStringFromException(e));
 				return false;
