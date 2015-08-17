@@ -131,12 +131,8 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 		{
 			lastActivity = System.currentTimeMillis();
 			byte[] ret = null;
-			try {
-				send(request);
-				ret = receive();
-			} catch (Exception e) {
-				log.error(Utils.getStringFromException(e));
-			}
+			send(request);
+			ret = receive();
 			return ret;
 		}
 	}
@@ -230,7 +226,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 						log.error("Send heartbeat failed\n" + obj.toString());
 				}
 			} catch (Exception e) {
-				log.error("This socket may be dead" + Utils.getStringFromException(e));
+				log.error("This socket may have dead" + Utils.getStringFromException(e));
 			}
 			return false;
 		}

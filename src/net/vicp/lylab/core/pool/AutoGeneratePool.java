@@ -3,6 +3,7 @@ package net.vicp.lylab.core.pool;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.AdditionalOp;
 import net.vicp.lylab.core.interfaces.Initializable;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.creator.AutoGenerate;
 
 /**
@@ -72,9 +73,14 @@ public class AutoGeneratePool<T> extends TimeoutRecyclePool<T> {
 				}
 				tmp = getFromAvailableContainer(id);
 			}
-			if(operator != null && !operator.operate(tmp))
-				continue;
-			break;
+			try {
+				if (operator == null || operator.operate(tmp))
+					break;
+			} catch (Exception e) {
+				log.error("Validate available failed:" + Utils.getStringFromException(e));
+			}
+			searchAndRemove(tmp);
+			continue;
 		}
 		return tmp;
 	}
