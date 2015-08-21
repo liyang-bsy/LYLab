@@ -122,7 +122,7 @@ public class CoreDef {
 	public static final long DEFAULT_TERMINATE_TIMEOUT = TWO*MINUTE;
 	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = MINUTE/TWO;
 
-	public static final long DEFAULT_PERMANENT_INTERVAL = SIX*TEN;		// 60 times
+	public static final long DEFAULT_PERMANENT_INTERVAL = SIX*TEN*SIX*TEN;		// 60 times
 	
 	public static final int SOCKET_MAX_BUFFER = TWO * KB;
 	public static final int DEFAULT_SOCKET_TTIMEOUT = (int) (MINUTE);

@@ -1,5 +1,6 @@
 package net.vicp.lylab.utils.permanent;
 
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.utils.StringLineWriter;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.tq.LoneWolf;
@@ -9,9 +10,11 @@ public class DiskPermanent extends LoneWolf implements AutoCloseable {
 	
 	StringLineWriter writer;
 	protected AtomicBoolean working = new AtomicBoolean(false);
+	protected String basePath;
 	
 	public DiskPermanent(String filePath, String fileSuffix) {
-		writer = new StringLineWriter(filePath);
+		basePath = filePath;
+		writer = new StringLineWriter(basePath);
 		writer.setSuffix(fileSuffix);
 		working.set(true);
 	}
@@ -32,9 +35,9 @@ public class DiskPermanent extends LoneWolf implements AutoCloseable {
 	}
 
 	@Override
+	@Deprecated
 	public void exec() {
-		// do nothing
-		return;
+		throw new LYException("Method is not available");
 	}
 
 	public void setMaxLine(int maxLine) {

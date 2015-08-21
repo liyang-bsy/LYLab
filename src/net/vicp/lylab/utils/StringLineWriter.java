@@ -29,7 +29,6 @@ public final class StringLineWriter extends NonCloneableBaseObject {
 					if(isOpenFile() == false)
 						open();
 					fileOut.write((line + "\r\n").getBytes(CoreDef.CHARSET()));
-					fileOut.write("\r\n".getBytes());
 					outCount++;
 					if (maxLine <= outCount)
 						close();
