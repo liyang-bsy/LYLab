@@ -54,9 +54,10 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 		}
 	}
 	
-	public TaskSocket(String host, Integer port) {
+	public TaskSocket(String host, Integer port, Protocol protocol) {
 		this.host = host;
 		this.port = port;
+		this.protocol = protocol;
 		setIsServer(false);
 	}
 

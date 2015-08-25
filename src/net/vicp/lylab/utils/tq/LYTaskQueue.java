@@ -412,8 +412,8 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 		taskPool.setMaxSize(maxQueue);
 	}
 
-	public void setMaxThread(Integer maxThread) {
-		if(maxQueue <= 0) throw new LYException("maxThread must be positive");
+	public void setMaxThread(int maxThread) {
+		if(maxThread <= 0) throw new LYException("maxThread must be positive");
 		this.maxThread = maxThread;
 		getThreadPool().setMaxSize(maxThread);
 	}

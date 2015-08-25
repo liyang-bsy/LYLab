@@ -37,9 +37,8 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 	}
 
 	public LongSocket(String host, Integer port, Protocol protocol, HeartBeat heartBeat) {
-		super(host, port);
+		super(host, port, protocol);
 		this.heartBeat = heartBeat;
-		this.protocol = protocol;
 	}
 
 	@Override

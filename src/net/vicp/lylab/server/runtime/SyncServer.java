@@ -10,7 +10,9 @@ import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.server.aop.DefaultAop;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
+import net.vicp.lylab.utils.internet.BaseSocket;
 import net.vicp.lylab.utils.internet.ToClientLongSocket;
+import net.vicp.lylab.utils.internet.ToClientSocket;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.Task;
 
@@ -31,6 +33,7 @@ public class SyncServer extends Task implements LifeCycle {
 	protected LYTaskQueue lyTaskQueue = null;
 	protected Aop aop;
 	protected Integer port = null;
+	protected boolean isLongServer = false;
 
 	public SyncServer() {
 		this(new DefaultAop());
@@ -81,7 +84,13 @@ public class SyncServer extends Task implements LifeCycle {
 		}
 		while (!isClosed.get()) {
 			try {
-				lyTaskQueue.addTask(new ToClientLongSocket(serverSocket, new SimpleHeartBeat()).setAopLogic(aop));
+				BaseSocket bs = null;
+				if(isLongServer)
+					bs = new ToClientLongSocket(serverSocket, new SimpleHeartBeat()).setAopLogic(aop);
+				else
+					bs = new ToClientSocket(serverSocket).setAopLogic(aop);
+				if(lyTaskQueue.addTask(bs) == null)
+					await(CoreDef.WAITING_SHORT);
 			} catch (Exception e) {
 				log.error(Utils.getStringFromException(e));
 			}
@@ -107,6 +116,14 @@ public class SyncServer extends Task implements LifeCycle {
 
 	public void setPort(int port) {
 		this.port = port;
+	}
+
+	public boolean isLongServer() {
+		return isLongServer;
+	}
+
+	public void setLongServer(boolean isLongServer) {
+		this.isLongServer = isLongServer;
 	}
 
 }

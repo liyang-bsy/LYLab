@@ -67,7 +67,7 @@ public abstract class AbstractPool<T> extends CloneableBaseObject implements Poo
 			if (isClosed())
 				throw new LYException("This pool is already closed");
 			availableContainer.clear();
-			this.notifyAll();
+			lock.notifyAll();
 		}
 	}
 

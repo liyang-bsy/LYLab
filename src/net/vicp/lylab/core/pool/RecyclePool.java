@@ -61,6 +61,27 @@ public class RecyclePool<T> extends IndexedPool<T> {
 			busyContainer = null;
 		}
 	}
+	
+	protected void closeAll() {
+		for(Long id:availableKeySet()) {
+			T tmp = availableContainer.get(id);
+			if(tmp instanceof AutoCloseable)
+				try {
+					((AutoCloseable) tmp).close();
+				} catch (Exception e) {
+					log.error(Utils.getStringFromException(e));
+				}
+		}
+		for(Long id:busyKeySet()) {
+			T tmp = busyContainer.get(id);
+			if(tmp instanceof AutoCloseable)
+				try {
+					((AutoCloseable) tmp).close();
+				} catch (Exception e) {
+					log.error(Utils.getStringFromException(e));
+				}
+		}
+	}
 
 	@Override
 	public boolean isClosed() {
@@ -74,24 +95,7 @@ public class RecyclePool<T> extends IndexedPool<T> {
 		synchronized (lock) {
 			if (isClosed())
 				return;
-			for(Long id:availableKeySet()) {
-				T tmp = availableContainer.get(id);
-				if(tmp instanceof AutoCloseable)
-					try {
-						((AutoCloseable) tmp).close();
-					} catch (Exception e) {
-						log.error(Utils.getStringFromException(e));
-					}
-			}
-			for(Long id:busyKeySet()) {
-				T tmp = busyContainer.get(id);
-				if(tmp instanceof AutoCloseable)
-					try {
-						((AutoCloseable) tmp).close();
-					} catch (Exception e) {
-						log.error(Utils.getStringFromException(e));
-					}
-			}
+			closeAll();
 			super.clear();
 			keyContainer.clear();
 			busyContainer.clear();

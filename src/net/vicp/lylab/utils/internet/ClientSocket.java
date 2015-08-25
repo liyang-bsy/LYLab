@@ -1,5 +1,6 @@
 package net.vicp.lylab.utils.internet;
 
+import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
 
@@ -16,8 +17,8 @@ import net.vicp.lylab.core.interfaces.Transmission;
 public class ClientSocket extends TaskSocket implements Recyclable, AutoCloseable, Transmission {
 	private static final long serialVersionUID = 7043024251356229037L;
 
-	public ClientSocket(String host, Integer port) {
-		super(host, port);
+	public ClientSocket(String host, Integer port, Protocol protocol) {
+		super(host, port, protocol);
 	}
 
 	@Override
