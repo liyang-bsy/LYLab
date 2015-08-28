@@ -7,18 +7,24 @@ import java.util.List;
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Aop;
+import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.internet.HeartBeat;
 
 import org.apache.commons.lang3.StringUtils;
 
 public class DefaultAop extends NonCloneableBaseObject implements Aop {
 	protected List<Filter> filterChain = new ArrayList<Filter>();
-
+	protected Protocol protocol= null;
+	
 	@Override
 	public void initialize() {
+		if(protocol == null)
+			throw new LYException("No available protocol");
 		filterChain.clear();
 		for (String key : CoreDef.config.getConfig("Filters").keyList()) {
 			try {
@@ -38,18 +44,34 @@ public class DefaultAop extends NonCloneableBaseObject implements Aop {
 	}
 	
 	@Override
-	public Message doAction(Socket client, Message request) {
+	public byte[] doAction(Socket client, byte[] requestByte, int offset) {
+		Message request = null;
+
 		String key = null;
 		BaseAction action = null;
-		Message response = null;
-		// do start filter
-		if (filterChain != null && filterChain.size() != 0)
-			for (Filter filter : filterChain)
-				if ((response = filter.doFilter(client, request)) != null)
-					return response;
-		response = new Message();
+		Message response = new Message();
 		try {
 			do {
+				try {
+					Object obj = protocol.decode(requestByte, offset);
+					if(obj instanceof HeartBeat)
+						return protocol.encode(obj);
+					request = (Message) obj;
+				} catch (Exception e) {
+					log.debug(Utils.getStringFromException(e));
+				}
+				if(request == null) {
+					response.setCode(0x00001);
+					response.setMessage("Message not found");
+					break;
+				}
+				// do start filter
+				if (filterChain != null && filterChain.size() != 0)
+					for (Filter filter : filterChain) {
+						Message ret = null;
+						if ((ret = filter.doFilter(client, request)) != null)
+							return protocol.encode(ret);
+					}
 				// gain key from request
 				key = request.getKey();
 				if (StringUtils.isBlank(key)) {
@@ -83,7 +105,16 @@ public class DefaultAop extends NonCloneableBaseObject implements Aop {
 		}
 		// to logger
 		log.debug("Access key:" + key  + "\nBefore:" + request + "\nAfter:" + response);
-		return response;
+		return protocol.encode(response);
+	}
+
+	public Protocol getProtocol() {
+		return protocol;
+	}
+
+	public Aop setProtocol(Protocol protocol) {
+		this.protocol = protocol;
+		return this;
 	}
 
 }

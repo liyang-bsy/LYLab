@@ -7,7 +7,6 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.core.pool.TimeoutSequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
@@ -102,24 +101,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 
 	@Override
 	public byte[] response(Socket client, byte[] request, int offset) {
-		Message requestMsg = null;
-		Message responseMsg = null;
-		try {
-			Object obj = protocol.decode(request, offset);
-			if(obj instanceof HeartBeat)
-				return protocol.encode(heartBeat);
-			requestMsg = (Message) obj;
-		} catch (Exception e) {
-			log.debug(Utils.getStringFromException(e));
-		}
-		if(requestMsg == null) {
-			responseMsg = new Message();
-			responseMsg.setCode(0x00001);
-			responseMsg.setMessage("Message not found");
-		}
-		else
-			responseMsg = getAopLogic().doAction(client, requestMsg);
-		return protocol == null ? null : protocol.encode(responseMsg);
+		return getAopLogic().doAction(client, request, offset);
 	}
 	
 	@Override

@@ -20,7 +20,6 @@ import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Transmission;
-import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.core.pool.RecyclePool;
 import net.vicp.lylab.server.transport_give_up.Transport;
@@ -160,28 +159,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 
 	@Override
 	public byte[] response(Socket client, byte[] request, int offset) {
-		Message requestMsg = null;
-		Message responseMsg = null;
-		try {
-			Object obj = protocol.decode(request, offset);
-			if(obj instanceof HeartBeat)
-				return protocol.encode(heartBeat);
-			requestMsg = (Message) obj;
-		} catch (Exception e) {
-			log.debug(Utils.getStringFromException(e));
-		}
-		if(requestMsg == null) {
-			responseMsg = new Message();
-			responseMsg.setCode(0x00001);
-			responseMsg.setMessage("Message not found");
-		}
-		else
-			responseMsg = getAopLogic().doAction(client, requestMsg);
-		byte[] response = null;
-		if(protocol != null) {
-			response = protocol.encode(responseMsg);
-		}
-		return response;
+		return getAopLogic().doAction(client, request, offset);
 	}
 	
 	private byte[] doResponse(Socket client, byte[] request, int offset) {

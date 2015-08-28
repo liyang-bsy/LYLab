@@ -7,7 +7,6 @@ import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
-import net.vicp.lylab.server.aop.DefaultAop;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.internet.BaseSocket;
@@ -36,7 +35,7 @@ public class SyncServer extends Task implements LifeCycle {
 	protected boolean isLongServer = false;
 
 	public SyncServer() {
-		this(new DefaultAop());
+		aop = null;
 	}
 
 	public SyncServer(Aop aop) {
@@ -122,7 +121,7 @@ public class SyncServer extends Task implements LifeCycle {
 		return isLongServer;
 	}
 
-	public void setLongServer(boolean isLongServer) {
+	public void setIsLongServer(boolean isLongServer) {
 		this.isLongServer = isLongServer;
 	}
 

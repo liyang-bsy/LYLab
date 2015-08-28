@@ -12,7 +12,6 @@ import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
-import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
@@ -97,21 +96,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 
 	@Override
 	public byte[] response(Socket client, byte[] request, int offset) {
-		Message requestMsg = null;
-		Message responseMsg = null;
-		try {
-			requestMsg = (Message) protocol.decode(request, offset);
-		} catch (Exception e) {
-			log.debug(Utils.getStringFromException(e));
-		}
-		if(requestMsg == null) {
-			responseMsg = new Message();
-			responseMsg.setCode(0x00001);
-			responseMsg.setMessage("Message not found");
-		}
-		else
-			responseMsg = getAopLogic().doAction(client, requestMsg);
-		return protocol == null ? null : protocol.encode(responseMsg);
+		return getAopLogic().doAction(client, request, offset);
 	}
 	
 	public byte[] doRequest(byte[] request) {
@@ -164,7 +149,22 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 		}
 		return true;
 	}
-	
+
+	public void write(int b) throws Exception {
+		if(isClosed()) return;
+		out.write(b);
+	}
+
+	public void write(byte[] b) throws Exception {
+		if(isClosed()) return;
+		out.write(b);
+	}
+
+	public void write(byte[] b, int off, int len) throws Exception {
+		if(isClosed()) return;
+		out.write(b, off, len);
+	}
+
 	protected byte[] receive() {
 		if(isClosed()) throw new LYException("Connection closed");
 		if (in != null) {
@@ -187,30 +187,50 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 				if(bufferLen == 0 && (protocol == null || ProtocolUtils.isMultiProtocol()))
 					protocol = ProtocolUtils.pairWithProtocol(buffer);
 				bufferLen += getLen;
-				
 				if (protocol.validate(buffer, bufferLen) > 0)
 					break;
 			}
 		}
 		return buffer;
 	}
+	
+	public int read() throws Exception {
+		if(isClosed()) throw new LYException("Connection closed");
+		if (in != null)
+			return in.read();
+		return 0;
+	}
+
+	public int read(byte[] b) throws Exception {
+		if(isClosed()) throw new LYException("Connection closed");
+		if (in != null)
+			return in.read(b);
+		return 0;
+	}
+
+	public int read(byte[] b, int off, int len) throws Exception {
+		if(isClosed()) throw new LYException("Connection closed");
+		if (in != null)
+			return in.read(b, off, len);
+		return 0;
+	}
 
 	@Override
 	public void close() {
 		try {
-		if (thread != null)
-			thread.interrupt();
-		if (socket != null) {
-			socket.shutdownInput();
-			socket.shutdownOutput();
-			if(!socket.isClosed())
-				socket.close();
-			socket = null;
-			in = null;
-			out = null;
-		}
-		if(afterClose != null)
-			afterClose.callback();
+			if (thread != null)
+				thread.interrupt();
+			if (socket != null) {
+				socket.shutdownInput();
+				socket.shutdownOutput();
+				if(!socket.isClosed())
+					socket.close();
+				socket = null;
+				in = null;
+				out = null;
+			}
+			if(afterClose != null)
+				afterClose.callback();
 		} catch (Exception e) {
 			throw new LYException("Close failed", e);
 		}
