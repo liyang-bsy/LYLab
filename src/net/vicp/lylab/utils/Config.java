@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,12 +13,14 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.lang3.StringUtils;
-
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.model.Pair;
+
+import org.apache.commons.lang3.StringUtils;
+
+import flexjson.JSONSerializer;
 
 /**
  * Powerful config object for global uses, support specific program mark
@@ -25,20 +28,30 @@ import net.vicp.lylab.core.model.Pair;
  * <br>Follow marks were supported
  * <br><br><b>Mode mark(first line only):</b> {@code [TREE]} or {@code [PLAIN]}, {@code [TREE]} is default
  * <br><br><b>Comment mark:</b> key(start with #) or bad key/value will be regard as comment
- * <br>Example:#comment = o(*≧▽≦)ツ
+ * <br>Example:
+ * <br>#comment = o(*≧▽≦)ツ
  * <br>Well, it will be nothing...
  * <br><br><b>Object mark:</b> the value of key(start with *) should be class name, stored its new instance. If value(start with &), will be regard as key and try to find any the key from itself or its parents.
- * <br>Example:*object1=com.java.ExampleClass
+ * <br>Example:
+ * <br>*object1=com.java.ExampleClass
  * <br>You can access "object1" by {@link #getObject(String key)}: {@code config.getObject("object1")};
  * <br><b>[!]</b>ExampleClass <b>MUST</b> have a default constructor
  * <br><br><b>Parameter mark:</b> the value of key(start with ^) will be set to last Object(* mark). If value(start with &), will be regard as key and try to find any the key from itself or its parents.
- * <br>Example:^value1=123.45
+ * <br>Example:
+ * <br>^value1=123.45
  * <br>{@code exampleClass.setValue1(123.45);}
  * <br>Its key will finally be dropped, certainly never replace any existed keys
  * <br><br><b>Configuration mark:</b> key(start with $) will be regard as another {@link Config}
- * <br>Example:$config1=dir/next_config.txt
+ * <br>Example:
+ * <br>$config1=dir/next_config.txt
  * <br>You can access "object1" by {@link #getObject(String key)} or {@link #getConfig(String key)} : {@code config.getConfig("config1")};
  * <br>If sub-config is {@code [PLAIN]}, all its entry will be obtain into current config
+ * <br><br><b>Array mark:</b> key(start with []) will be regard as an array
+ * <br>Example:
+ * <br>[]item=abc
+ * <br>[]item=def
+ * <br>You will get an {@link String} array { "abc","def" };
+ * <br>The key will be retained at current config, you may reference to it somewhere else.
  * <br>
  * <br>Different between Tree/Plain {@link Config}
  * <br>Tree-Configuration {@link Config} could get it sub-config by {@link #getConfig(String key)}
@@ -60,12 +73,13 @@ public final class Config extends NonCloneableBaseObject {
 	// Pattern.compile("^[^\\[]+[\\[][0-9]*[\\]]$").matcher("65435632[554234]").find()
 
 	public static void main(String[] arg) {
-		System.out.println(new Config(CoreDef.rootPath + "\\config\\A.txt"));
+		System.out.println(new JSONSerializer().deepSerialize(new Config(CoreDef.rootPath + "\\config\\A.txt").dataMap));
 	}
 
 	private transient String fileName;
 	private Map<String, Object> dataMap;
 	private Map<String, Object> tmpMap;
+//	private Map<String, List<Object>> arrayMap;
 	private List<String> keyList = new ArrayList<String>();
 	private transient Config parent;
 	private int mode = 0;
@@ -74,13 +88,14 @@ public final class Config extends NonCloneableBaseObject {
 	private transient List<Pair<String, String>> lazyLoad = new ArrayList<Pair<String,String>>();
 
 //	public static final String INVISIBLE_CHAR = "[\u0000-\u0020]";
-	public static final String VALID_NAME = "([$*^][_\\w]*)|([_\\w]*)";
+	public static final String VALID_NAME = "(([$*^]|\\[\\])[_\\w]*)|([_\\w]*)";
 	public static final String VALID_VALUE = "([&][^&]*)|([^&]*)";
 	
 	public static final Map<Character, Integer> sortRule = new HashMap<Character, Integer>();
 	public static final Set<Character> lazyLoadSet;
 	static {
 		sortRule.put('*', 50);
+		sortRule.put('[', 50);
 		sortRule.put('^', 50);
 		sortRule.put('$', 100);
 		lazyLoadSet = sortRule.keySet();
@@ -121,6 +136,7 @@ public final class Config extends NonCloneableBaseObject {
 		// file trace tree
 		fileNameTrace.push(fileName);
 		// initial
+//		arrayMap = new HashMap<String, List<Object>>();
 		tmpMap = new ConcurrentHashMap<String, Object>();
 		// clear old data
 		lazyLoad.clear();
@@ -156,6 +172,9 @@ public final class Config extends NonCloneableBaseObject {
 			lazyLoad();
 		dataMap = tmpMap;
 		tmpMap = null;
+//		arrayMap.clear();
+//		arrayMap = null;
+//		System.gc();
 		fileNameTrace.pop();
 	}
 
@@ -183,6 +202,7 @@ public final class Config extends NonCloneableBaseObject {
 		
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void lazyLoad() {
 		Object lastObject = null;
 		Pair<String, String> property = null;
@@ -246,6 +266,7 @@ public final class Config extends NonCloneableBaseObject {
 									+ propertyRealValue
 									+ "] in this Config or parent Config");
 						target = obj;
+						putToMap(tmpMap, propertyRealName, target);
 					} else {
 						target = Class.forName(propertyValue).newInstance();
 						putToMap(tmpMap, propertyRealName, target);
@@ -271,6 +292,35 @@ public final class Config extends NonCloneableBaseObject {
 						setter(lastObject, propertyRealName, obj);
 					} else
 						setter(lastObject, propertyRealName, propertyValue);
+				} else if (propertyName.startsWith("[")) {
+					if(propertyName.charAt(1) != ']')
+						throw new LYException("Bad array format ["
+								+ propertyName
+								+ "], missing ']'");
+					// object parameter reference
+					String propertyRealName = propertyName.substring(2);
+					List valueContainer = (List) tmpMap.get(propertyRealName);
+					if(valueContainer == null) valueContainer = new ArrayList();
+					if (propertyValue.startsWith("&")) {
+						String propertyRealValue = propertyValue.substring(1);
+						Object obj = null;
+						Config root = this;
+						while (true) {
+							obj = root.tmpMap.get(propertyRealValue);
+							if (obj != null || root.parent == null)
+								break;
+							root = parent;
+						}
+						if (obj == null)
+							throw new LYException("Cannot find reference ["
+									+ propertyRealValue
+									+ "] in this Config or parent Config");
+						valueContainer.add(obj);
+						//setter(lastObject, propertyRealName, obj);
+					} else
+						valueContainer.add(propertyValue);
+//						setter(lastObject, propertyRealName, propertyValue);
+					putToMap(tmpMap, propertyRealName, valueContainer);
 				}
 			}
 		} catch (Exception e) {
@@ -286,6 +336,7 @@ public final class Config extends NonCloneableBaseObject {
 		return -1;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void setter(Object owner, String fieldName, Object param)
 			throws NoSuchMethodException, SecurityException,
 			IllegalAccessException, IllegalArgumentException,
@@ -319,7 +370,11 @@ public final class Config extends NonCloneableBaseObject {
 			}
 		// If we got its setter, then invoke it
 		if (setMethod != null)
-			if (param.getClass() == String.class)
+			if(param.getClass().getName().matches("^\\[L[a-zA-Z0-9_.]*;$")
+					|| Collection.class.isAssignableFrom(param.getClass()))
+				setMethod.invoke(owner,
+						Caster.arrayCast((List<Object>) param, parameterClass));
+			else if (param.getClass() == String.class)
 				// But sometimes we may need casting parameter before invoking
 				setMethod.invoke(owner,
 						Caster.simpleCast((String) param, parameterClass));
@@ -354,7 +409,7 @@ public final class Config extends NonCloneableBaseObject {
 				if(pair[0].matches(VALID_NAME)
 						&& pair[1].matches(VALID_VALUE))
 					properties.add(new Pair<String, String>(pair[0], pair[1]));
-				else log.error("Property" + rawPair + " contains invalid character");
+				else log.error("Property [" + rawPair + "] contains invalid character");
 			}
 		}
 	}

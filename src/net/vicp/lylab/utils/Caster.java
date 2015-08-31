@@ -1,5 +1,12 @@
 package net.vicp.lylab.utils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
@@ -64,4 +71,49 @@ public final class Caster extends NonCloneableBaseObject {
 		}
 	}
 
+	/**
+	 * ArrayList-based simple cast, from one {@link java.util.Collection} type to Array-based basic type
+	 * @param originalArray
+	 * @param targetClass
+	 * @return
+	 * Object of convert result
+	 * @throws
+	 * LYException If convert failed
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked"})
+	public static Object arrayCast(List originalArray, Class targetClass) {
+		if(originalArray == null)
+			throw new NullPointerException("Parameter originalArray is null");
+		if(targetClass == null)
+			throw new NullPointerException("Parameter targetClass is null");
+		
+		Object targetArray = null;
+		try {
+			if(List.class.isAssignableFrom(targetClass)) {
+				targetArray = new ArrayList();
+				((ArrayList) targetArray).addAll(originalArray);
+			}
+			else if(Set.class.isAssignableFrom(targetClass)) {
+				targetArray = new HashSet();
+				((HashSet) targetArray).addAll(originalArray);
+			}
+			else if(targetClass.getName().matches("^\\[L[a-zA-Z0-9_.]*;$")) {
+				targetArray = Arrays.copyOf(originalArray.toArray(), originalArray.size(), targetClass);
+			}
+			else if(Collection.class.isAssignableFrom(targetClass)) {
+				targetArray = originalArray;
+			}
+			
+//			if(Collection.class.isAssignableFrom(targetClass)) {
+//				targetArray = targetClass.newInstance();
+//				((Collection) targetArray).addAll(originalArray);
+//			}
+			if(targetArray == null)
+				throw new LYException("Unsupport target type:" + targetClass.getName());
+			return targetArray;
+		} catch (Exception e) {
+			throw new LYException("Cast failed from ArrayList [" + originalArray + "] to " + targetClass.getName(), e);
+		}
+	}
+	
 }
