@@ -58,9 +58,9 @@ import flexjson.JSONSerializer;
  * <br>Plain-Configuration will obtain all sub-config into itself
  * <br>
  * <br>Entry rule:
- * <br>Entry start with '#' will be regard as comment and ignored for dataMap;
- * <br>Key may start with function mark '$'/'*'/'^', itself contains underline, number or alphabet
- * <br>value may start with function mark '&', itself may contain any visible character except '&'
+ * <br>Entry start with "#" will be regard as comment and ignored for dataMap;
+ * <br>Key may start with function mark "$"/"*"/"^"/"[]", itself contains underline, number or alphabet
+ * <br>value may start with function mark "&", itself may contain any visible character except "&"
  * 
  * @author Young
  * @since 2015.07.29
