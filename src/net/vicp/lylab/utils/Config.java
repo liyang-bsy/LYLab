@@ -50,7 +50,7 @@ import flexjson.JSONSerializer;
  * <br>Example:
  * <br>[]item=abc
  * <br>[]item=def
- * <br>You will get an {@link String} array { "abc","def" };
+ * <br>You will get an {@link ArrayList} contains { "abc","def" };
  * <br>The key will be retained at current config, you may reference to it somewhere else.
  * <br>
  * <br>Different between Tree/Plain {@link Config}
