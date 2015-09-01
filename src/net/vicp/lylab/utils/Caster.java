@@ -80,7 +80,7 @@ public final class Caster extends NonCloneableBaseObject {
 	 * @throws
 	 * LYException If convert failed
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked"})
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static Object arrayCast(List originalArray, Class targetClass) {
 		if(originalArray == null)
 			throw new NullPointerException("Parameter originalArray is null");

@@ -73,24 +73,24 @@ public final class Config extends NonCloneableBaseObject {
 	// Pattern.compile("^[^\\[]+[\\[][0-9]*[\\]]$").matcher("65435632[554234]").find()
 
 	public static void main(String[] arg) {
-		System.out.println(new JSONSerializer().deepSerialize(new Config(CoreDef.rootPath + "\\config\\A.txt").dataMap));
+		System.out.println(new JSONSerializer().exclude("*.class").deepSerialize(new Config(CoreDef.rootPath + "\\config\\A.txt").dataMap));
 	}
 
 	private transient String fileName;
 	private Map<String, Object> dataMap;
-	private Map<String, Object> tmpMap;
+	private transient Map<String, Object> tmpMap;
 //	private Map<String, List<Object>> arrayMap;
 	private List<String> keyList = new ArrayList<String>();
 	private transient Config parent;
 	private int mode = 0;
 	private transient Stack<String> fileNameTrace;
 	private transient List<Pair<String, String>> properties = new ArrayList<Pair<String, String>>();
-	private transient List<Pair<String, String>> lazyLoad = new ArrayList<Pair<String,String>>();
+	private transient List<Pair<String, String>> lazyLoad = new ArrayList<Pair<String, String>>();
 
 //	public static final String INVISIBLE_CHAR = "[\u0000-\u0020]";
 	public static final String VALID_NAME = "(([$*^]|\\[\\])[_\\w]*)|([_\\w]*)";
 	public static final String VALID_VALUE = "([&][^&]*)|([^&]*)";
-	
+
 	public static final Map<Character, Integer> sortRule = new HashMap<Character, Integer>();
 	public static final Set<Character> lazyLoadSet;
 	static {
@@ -107,7 +107,7 @@ public final class Config extends NonCloneableBaseObject {
 	public Config() {
 		this(null, null, null);
 	}
-	
+
 	/**
 	 * Create a config with specific file name
 	 * @param fileName
@@ -136,7 +136,7 @@ public final class Config extends NonCloneableBaseObject {
 		// file trace tree
 		fileNameTrace.push(fileName);
 		// initial
-//		arrayMap = new HashMap<String, List<Object>>();
+		// arrayMap = new HashMap<String, List<Object>>();
 		tmpMap = new ConcurrentHashMap<String, Object>();
 		// clear old data
 		lazyLoad.clear();
@@ -172,9 +172,9 @@ public final class Config extends NonCloneableBaseObject {
 			lazyLoad();
 		dataMap = tmpMap;
 		tmpMap = null;
-//		arrayMap.clear();
-//		arrayMap = null;
-//		System.gc();
+		// arrayMap.clear();
+		// arrayMap = null;
+		// System.gc();
 		fileNameTrace.pop();
 	}
 
@@ -190,16 +190,17 @@ public final class Config extends NonCloneableBaseObject {
 		}
 		return false;
 	}
-	
+
 	// Simulate a safely insert-sort
 	private void insertLazyLoad(Pair<String, String> property) {
-		int i=0;
-		for(;i<lazyLoad.size();i++)
-			if(sortRule.get(property.getLeft().charAt(0)) < sortRule.get(lazyLoad.get(i).getLeft().charAt(0)))
+		int i = 0;
+		for (; i < lazyLoad.size(); i++)
+			if (sortRule.get(property.getLeft().charAt(0))
+					< sortRule.get(lazyLoad.get(i).getLeft().charAt(0)))
 				break;
-		lazyLoad.add(i,property);
+		lazyLoad.add(i, property);
 		log.debug("[Transcribe]:" + property);
-		
+
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -207,12 +208,13 @@ public final class Config extends NonCloneableBaseObject {
 		Object lastObject = null;
 		Pair<String, String> property = null;
 		try {
-			for(int i=0;i<lazyLoad.size();i++) {
+			for (int i = 0; i < lazyLoad.size(); i++) {
 				property = lazyLoad.get(i);
 				log.debug("[Execute]:" + property);
 				String propertyName = property.getLeft();
 				String propertyValue = property.getRight();
-				if (propertyName.startsWith("$")) {
+				switch (propertyName.charAt(0)) {
+				case '$': {
 					// sub-config reference
 					String propertyRealName = propertyName.substring(1);
 					String realFileName = propertyValue;
@@ -247,7 +249,9 @@ public final class Config extends NonCloneableBaseObject {
 					default:
 						throw new LYException("Unknow config mode: " + mode);
 					}
-				} else if (propertyName.startsWith("*")) {
+				}
+					break;
+				case '*': {
 					// object reference
 					String propertyRealName = propertyName.substring(1);
 					Object target = null;
@@ -272,7 +276,40 @@ public final class Config extends NonCloneableBaseObject {
 						putToMap(tmpMap, propertyRealName, target);
 					}
 					lastObject = target;
-				} else if (propertyName.startsWith("^")) {
+				}
+					break;
+				case '[': {
+					if (propertyName.charAt(1) != ']')
+						throw new LYException("Bad array format ["
+								+ propertyName + "], missing ']'");
+					// object parameter reference
+					String propertyRealName = propertyName.substring(2);
+					List valueContainer = (List) tmpMap.get(propertyRealName);
+					if (valueContainer == null)
+						valueContainer = new ArrayList();
+					if (propertyValue.startsWith("&")) {
+						String propertyRealValue = propertyValue.substring(1);
+						Object obj = null;
+						Config root = this;
+						while (true) {
+							obj = root.tmpMap.get(propertyRealValue);
+							if (obj != null || root.parent == null)
+								break;
+							root = parent;
+						}
+						if (obj == null)
+							throw new LYException("Cannot find reference ["
+									+ propertyRealValue
+									+ "] in this Config or parent Config");
+						valueContainer.add(obj);
+						// setter(lastObject, propertyRealName, obj);
+					} else
+						valueContainer.add(propertyValue);
+					// setter(lastObject, propertyRealName, propertyValue);
+					putToMap(tmpMap, propertyRealName, valueContainer);
+				}
+					break;
+				case '^': {
 					// object parameter reference
 					String propertyRealName = propertyName.substring(1);
 					if (propertyValue.startsWith("&")) {
@@ -292,35 +329,10 @@ public final class Config extends NonCloneableBaseObject {
 						setter(lastObject, propertyRealName, obj);
 					} else
 						setter(lastObject, propertyRealName, propertyValue);
-				} else if (propertyName.startsWith("[")) {
-					if(propertyName.charAt(1) != ']')
-						throw new LYException("Bad array format ["
-								+ propertyName
-								+ "], missing ']'");
-					// object parameter reference
-					String propertyRealName = propertyName.substring(2);
-					List valueContainer = (List) tmpMap.get(propertyRealName);
-					if(valueContainer == null) valueContainer = new ArrayList();
-					if (propertyValue.startsWith("&")) {
-						String propertyRealValue = propertyValue.substring(1);
-						Object obj = null;
-						Config root = this;
-						while (true) {
-							obj = root.tmpMap.get(propertyRealValue);
-							if (obj != null || root.parent == null)
-								break;
-							root = parent;
-						}
-						if (obj == null)
-							throw new LYException("Cannot find reference ["
-									+ propertyRealValue
-									+ "] in this Config or parent Config");
-						valueContainer.add(obj);
-						//setter(lastObject, propertyRealName, obj);
-					} else
-						valueContainer.add(propertyValue);
-//						setter(lastObject, propertyRealName, propertyValue);
-					putToMap(tmpMap, propertyRealName, valueContainer);
+				}
+					break;
+				default:
+					throw new LYException("Unsupported grammar on property name:" + propertyName);
 				}
 			}
 		} catch (Exception e) {
@@ -328,28 +340,25 @@ public final class Config extends NonCloneableBaseObject {
 					+ "] at line [" + getLine(property) + "]", e);
 		}
 	}
-	
+
 	private int getLine(Pair<String, String> property) {
 		for (int i = 0; i < properties.size(); i++)
 			if (property.equals(properties.get(i)))
-				return i;
+				return i + 1;
 		return -1;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void setter(Object owner, String fieldName, Object param)
 			throws NoSuchMethodException, SecurityException,
 			IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException {
 		if (owner == null)
-			throw new NullPointerException("Owner is null for setter["
-					+ fieldName + "]");
+			throw new NullPointerException("Owner is null for setter[" + fieldName + "]");
 		if (param == null)
-			throw new NullPointerException("Parameter is null for setter["
-					+ fieldName + "]");
-		String setter = "set" + fieldName.substring(0, 1).toUpperCase()
-				+ fieldName.substring(1);
-		
+			throw new NullPointerException("Parameter is null for setter[" + fieldName + "]");
+		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+
 		// Get setter by java.lang.reflect.*
 		Method setMethod = null;
 		Class<?> parameterClass = null;
@@ -357,7 +366,7 @@ public final class Config extends NonCloneableBaseObject {
 			setMethod = owner.getClass().getDeclaredMethod(setter, String.class);
 			parameterClass = String.class;
 		} catch (Exception e) { }
-		if(setMethod == null)
+		if (setMethod == null)
 			for (Method method : owner.getClass().getDeclaredMethods()) {
 				if (method.getName().equals(setter)) {
 					Class<?>[] pts = method.getParameterTypes();
@@ -370,18 +379,17 @@ public final class Config extends NonCloneableBaseObject {
 			}
 		// If we got its setter, then invoke it
 		if (setMethod != null)
-			if(param.getClass().getName().matches("^\\[L[a-zA-Z0-9_.]*;$")
+			if (param.getClass().getName().matches("^\\[L[a-zA-Z0-9_.]*;$")
 					|| Collection.class.isAssignableFrom(param.getClass()))
-				setMethod.invoke(owner,
-						Caster.arrayCast((List<Object>) param, parameterClass));
+				setMethod.invoke(owner, Caster.arrayCast((List<Object>) param, parameterClass));
 			else if (param.getClass() == String.class)
 				// But sometimes we may need casting parameter before invoking
-				setMethod.invoke(owner,
-						Caster.simpleCast((String) param, parameterClass));
+				setMethod.invoke(owner, Caster.simpleCast((String) param, parameterClass));
 			else
 				setMethod.invoke(owner, param);
 		else
-			throw new LYException("No available setter[" + setter + "] was found for " + owner.getClass());
+			throw new LYException("No available setter[" + setter
+					+ "] was found for " + owner.getClass());
 	}
 
 	private void rawLoader() {
@@ -391,7 +399,7 @@ public final class Config extends NonCloneableBaseObject {
 			String rawPair = rawList.get(i).replaceAll("([\\s]*)", "");
 			// Remove comment
 			rawPair = rawPair.replaceAll("([#][\\S]*)", "");
-			
+
 			String[] pair = rawPair.split("=");
 			if (pair.length == 1) {
 				if (i == 0 && pair[0].startsWith("[") && pair[0].endsWith("]"))
@@ -399,17 +407,22 @@ public final class Config extends NonCloneableBaseObject {
 				else if(StringUtils.isBlank(pair[0]))
 					properties.add(new Pair<String, String>("", null));
 				else {
-					log.error("Bad key/value in file[" + fileName + "] at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
+					log.error("Ignored bad key/value in file[" + fileName
+							+ "] at line [" + (i + 1) + "], detail:"
+							+ Arrays.deepToString(pair));
 					properties.add(new Pair<String, String>("", null));
 				}
 			} else if (pair.length != 2) {
-				log.error("Bad key/value in file[" + fileName + "] at line [" + (i+1) + "], detail:" + Arrays.deepToString(pair));
+				log.error("Ignored bad key/value in file[" + fileName
+						+ "] at line [" + (i + 1) + "], detail:"
+						+ Arrays.deepToString(pair));
 				properties.add(new Pair<String, String>("", null));
 			} else {
-				if(pair[0].matches(VALID_NAME)
-						&& pair[1].matches(VALID_VALUE))
+				if(pair[0].matches(VALID_NAME) && pair[1].matches(VALID_VALUE))
 					properties.add(new Pair<String, String>(pair[0], pair[1]));
-				else log.error("Property [" + rawPair + "] contains invalid character");
+				else
+					log.error("Ignored bad property [" + rawPair
+							+ "] which contains invalid character");
 			}
 		}
 	}
@@ -418,12 +431,12 @@ public final class Config extends NonCloneableBaseObject {
 		for (String key : other.keyList())
 			putToMap(container, key, other.getProperty(key));
 	}
-	
+
 	private void putToMap(Map<String, Object> map, String key, Object value) {
 		map.put(key, value);
 		keyList.add(key);
 	}
-	
+
 	public List<String> keyList() {
 		return new ArrayList<String>(keyList);
 	}
@@ -445,7 +458,8 @@ public final class Config extends NonCloneableBaseObject {
 			throw new LYException("Key is null");
 		Object tmp = dataMap.get(key);
 		if (tmp == null)
-			throw new LYException("Entry[" + key + "] not found in your config file[" + fileName + "]");
+			throw new LYException("Entry[" + key
+					+ "] not found in your config file[" + fileName + "]");
 		return tmp;
 	}
 	
@@ -480,7 +494,7 @@ public final class Config extends NonCloneableBaseObject {
 			throw new LYException("Can not make instance", e);
 		}
 	}
-	
+
 	/**
 	 * Get sub-config from this config.
 	 * <br><b>[!]</b>If this is a plain config, invoke it will surely result in an exception
@@ -510,7 +524,7 @@ public final class Config extends NonCloneableBaseObject {
 					+ "] failed");
 		}
 	}
-	
+
 	public Integer getInteger(String key) {
 		String value = getString(key);
 		try {
