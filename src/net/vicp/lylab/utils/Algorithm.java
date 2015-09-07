@@ -25,7 +25,11 @@ public class Algorithm {
 		} else
 			return i - compare.length; // 返回模式串在主串中的头下标
 	}
-
+public static void main(String[] args) {
+	byte[] source = new byte[]{0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6};
+	byte[] compare = new byte[]{0,1};
+	System.out.println(KMPSearch(source, compare, 16));
+}
 	/**
 	 * KMP Search, O(n+m)
 	 * 
@@ -49,7 +53,7 @@ public class Algorithm {
 		if (j < compare.length) {
 			return -1;
 		} else
-			return i - compare.length - srcOffset; // 返回模式串在主串中的头下标
+			return i - compare.length - srcOffset; // 返回模式串在偏移子串中的下标
 	}
 
 	/**
@@ -60,21 +64,7 @@ public class Algorithm {
 	 * @return return index or -1 means not found
 	 */
 	public static int KMPSearch(byte[] source, byte[] compare) {
-		int[] next = _KMPNext(compare);
-		int i = 0;
-		int j = 0;
-		while (i <= source.length - 1 && j <= compare.length - 1) {
-			if (j == -1 || source[i] == compare[j]) {
-				i++;
-				j++;
-			} else {
-				j = next[j];
-			}
-		}
-		if (j < compare.length) {
-			return -1;
-		} else
-			return i - compare.length; // 返回模式串在主串中的头下标
+		return KMPSearch(source, compare, 0);
 	}
 
 	/**

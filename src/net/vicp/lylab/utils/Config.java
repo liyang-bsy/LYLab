@@ -13,14 +13,13 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
+
+import flexjson.JSONSerializer;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.model.Pair;
-
-import org.apache.commons.lang3.StringUtils;
-
-import flexjson.JSONSerializer;
 
 /**
  * Powerful config object for global uses, support specific program mark
@@ -67,6 +66,7 @@ import flexjson.JSONSerializer;
  * @version 2.1.0
  *
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public final class Config extends NonCloneableBaseObject {
 	// Regular expression, start with any thing except '[', and end with '[number]'
 	// May used for future array/switch-value support
@@ -203,7 +203,6 @@ public final class Config extends NonCloneableBaseObject {
 
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void lazyLoad() {
 		Object lastObject = null;
 		Pair<String, String> property = null;
@@ -348,7 +347,6 @@ public final class Config extends NonCloneableBaseObject {
 		return -1;
 	}
 
-	@SuppressWarnings("unchecked")
 	private void setter(Object owner, String fieldName, Object param)
 			throws NoSuchMethodException, SecurityException,
 			IllegalAccessException, IllegalArgumentException,
@@ -507,7 +505,47 @@ public final class Config extends NonCloneableBaseObject {
 		try {
 			return (Config) getProperty(key);
 		} catch (Exception e) {
-			throw new LYException("Convert entry[" + key + "] into Config");
+			throw new LYException("Convert entry[" + key + "] into Config", e);
+		}
+	}
+
+	public <T> T[] getArray(String key, Class<T[]> arrayClass) {
+		Object value = getProperty(key);
+		try {
+			return (T[]) Caster.arrayCast((List) value, arrayClass);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value
+					+ "] failed", e);
+		}
+	}
+
+	public Object[] getArray(String key) {
+		Object value = getProperty(key);
+		try {
+			return (Object[]) Caster.arrayCast((List) value, Object[].class);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value
+					+ "] failed", e);
+		}
+	}
+
+	public List getList(String key) {
+		Object value = getProperty(key);
+		try {
+			return (List) Caster.arrayCast((List) value, List.class);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value
+					+ "] failed", e);
+		}
+	}
+
+	public Set getSet(String key) {
+		Object value = getProperty(key);
+		try {
+			return (Set) Caster.arrayCast((List) value, Set.class);
+		} catch (Exception e) {
+			throw new LYException("Convert entry[" + key + "] value[" + value
+					+ "] failed", e);
 		}
 	}
 
@@ -521,7 +559,7 @@ public final class Config extends NonCloneableBaseObject {
 			return Short.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
-					+ "] failed");
+					+ "] failed", e);
 		}
 	}
 
@@ -531,7 +569,7 @@ public final class Config extends NonCloneableBaseObject {
 			return Integer.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
-					+ "] failed");
+					+ "] failed", e);
 		}
 	}
 
@@ -541,7 +579,7 @@ public final class Config extends NonCloneableBaseObject {
 			return Long.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
-					+ "] failed");
+					+ "] failed", e);
 		}
 	}
 
@@ -551,7 +589,7 @@ public final class Config extends NonCloneableBaseObject {
 			return Float.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
-					+ "] failed");
+					+ "] failed", e);
 		}
 	}
 
@@ -561,7 +599,7 @@ public final class Config extends NonCloneableBaseObject {
 			return Double.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
-					+ "] failed");
+					+ "] failed", e);
 		}
 	}
 
@@ -571,7 +609,7 @@ public final class Config extends NonCloneableBaseObject {
 			return Boolean.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
-					+ "] failed");
+					+ "] failed", e);
 		}
 	}
 
@@ -581,7 +619,7 @@ public final class Config extends NonCloneableBaseObject {
 			return Byte.valueOf(value);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
-					+ "] failed");
+					+ "] failed", e);
 		}
 	}
 
@@ -591,7 +629,7 @@ public final class Config extends NonCloneableBaseObject {
 			return Character.valueOf(value.charAt(0));
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
-					+ "] failed");
+					+ "] failed", e);
 		}
 	}
 
