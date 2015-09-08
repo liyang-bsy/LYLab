@@ -59,24 +59,8 @@ public class SyncServer extends Task implements LifeCycle {
 
 	@Override
 	public void exec() {
-		if (this.lyTaskQueue == null) {
-			lyTaskQueue = new LYTaskQueue();
-			try {
-				lyTaskQueue.setMaxQueue(CoreDef.config.getConfig("SyncServer")
-						.getInteger("maxQueue"));
-			} catch (Exception e) {
-			}
-			try {
-				lyTaskQueue.setMaxThread(CoreDef.config.getConfig("SyncServer")
-						.getInteger("maxThread"));
-			} catch (Exception e) {
-			}
-		}
 		try {
-			port = CoreDef.config.getConfig("SyncServer").getInteger("port");
-		} catch (Exception e) {
-		}
-		try {
+			if(port == null) throw new NullPointerException("Server port not defined");
 			serverSocket = new ServerSocket(port);
 		} catch (Exception e) {
 			throw new LYException("Server start failed", e);
@@ -97,8 +81,7 @@ public class SyncServer extends Task implements LifeCycle {
 	}
 
 	public void setLyTaskQueue(LYTaskQueue lyTaskQueue) {
-		if(this.lyTaskQueue == null)
-			this.lyTaskQueue = lyTaskQueue;
+		this.lyTaskQueue = lyTaskQueue;
 	}
 
 	public void setAop(Aop aop) {

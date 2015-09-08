@@ -41,6 +41,8 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	private volatile Boolean useWatchDog = false;
 	private volatile AtomicBoolean isRunning = new AtomicBoolean(false);
 	private volatile AtomicBoolean closed = new AtomicBoolean(false);
+	
+	private String permanentFileName = null;
 
 	private volatile boolean recordFailed = false;
 	private List<Task> forewarnList = new ArrayList<Task>();
@@ -157,9 +159,9 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	@Override
 	public void initialize() {
 		closed.set(false);
-		if(CoreDef.config.containsKey("permanentFileName"))
+		if(permanentFileName != null)
 		{
-			File file = new File(CoreDef.config.getString("permanentFileName"));
+			File file = new File(permanentFileName);
 			if (file.exists()) {
 				try (ObjectInputStream ois = new ObjectInputStream(
 						new FileInputStream(file));) {
@@ -170,7 +172,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 						addTask(tk);
 					}
 					ois.close();
-					Utils.deleteFile(CoreDef.config.getString("permanentFileName"));
+					Utils.deleteFile(permanentFileName);
 				} catch (Exception e) {
 					throw new LYException(
 							"Unable to load data from last permanent file", e);
@@ -219,9 +221,9 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 			stopWatchDog();
 		}
 		if (!getTaskPool().isEmpty()) {
-			if(CoreDef.config.containsKey("permanentFileName"))
+			if(permanentFileName != null)
 			{
-				File p = new File(CoreDef.config.getString("permanentFileName"));
+				File p = new File(permanentFileName);
 				if (!p.exists()) {
 					try {
 						p.createNewFile();
@@ -445,6 +447,14 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 
 	public void setTolerance(Long tolerance) {
 		this.tolerance = tolerance;
+	}
+
+	public String getPermanentFileName() {
+		return permanentFileName;
+	}
+
+	public void setPermanentFileName(String permanentFileName) {
+		this.permanentFileName = permanentFileName;
 	}
 
 }

@@ -37,10 +37,6 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		
 		setExpireTime(expireTime); // 30min = 60s*30min
 		LYCache.setMemoryControl(memoryLimitation, threshold); // 1GB
-		try {
-			setExpireTime(CoreDef.config.getConfig("LYCache").getLong("expireTime")); // 30min = 60s*30min
-			LYCache.setMemoryControl(CoreDef.config.getConfig("LYCache").getLong("memoryLimitation"), CoreDef.config.getConfig("LYCache").getDouble("threshold")); // 1GB
-		} catch (Exception e) { }
 	}
 
 	public static void setMemoryControl(long memoryLimitation, double threshold) {

@@ -1,7 +1,6 @@
 package net.vicp.lylab.utils.internet.protocol;
 
 import net.vicp.lylab.core.BaseObject;
-import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 
@@ -21,9 +20,6 @@ public final class ProtocolUtils extends BaseObject {
 	private static int configSize;
 
 	private static Protocol[] rawProtocols = new Protocol[0];
-	static {
-		reloadProtocols();
-	}
 
 	/**
 	 * Pair to protocol by head with protocol config
@@ -91,18 +87,12 @@ public final class ProtocolUtils extends BaseObject {
 		return true;
 	}
 	
-	public synchronized static void reloadProtocols() {
-		configSize = CoreDef.config.getConfig("ProtocolUtils").keyList().size();
-		rawProtocols = new Protocol[configSize];
-		int i = 0;
-		for (String key : CoreDef.config.getConfig("ProtocolUtils").keyList()) {
-			rawProtocols[i] = (Protocol) CoreDef.config.getConfig("ProtocolUtils").getNewInstance(key);
-			i++;
-		}
-	}
-
 	public static boolean isMultiProtocol() {
 		return configSize != 1;
+	}
+
+	public static void setRawProtocols(Protocol[] rawProtocols) {
+		ProtocolUtils.rawProtocols = rawProtocols;
 	}
 
 }

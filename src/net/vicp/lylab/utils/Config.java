@@ -15,10 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 
-import flexjson.JSONSerializer;
-import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.core.model.Pair;
 
 /**
@@ -72,13 +71,9 @@ public final class Config extends NonCloneableBaseObject {
 	// May used for future array/switch-value support
 	// Pattern.compile("^[^\\[]+[\\[][0-9]*[\\]]$").matcher("65435632[554234]").find()
 
-	public static void main(String[] arg) {
-		System.out.println(new JSONSerializer().exclude("*.class").deepSerialize(new Config(CoreDef.rootPath + "\\config\\A.txt").dataMap));
-	}
-
 	private transient String fileName;
 	private Map<String, Object> dataMap;
-	private transient Map<String, Object> tmpMap;
+//	private transient Map<String, Object> tmpMap;
 //	private Map<String, List<Object>> arrayMap;
 	private List<String> keyList = new ArrayList<String>();
 	private transient Config parent;
@@ -120,12 +115,13 @@ public final class Config extends NonCloneableBaseObject {
 		this.fileName = fileName;
 		this.fileNameTrace = fileNameTrace;
 		this.parent = parent;
-		dataMap = null;
+		dataMap = new ConcurrentHashMap<String, Object>();
 		reload();
 	}
 
 	/**
-	 * You may reload your config manually
+	 * You may reload your configuration manually, it will close all current 'opened' object.
+	 * <br>[!]If you keep a Strong-Reference to an 'opened' Object, keep using it may result in an exception.
 	 * @param fileName
 	 * @param fileNameTrace
 	 * @param parent
@@ -136,8 +132,9 @@ public final class Config extends NonCloneableBaseObject {
 		// file trace tree
 		fileNameTrace.push(fileName);
 		// initial
+		deepClose();
 		// arrayMap = new HashMap<String, List<Object>>();
-		tmpMap = new ConcurrentHashMap<String, Object>();
+//		tmpMap = new ConcurrentHashMap<String, Object>();
 		// clear old data
 		lazyLoad.clear();
 		properties.clear();
@@ -162,7 +159,7 @@ public final class Config extends NonCloneableBaseObject {
 				if (isLazyLoad(propertyName))
 					insertLazyLoad(property);
 				else
-					putToMap(tmpMap, propertyName, property.getRight());
+					putToMap(dataMap, propertyName, property.getRight());
 			} catch (Exception e) {
 				throw new LYException("Failed to load config file[" + fileName
 						+ "] at line [" + getLine(property) + "]", e);
@@ -170,12 +167,36 @@ public final class Config extends NonCloneableBaseObject {
 		}
 		if (!lazyLoad.isEmpty())
 			lazyLoad();
-		dataMap = tmpMap;
-		tmpMap = null;
+//		dataMap = tmpMap;
+//		tmpMap = null;
 		// arrayMap.clear();
 		// arrayMap = null;
 		// System.gc();
 		fileNameTrace.pop();
+	}
+	
+	/**
+	 * Call this without reasons will destroy <b>ALL</b> your current configuration.
+	 * <br>It's advised to run this <b>ONLY IF</b> the server is determined to shutdown.
+	 * <br>Anyhow, it's your own risk to call this!
+	 */
+	public void deepClose() {
+		synchronized (lock) {
+			for(String key:dataMap.keySet())
+			{
+				Object tmp = dataMap.get(key);
+				if(tmp instanceof AutoCloseable)
+					try {
+						((AutoCloseable) tmp).close();
+						log.info(tmp.getClass().getSimpleName() + " - Closed");
+					} catch (Throwable t) {
+						log.error(tmp.getClass().getSimpleName() + " - Close failed:" + Utils.getStringFromThrowable(t));
+					}
+				else if(tmp instanceof Config)
+					((Config) tmp).deepClose();
+			}
+			dataMap.clear();
+		}
 	}
 
 	/**
@@ -239,11 +260,11 @@ public final class Config extends NonCloneableBaseObject {
 					switch (mode) {
 					case 0:
 						config = new Config(realFileName, fileNameTrace, this);
-						putToMap(tmpMap, propertyRealName, config);
+						putToMap(dataMap, propertyRealName, config);
 						break;
 					case 1:
 						config = new Config(realFileName, fileNameTrace, this);
-						readFromConfig(tmpMap, config);
+						readFromConfig(dataMap, config);
 						break;
 					default:
 						throw new LYException("Unknow config mode: " + mode);
@@ -259,7 +280,7 @@ public final class Config extends NonCloneableBaseObject {
 						Object obj = null;
 						Config root = this;
 						while (true) {
-							obj = root.tmpMap.get(propertyRealValue);
+							obj = root.dataMap.get(propertyRealValue);
 							if (obj != null || root.parent == null)
 								break;
 							root = parent;
@@ -269,11 +290,18 @@ public final class Config extends NonCloneableBaseObject {
 									+ propertyRealValue
 									+ "] in this Config or parent Config");
 						target = obj;
-						putToMap(tmpMap, propertyRealName, target);
+						putToMap(dataMap, propertyRealName, target);
 					} else {
 						target = Class.forName(propertyValue).newInstance();
-						putToMap(tmpMap, propertyRealName, target);
+						putToMap(dataMap, propertyRealName, target);
 					}
+					if(lastObject instanceof Initializable)
+						try {
+							((Initializable) lastObject).initialize();
+							log.info(lastObject.getClass().getSimpleName() + " - Initialized");
+						} catch (Throwable t) {
+							log.error(Utils.getStringFromThrowable(t));
+						}
 					lastObject = target;
 				}
 					break;
@@ -281,9 +309,9 @@ public final class Config extends NonCloneableBaseObject {
 					if (propertyName.charAt(1) != ']')
 						throw new LYException("Bad array format ["
 								+ propertyName + "], missing ']'");
-					// object parameter reference
+					// array reference
 					String propertyRealName = propertyName.substring(2);
-					List valueContainer = (List) tmpMap.get(propertyRealName);
+					List valueContainer = (List) dataMap.get(propertyRealName);
 					if (valueContainer == null)
 						valueContainer = new ArrayList();
 					if (propertyValue.startsWith("&")) {
@@ -291,7 +319,7 @@ public final class Config extends NonCloneableBaseObject {
 						Object obj = null;
 						Config root = this;
 						while (true) {
-							obj = root.tmpMap.get(propertyRealValue);
+							obj = root.dataMap.get(propertyRealValue);
 							if (obj != null || root.parent == null)
 								break;
 							root = parent;
@@ -305,7 +333,7 @@ public final class Config extends NonCloneableBaseObject {
 					} else
 						valueContainer.add(propertyValue);
 					// setter(lastObject, propertyRealName, propertyValue);
-					putToMap(tmpMap, propertyRealName, valueContainer);
+					putToMap(dataMap, propertyRealName, valueContainer);
 				}
 					break;
 				case '^': {
@@ -316,7 +344,7 @@ public final class Config extends NonCloneableBaseObject {
 						Object obj = null;
 						Config root = this;
 						while (true) {
-							obj = root.tmpMap.get(propertyRealValue);
+							obj = root.dataMap.get(propertyRealValue);
 							if (obj != null || root.parent == null)
 								break;
 							root = parent;
@@ -334,6 +362,13 @@ public final class Config extends NonCloneableBaseObject {
 					throw new LYException("Unsupported grammar on property name:" + propertyName);
 				}
 			}
+			if(lastObject instanceof Initializable)
+				try {
+					((Initializable) lastObject).initialize();
+					log.info(lastObject.getClass().getSimpleName() + " - Initialized");
+				} catch (Throwable t) {
+					log.error(Utils.getStringFromThrowable(t));
+				}
 		} catch (Exception e) {
 			throw new LYException("Failed on lazy load config file[" + fileName
 					+ "] at line [" + getLine(property) + "]", e);
@@ -456,8 +491,7 @@ public final class Config extends NonCloneableBaseObject {
 			throw new LYException("Key is null");
 		Object tmp = dataMap.get(key);
 		if (tmp == null)
-			throw new LYException("Entry[" + key
-					+ "] not found in your config file[" + fileName + "]");
+			throw new LYException("Entry[" + key + "] not found in your config file[" + fileName + "]");
 		return tmp;
 	}
 	

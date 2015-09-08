@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.GlobalInitializer;
 import net.vicp.lylab.core.interfaces.Callback;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
@@ -21,7 +20,6 @@ public class Client implements Callback {
 
 	public static void main(String[] args) throws IOException {
 		CoreDef.config = new Config(CoreDef.rootPath + File.separator + "config" + File.separator + "config.txt");
-		GlobalInitializer.createInstance();
 		as = new AsyncSocket("localhost", 8888 , new SimpleHeartBeat());
 		as.setAfterTransmission(new Client());
 		as.initialize();

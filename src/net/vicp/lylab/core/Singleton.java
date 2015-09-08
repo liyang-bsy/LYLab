@@ -14,12 +14,12 @@ import net.vicp.lylab.utils.atomic.AtomicBoolean;
  * @author Young
  *
  */
-public final class GlobalInitializer extends NonCloneableBaseObject implements LifeCycle {
+public final class Singleton extends NonCloneableBaseObject implements LifeCycle {
 	private static Map<String, Object> singletonManager;
 	private static AtomicBoolean inited = new AtomicBoolean(false);
-	private static GlobalInitializer instance = null;
+	private static Singleton instance = null;
 
-	private GlobalInitializer() {
+	private Singleton() {
 		initialize();
 	}
 
@@ -28,21 +28,22 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 		if(inited.getAndSet(true) == true)
 			return;
 		log.info("Initializer - Initialization started");
-		List<String> keyList = CoreDef.config.getConfig("GlobalInitializer").keyList();
+		List<String> keyList = CoreDef.config.getConfig("Singleton").keyList();
 		singletonManager = new ConcurrentHashMap<String, Object>(keyList.size());
 		Object tmp;
 		for (String key : keyList) {
 			try {
-				tmp = CoreDef.config.getConfig("GlobalInitializer").getObject(key);
+				tmp = CoreDef.config.getConfig("Singleton").getObject(key);
 				singletonManager.put(key, tmp);
-				if (tmp.getClass() == String.class)
-					tmp = CoreDef.config.getConfig("GlobalInitializer").getNewInstance(key);
-				if (tmp instanceof Initializable) {
-					try {
-						((Initializable) tmp).initialize();
-						log.info(tmp.getClass().getSimpleName() + " - Started");
-					} catch (Throwable t) {
-						log.error(Utils.getStringFromThrowable(t));
+				if (tmp.getClass() == String.class) {
+					tmp = CoreDef.config.getConfig("Singleton").getNewInstance(key);
+					if (tmp instanceof Initializable) {
+						try {
+							((Initializable) tmp).initialize();
+							log.info(tmp.getClass().getSimpleName() + " - Started");
+						} catch (Throwable t) {
+							log.error(Utils.getStringFromThrowable(t));
+						}
 					}
 				}
 				singletonManager.put(key, tmp);
@@ -76,7 +77,7 @@ public final class GlobalInitializer extends NonCloneableBaseObject implements L
 	
 	public synchronized static void createInstance() {
 		if(instance == null)
-			instance = new GlobalInitializer();
+			instance = new Singleton();
 	}
 	
 	public synchronized static void destroyInstance() {

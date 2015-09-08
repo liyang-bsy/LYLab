@@ -370,6 +370,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 
 	@Override
 	public void initialize() {
+		// TODO
 		if(!CoreDef.config.containsKey("AsyncSocket")) {
 			selectorPool = new SelectorPool(CoreDef.DEFAULT_CONTAINER_TIMEOUT,CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 		}

@@ -25,16 +25,6 @@ public class DefaultAop extends NonCloneableBaseObject implements Aop {
 	public void initialize() {
 		if(protocol == null)
 			throw new LYException("No available protocol");
-		filterChain.clear();
-		for (String key : CoreDef.config.getConfig("Filters").keyList()) {
-			try {
-				Class<?> instanceClass = Class.forName(CoreDef.config.getConfig("Filters").getString(key));
-				Filter tmp = (Filter) instanceClass.newInstance();
-				filterChain.add(tmp);
-			} catch (Exception e) {
-				log.error(Utils.getStringFromException(e));
-			}
-		}
 	}
 
 	@Override
@@ -115,6 +105,14 @@ public class DefaultAop extends NonCloneableBaseObject implements Aop {
 	public Aop setProtocol(Protocol protocol) {
 		this.protocol = protocol;
 		return this;
+	}
+
+	public List<Filter> getFilterChain() {
+		return filterChain;
+	}
+
+	public void setFilterChain(List<Filter> filterChain) {
+		this.filterChain = filterChain;
 	}
 
 }
