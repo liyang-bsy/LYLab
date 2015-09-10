@@ -1,4 +1,4 @@
-package net.vicp.lylab.server.transport_give_up;
+package net.vicp.lylab.utils.internet.async_test;
 
 import java.util.Map;
 import java.util.UUID;
@@ -17,13 +17,13 @@ import net.vicp.lylab.utils.controller.TimeoutController;
  * @author Young
  *
  */
-public class Transport extends NonCloneableBaseObject implements Recyclable {
+public class Transfer extends NonCloneableBaseObject implements Recyclable {
 	protected Map<String, Message> responseMap = new ConcurrentHashMap<String, Message>();
 	protected AtomicBoolean isClosed = new AtomicBoolean(false);
 	protected long timeout = CoreDef.DEFAULT_SOCKET_TTIMEOUT;
 	protected long readTimeout = CoreDef.DEFAULT_READ_TTIMEOUT;
 	
-	public Transport() {
+	public Transfer() {
 		TimeoutController.addToWatch(this);
 	}
 

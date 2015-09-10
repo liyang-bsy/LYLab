@@ -7,7 +7,6 @@ import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.utils.Config;
-import net.vicp.lylab.utils.internet.AsyncSocket;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
 
 public class Server {

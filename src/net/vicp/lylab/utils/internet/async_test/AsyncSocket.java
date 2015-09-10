@@ -1,4 +1,4 @@
-package net.vicp.lylab.utils.internet;
+package net.vicp.lylab.utils.internet.async_test;
 
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -20,10 +20,13 @@ import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Transmission;
-import net.vicp.lylab.core.model.SimpleHeartBeat;
+import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.core.pool.RecyclePool;
-import net.vicp.lylab.server.transport_give_up.Transport;
 import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.creator.AutoGenerate;
+import net.vicp.lylab.utils.creator.SelectorCreator;
+import net.vicp.lylab.utils.internet.BaseSocket;
+import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
 /**
@@ -47,7 +50,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 	// IP mapping
 	protected Map<String, SocketChannel> ipMap = new ConcurrentHashMap<String, SocketChannel>();
 	protected RecyclePool<Selector> selectorPool;
-	protected Transport transport;
+	protected Transfer transport;
 
 	// Long socket keep alive
 	protected Map<String, Long> lastActivityMap = new ConcurrentHashMap<String, Long>();
@@ -256,8 +259,8 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 				}
 				if (getLen == -1)
 				{
-					if(protocol!=null)
-						send(socketChannel, ByteBuffer.wrap(protocol.encode(new SimpleHeartBeat())));
+//					if(protocol!=null)
+//						send(socketChannel, ByteBuffer.wrap(protocol.encode(new SimpleHeartBeat())));
 					break;
 				}
 				getLen += readTailLen;
@@ -372,7 +375,8 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 	public void initialize() {
 		// TODO
 		if(!CoreDef.config.containsKey("AsyncSocket")) {
-			selectorPool = new SelectorPool(CoreDef.DEFAULT_CONTAINER_TIMEOUT,CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
+			AutoGenerate<Selector> creator = new SelectorCreator();
+			selectorPool = new AutoGeneratePool<>(creator, null, CoreDef.DEFAULT_CONTAINER_TIMEOUT, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 		}
 		else {
 			selectorPool = new RecyclePool<Selector>(CoreDef.config.getConfig("AsyncSocket").getInteger("maxSelectorPool"));
