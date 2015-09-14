@@ -26,6 +26,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Utils extends NonCloneableBaseObject {
 
 	/**
+	 * delete CRLF; delete empty line ;delete blank lines
+	 * 
+	 * @param input
+	 * @return
+	 */
+	public static String deleteCRLF(String input) {
+		return input.replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1").replaceAll("^((\r\n)|\n)", "");
+	}
+
+	/**
 	 * 路径为文件且不为空则进行删除
 	 * 
 	 * @param path

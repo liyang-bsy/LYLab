@@ -22,7 +22,7 @@ public class Command extends NonCloneableBaseObject {
 		int code = -1;
 		String msg = "[Not Avaliable]";
 		try {
-			Process ps = rt.exec(cmd);
+			Process ps = rt.exec(cmdSeq);
 			msg = loadStream(ps.getInputStream());
 			code = ps.waitFor();
 		} catch (Exception e) {
