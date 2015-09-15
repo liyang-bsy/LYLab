@@ -29,7 +29,7 @@ public abstract class AutoGenerate<T> extends CloneableBaseObject implements Aut
 	public abstract T newInstance();
 
 	@SuppressWarnings("unchecked")
-	public T get() {
+	protected T get() {
 		synchronized (lock) {
 			if (instanceClass == null)
 				throw new LYException("instanceClass is null");

@@ -10,12 +10,6 @@ public abstract class CustomCreator<T> extends AutoGenerate<T> {
 
 	@Override
 	@Deprecated
-	public T get() {
-		throw new LYException("Get() is not available for CustomCreator");
-	}
-
-	@Override
-	@Deprecated
 	public T get(Class<T> instanceClass, Object... constructorParameters) {
 		throw new LYException("Get(Class<T> , Object... ) is not available for CustomCreator");
 	}
