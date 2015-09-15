@@ -10,6 +10,7 @@ import net.vicp.lylab.utils.timer.InstantJob;
  * @version 1.0.2
  */
 public class RefreshCache extends InstantJob {
+	LYCache lyCache;
 	
 	@Override
 	public Integer getInterval() {
@@ -18,7 +19,15 @@ public class RefreshCache extends InstantJob {
 
 	@Override
 	public void exec() {
-		LYCache.flush();
+		lyCache.flush();
+	}
+
+	public LYCache getLyCache() {
+		return lyCache;
+	}
+
+	public void setLyCache(LYCache lyCache) {
+		this.lyCache = lyCache;
 	}
 	
 }

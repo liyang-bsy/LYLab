@@ -225,6 +225,7 @@ public final class Config extends NonCloneableBaseObject {
 	}
 
 	private void lazyLoad() {
+		List<Object> lazyInitialize = new ArrayList<>();
 		Object lastObject = null;
 		Pair<String, String> property = null;
 		try {
@@ -295,13 +296,7 @@ public final class Config extends NonCloneableBaseObject {
 						target = Class.forName(propertyValue).newInstance();
 						putToMap(dataMap, propertyRealName, target);
 					}
-					if(lastObject instanceof Initializable)
-						try {
-							((Initializable) lastObject).initialize();
-							log.info(lastObject.getClass().getSimpleName() + " - Initialized");
-						} catch (Throwable t) {
-							log.error(Utils.getStringFromThrowable(t));
-						}
+					lazyInitialize.add(target);
 					lastObject = target;
 				}
 					break;
@@ -362,13 +357,14 @@ public final class Config extends NonCloneableBaseObject {
 					throw new LYException("Unsupported grammar on property name:" + propertyName);
 				}
 			}
-			if(lastObject instanceof Initializable)
-				try {
-					((Initializable) lastObject).initialize();
-					log.info(lastObject.getClass().getSimpleName() + " - Initialized");
-				} catch (Throwable t) {
-					log.error(Utils.getStringFromThrowable(t));
-				}
+			for(Object obj:lazyInitialize)
+				if(obj instanceof Initializable)
+					try {
+						((Initializable) obj).initialize();
+						log.info(obj.getClass().getSimpleName() + " - Initialized");
+					} catch (Throwable t) {
+						log.error(Utils.getStringFromThrowable(t));
+					}
 		} catch (Exception e) {
 			throw new LYException("Failed on lazy load config file[" + fileName
 					+ "] at line [" + getLine(property) + "]", e);

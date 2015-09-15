@@ -5,11 +5,9 @@ import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.interfaces.AutoInitialize;
 import net.vicp.lylab.core.interfaces.DoHash;
 import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.core.model.CacheValue;
-import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 import net.vicp.lylab.utils.hash.MD5Hash;
 
 /**
@@ -26,20 +24,18 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 	private static DoHash doHash = new MD5Hash();
 	public double threshold = CoreDef.DEFAULT_LYCACHE_THRESHOLD;
 
-	private static AutoInitialize<LYCache> instance = new AtomicStrongReference<LYCache>();
-
 	@Override
 	public synchronized void initialize() {
 		ArrayList<CacheContainer> list = new ArrayList<CacheContainer>();
 		for (int i = 0; i < 16; i++)
 			list.add(new CacheContainer());
-		getInstance().bundles = list;
+		this.bundles = list;
 		
 		setExpireTime(expireTime); // 30min = 60s*30min
-		LYCache.setMemoryControl(memoryLimitation, threshold); // 1GB
+		setMemoryControl(memoryLimitation, threshold); // 1GB
 	}
 
-	public static void setMemoryControl(long memoryLimitation, double threshold) {
+	public void setMemoryControl(long memoryLimitation, double threshold) {
 		if (threshold > 1.0D)
 			threshold = 1.0D;
 		setThreshold(threshold);
@@ -49,16 +45,16 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 			item.setMemoryLimitation(memoryLimitation / 16);
 			item.setThreshold(threshold);
 		}
-		LYCache.flush();
+		flush();
 	}
 
-	private static CacheContainer getContainer(Integer seq) {
+	private CacheContainer getContainer(Integer seq) {
 		if (seq < 0 || seq > getBundles().size())
 			return null;
 		return getBundles().get(seq);
 	}
 
-	private static CacheContainer getContainer(String key) {
+	private CacheContainer getContainer(String key) {
 		Integer seq = keyRule(key);
 		return getContainer(seq);
 	}
@@ -67,22 +63,18 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		return Math.abs(doHash.hash(key))%16;
 	}
 
-	public static List<CacheContainer> getBundles() {
-		return getInstance().bundles;
+	public List<CacheContainer> getBundles() {
+		return bundles;
 	}
 
-	public static LYCache getInstance() {
-		return instance.get(LYCache.class);
-	}
-
-	public static long getEntrySize() {
+	public long getEntrySize() {
 		long size = 0;
 		for (CacheContainer cc : getBundles())
 			size += cc.size();
 		return size;
 	}
 
-	public static long getMemorySize() {
+	public long getMemorySize() {
 		long size = 0;
 		for (CacheContainer cc : getBundles())
 			size += cc.getMemoryUsage();
@@ -90,42 +82,42 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 	}
 
 	// function start
-	public static int setCacheValue(String key, CacheValue cv) {
+	public int setCacheValue(String key, CacheValue cv) {
 		CacheContainer cc = getContainer(key);
 		if (cc == null)
 			return 1;
 		return cc.setCacheValue(key, cv);
 	}
 	
-	public static int set(String key, byte[] value) {
+	public int set(String key, byte[] value) {
 		CacheContainer cc = getContainer(key);
 		if (cc == null)
 			return 1;
-		return cc.set(key, value, getInstance().expireTime);
+		return cc.set(key, value, expireTime);
 	}
 
-	public static byte[] get(String key) {
+	public byte[] get(String key) {
 		CacheContainer cc = getContainer(key);
 		if (cc == null)
 			return null;
 		return cc.get(key);
 	}
 
-	public static byte[] get(String key, boolean renew) {
+	public byte[] get(String key, boolean renew) {
 		CacheContainer cc = getContainer(key);
 		if (cc == null)
 			return null;
 		return cc.get(key, renew);
 	}
 
-	public static byte[] delete(String key) {
+	public byte[] delete(String key) {
 		CacheContainer cc = getContainer(key);
 		if (cc == null)
 			return null;
 		return cc.delete(key);
 	}
 
-	public static boolean flush() {
+	public boolean flush() {
 		try {
 			for (CacheContainer cc : getBundles())
 				cc.flush();
@@ -135,7 +127,7 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		return true;
 	}
 
-	public static void clear() {
+	public void clear() {
 		for (CacheContainer cc : getBundles())
 			cc.clear();
 	}
@@ -145,28 +137,28 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 	}
 
 	// getter & setter
-	public static long getExpireTime() {
-		return getInstance().expireTime;
+	public long getExpireTime() {
+		return expireTime;
 	}
 
-	public static void setExpireTime(long expireTime) {
-		getInstance().expireTime = expireTime;
+	public void setExpireTime(long expireTime) {
+		this.expireTime = expireTime;
 	}
 
-	public static long getMemoryLimitation() {
-		return getInstance().memoryLimitation;
+	public long getMemoryLimitation() {
+		return memoryLimitation;
 	}
 
-	public static void setMemoryLimitation(long memoryLimitation) {
-		getInstance().memoryLimitation = memoryLimitation;
+	public void setMemoryLimitation(long memoryLimitation) {
+		this.memoryLimitation = memoryLimitation;
 	}
 
-	public static double getThreshold() {
-		return getInstance().threshold;
+	public double getThreshold() {
+		return threshold;
 	}
 
-	public static void setThreshold(double threshold) {
-		getInstance().threshold = threshold;
+	public void setThreshold(double threshold) {
+		this.threshold = threshold;
 	}
 
 }

@@ -11,17 +11,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.exceptions.LYException;
-import net.vicp.lylab.core.interfaces.AutoInitialize;
-import net.vicp.lylab.utils.atomic.AtomicStrongReference;
-
 import org.apache.commons.lang3.time.DateFormatUtils;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.exceptions.LYException;
 
 public class Utils extends NonCloneableBaseObject {
 
@@ -301,8 +299,8 @@ public class Utils extends NonCloneableBaseObject {
 		}
 	}
 
-	private static AutoInitialize<JsonFactory> jsonFactory = new AtomicStrongReference<JsonFactory>();
-	private static AutoInitialize<ObjectMapper> mapper = new AtomicStrongReference<ObjectMapper>();
+	private static final JsonFactory jsonFactory = new JsonFactory();
+	private static final ObjectMapper mapper = new ObjectMapper();
 
 	public static String serialize(Object obj)
 	{
@@ -311,8 +309,8 @@ public class Utils extends NonCloneableBaseObject {
 		String str = null;
 		try {
 			StringWriter sw = new StringWriter();
-			JsonGenerator generator = jsonFactory.get(JsonFactory.class).createGenerator(sw);
-			mapper.get(ObjectMapper.class).writeValue(generator, obj);
+			JsonGenerator generator = jsonFactory.createGenerator(sw);
+			mapper.writeValue(generator, obj);
 			str = sw.toString();
 			generator.close();
 		} catch (Exception e) { throw new LYException("Serialize failed", e); }
@@ -320,14 +318,14 @@ public class Utils extends NonCloneableBaseObject {
 		return str;
 	}
 	
-	public static Object deserialize(Class<?> instanceClass, String json)
+	public static <T> T deserialize(Class<T> instanceClass, String json)
 	{
 		if(json == null)
 			throw new LYException("Parameter json is null");
 		if(instanceClass == null)
 			throw new LYException("Parameter instanceClass is null");
 		try {
-			return mapper.get(ObjectMapper.class).readValue(json, instanceClass);  
+			return mapper.readValue(json, instanceClass);  
 		} catch (Exception e) {
 			throw new LYException("Can not deserialize follow json[" + json + "] into " + instanceClass.getName(), e);
 		}
@@ -340,7 +338,7 @@ public class Utils extends NonCloneableBaseObject {
 		if(className == null)
 			throw new LYException("Parameter className is null");
 		try {
-			return mapper.get(ObjectMapper.class).readValue(json, Class.forName(className));  
+			return mapper.readValue(json, Class.forName(className));  
 		} catch (Exception e) {
 			throw new LYException("Can not deserialize follow json into " + className + "\n" + json, e);
 		}
