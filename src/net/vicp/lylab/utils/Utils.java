@@ -248,10 +248,10 @@ public class Utils extends NonCloneableBaseObject {
 		return ret;
 	}
 
-	public static boolean inList(Object[] list, Object item) {
-		if(list == null || item == null) return false;
-		for(Object o:list)
-			if(o.equals(item))
+	public static <T> boolean inList(T[] list, Object item) {
+		if(list == null || item == null || list.length == 0) return false;
+		for(T o:list)
+			if(item.equals(o))
 				return true;
 		return false;
 	}

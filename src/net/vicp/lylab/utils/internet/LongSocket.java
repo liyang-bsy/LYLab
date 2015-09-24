@@ -101,7 +101,9 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 
 	@Override
 	public byte[] response(Socket client, byte[] request, int offset) {
-		return getAopLogic().doAction(client, request, offset);
+		if(getAopLogic() != null)
+			return getAopLogic().doAction(client, request, offset);
+		return new byte[0];
 	}
 	
 	@Override

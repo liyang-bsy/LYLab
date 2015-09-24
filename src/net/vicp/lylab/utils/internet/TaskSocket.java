@@ -96,7 +96,9 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 
 	@Override
 	public byte[] response(Socket client, byte[] request, int offset) {
-		return getAopLogic().doAction(client, request, offset);
+		if(getAopLogic() != null)
+			return getAopLogic().doAction(client, request, offset);
+		return new byte[0];
 	}
 	
 	public byte[] doRequest(byte[] request) {
