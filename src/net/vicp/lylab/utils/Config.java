@@ -43,7 +43,8 @@ import net.vicp.lylab.core.model.Pair;
  * <br>Example:
  * <br>$config1=dir/next_config.txt
  * <br>You can access "object1" by {@link #getObject(String key)} or {@link #getConfig(String key)} : {@code config.getConfig("config1")};
- * <br>If sub-config is {@code [PLAIN]}, all its entry will be obtain into current config
+ * <br>If sub-config is {@code [PLAIN]}, all its entries will be obtain into current config
+ * <br><b>[!]</b>Especially, if the key start with "$+", all entries will be obtain into current config like PLAIN mode
  * <br><br><b>Array mark:</b> key(start with []) will be regard as an array
  * <br>Example:
  * <br>[]item=abc
@@ -77,13 +78,17 @@ public final class Config extends NonCloneableBaseObject {
 //	private Map<String, List<Object>> arrayMap;
 	private List<String> keyList = new ArrayList<String>();
 	private transient Config parent;
+	/**
+	 * 0 is TREE
+	 * 1 is PLAIN
+	 */
 	private int mode = 0;
 	private transient Stack<String> fileNameTrace;
 	private transient List<Pair<String, String>> properties = new ArrayList<Pair<String, String>>();
 	private transient List<Pair<String, String>> lazyLoad = new ArrayList<Pair<String, String>>();
 
 //	public static final String INVISIBLE_CHAR = "[\u0000-\u0020]";
-	public static final String VALID_NAME = "(([$*^]|\\[\\])[_\\w]*)|([_\\w]*)";
+	public static final String VALID_NAME = "(([*^]|\\[\\]|\\$\\+|\\$)[_\\w]*)|([_\\w]*)";
 	public static final String VALID_VALUE = "([&][^&]*)|([^&]*)";
 
 	public static final Map<Character, Integer> sortRule = new HashMap<Character, Integer>();
@@ -258,7 +263,10 @@ public final class Config extends NonCloneableBaseObject {
 						throw new LYException(
 								"Circle reference was found in config file["
 										+ realFileName + "]");
-					switch (mode) {
+					int inputMode = mode;
+					if(propertyRealName.startsWith("+"))
+						inputMode = 1;
+					switch (inputMode) {
 					case 0:
 						config = new Config(realFileName, fileNameTrace, this);
 						putToMap(dataMap, propertyRealName, config);
@@ -268,7 +276,7 @@ public final class Config extends NonCloneableBaseObject {
 						readFromConfig(dataMap, config);
 						break;
 					default:
-						throw new LYException("Unknow config mode: " + mode);
+						throw new LYException("Unknow config mode: " + inputMode);
 					}
 				}
 					break;
