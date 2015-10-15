@@ -2,3 +2,6 @@
 /bin/
 /lytaskqueue.bin
 /config.txt
+/.settings/
+/.classpath
+/.project
