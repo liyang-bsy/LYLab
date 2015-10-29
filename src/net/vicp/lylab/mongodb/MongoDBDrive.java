@@ -3,16 +3,14 @@ package net.vicp.lylab.mongodb;
 import java.util.Arrays;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
-
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
+import net.vicp.lylab.core.interfaces.Initializable;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 
-public class MongoDBDrive extends NonCloneableBaseObject implements ApplicationListener {
+public class MongoDBDrive extends NonCloneableBaseObject implements Initializable {
 	
 	/**
 	 * MongoDB host name or IP:port
@@ -33,7 +31,7 @@ public class MongoDBDrive extends NonCloneableBaseObject implements ApplicationL
 	private static MongoDBDrive instance = null;
 
 	@Override
-	public void onApplicationEvent(ApplicationEvent arg) {
+	public void initialize() {
 		if(instance == null)
 		{
 			System.out.println("MongoDBDrive - Initialization started");

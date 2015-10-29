@@ -142,15 +142,16 @@ public class MongoDBService<T> {
 	 * @param order		排序关键字
 	 * @throws SQLException
 	 */
-//	public List<T> queryForList(Page page, String[] filter, Object[] value, String order) throws SQLException
-//	{
-//		if(filter == null || value == null)
-//			return new ArrayList<T>();
-//		Query<T> query = getDao().createQuery().disableValidation();
-//		queryAnalasis(query, filter, value);
+	public List<T> queryForList(int limit, int offset, String[] filter, Object[] value, String order) throws SQLException
+	{
+		if(filter == null || value == null)
+			return new ArrayList<T>();
+		Query<T> query = getDao().createQuery().disableValidation();
+		queryAnalasis(query, filter, value);
 //		page.setTotal((int) query.countAll());
+		return query.limit(limit).offset(offset).order(order).asList();
 //		return query.limit(page.getLimit()).offset((page.getStart()-1)*page.getLimit()).order(order).asList();
-//	}
+	}
 	/**
 	 * 查询日志通用接口，查询多个对象的总数
 	 * @param filter	条件字符串组
