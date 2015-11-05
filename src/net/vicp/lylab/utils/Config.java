@@ -201,6 +201,7 @@ public final class Config extends NonCloneableBaseObject {
 					((Config) tmp).deepClose();
 			}
 			dataMap.clear();
+			keyList.clear();
 		}
 	}
 

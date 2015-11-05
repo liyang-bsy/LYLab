@@ -4,11 +4,14 @@ import java.util.Arrays;
 
 public class Algorithm {
 	public static void main(String[] args) {
-		byte[] source = new byte[]{0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6};
-		byte[] compare = new byte[]{0,1};
-		System.out.println(KMPSearch(source, compare, 16));
-		quicksort(source);
-		System.out.println(Arrays.toString(source));
+//		byte[] source = new byte[]{0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6};
+//		byte[] compare = new byte[]{0,1};
+//		System.out.println(KMPSearch(source, compare, 16));
+//		quicksort(source);
+//		System.out.println(Arrays.toString(source));
+		String[] strings = new String[]{ "a" , "b" , "c" , "a","d","ab","ac","ba","bc"};
+		quicksort(strings);
+		System.out.println(Arrays.toString(strings));
 	}
 
 	private static void swap(Object arr[], int i, int j) {
