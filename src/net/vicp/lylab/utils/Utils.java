@@ -265,7 +265,7 @@ public class Utils extends NonCloneableBaseObject {
 
 	/**
 	 * 获取异常的字符串内容
-	 * @param t
+	 * @param e Exception itself
 	 * @return
 	 */
 	public static String getStringFromException(Exception e) {
@@ -275,7 +275,7 @@ public class Utils extends NonCloneableBaseObject {
 
 	/**
 	 * 获取错误的字符串内容
-	 * @param t
+	 * @param e Error itself
 	 * @return
 	 */
 	public static String getStringFromError(Error e) {
@@ -285,18 +285,14 @@ public class Utils extends NonCloneableBaseObject {
 
 	/**
 	 * 获取异常/错误的字符串内容
-	 * @param t
+	 * @param t Any throwable object
 	 * @return
 	 */
 	public static String getStringFromThrowable(Throwable t) {
-		try {
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			t.printStackTrace(pw);
-			return "\r\n" + sw.toString() + "\r\n";
-		} catch (Exception ex) {
-			return "bad getErrorInfoFromException";
-		}
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		t.printStackTrace(pw);
+		return "\r\n" + sw.toString() + "\r\n";
 	}
 
 	private static final JsonFactory jsonFactory = new JsonFactory();
