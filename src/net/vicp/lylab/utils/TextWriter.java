@@ -8,7 +8,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
-public final class StringLineWriter extends NonCloneableBaseObject {
+public final class TextWriter extends NonCloneableBaseObject {
 	private String path = "";
 	private String suffix = "txt";
 	private int maxLine = 10000;
@@ -16,7 +16,7 @@ public final class StringLineWriter extends NonCloneableBaseObject {
 	private FileOutputStream fileOut = null;
 	private int outCount = 0;
 
-	public StringLineWriter(String path) {
+	public TextWriter(String path) {
 		this.path = path;
 		Utils.createDirectory(path);
 	}

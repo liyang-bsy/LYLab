@@ -3,6 +3,12 @@ package net.vicp.lylab.utils;
 import java.util.Arrays;
 
 public class Algorithm {
+
+    /**
+     * Prevents instantiation.
+     */
+	private Algorithm() {}
+	
 	public static void main(String[] args) {
 //		byte[] source = new byte[]{0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6};
 //		byte[] compare = new byte[]{0,1};
@@ -23,8 +29,9 @@ public class Algorithm {
 	// Quick Sort below
 	public static <T extends Comparable<T>> void quicksort(T[] arr, int left, int right) {
 		int i, last;
-		if (left >= right) { /* do nothing if array contains fewer than two */
-			return; /* two elements */
+		// do nothing if array contains fewer than two elements
+		if (left >= right) {
+			return;
 		}
 		swap(arr, left, (left + right) / 2);
 		last = left;
