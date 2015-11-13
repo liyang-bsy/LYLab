@@ -5,16 +5,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.model.Pair;
-import net.vicp.lylab.utils.platform.OSInfo;
 
 public class Command extends NonCloneableBaseObject {
 	private static final Runtime rt = Runtime.getRuntime();
+	private static String defaultShellEncoding = "GBK";
 
 	public static Pair<Integer, String> execute(String cmd) {
 		String[] cmdSeq = { "", "/c", "" };
-		if(OSInfo.isWindows())
+		if(CoreDef.OperationSystem.isWindows())
 			cmdSeq[0] = "cmd";
 		else
 			cmdSeq[0] = "/bin/bash";
@@ -32,9 +33,9 @@ public class Command extends NonCloneableBaseObject {
 	}
 
 	// read an input-stream into a String
-	static String loadStream(InputStream is) throws IOException {
+	private static String loadStream(InputStream is) throws IOException {
 		String str = "";
-		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is, "GBK"));
+		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is, getDefaultShellEncoding()));
 		StringBuilder buffer = new StringBuilder();
 		while ((str = bufferedReader.readLine()) != null) {
 			buffer.append(str);
@@ -42,4 +43,13 @@ public class Command extends NonCloneableBaseObject {
 		}
 		return buffer.toString();
 	}
+
+	public static String getDefaultShellEncoding() {
+		return defaultShellEncoding;
+	}
+
+	public static void setDefaultShellEncoding(String defaultShellEncoding) {
+		Command.defaultShellEncoding = defaultShellEncoding;
+	}
+
 }

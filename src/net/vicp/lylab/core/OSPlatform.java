@@ -1,4 +1,4 @@
-package net.vicp.lylab.utils.platform;
+package net.vicp.lylab.core;
 
 public enum OSPlatform {
 	

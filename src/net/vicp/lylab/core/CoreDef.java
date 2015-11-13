@@ -24,6 +24,7 @@ public class CoreDef {
 	public static Config config = new Config();
 	public static Object[] dock = new Object[16];
 	
+	public static final OSInfo OperationSystem = new OSInfo();
 	protected static String _charset = "UTF-8";
 	protected static Charset charset = Charset.forName(CoreDef._charset);
 	public static CharsetEncoder charsetEncoder = charset.newEncoder();
