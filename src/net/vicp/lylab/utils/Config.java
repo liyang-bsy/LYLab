@@ -504,11 +504,11 @@ public final class Config extends NonCloneableBaseObject {
 	 * Get value type of a key from config
 	 * @param key
 	 * @return
-	 * A Class<?> object expected, null if key not existed.
+	 * A Class<?> object expected.
+	 * @throws LYException
+	 * If key not existed, contains information about key/file name etc.
 	 */
 	public Class<?> getValueTypeByKey(String key) {
-		if (!containsKey(key))
-			return null;
 		return getProperty(key).getClass();
 	}
 
