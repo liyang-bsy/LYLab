@@ -3,14 +3,7 @@ package net.vicp.lylab.utils;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -574,7 +567,7 @@ public final class Config extends NonCloneableBaseObject {
 	public List getList(String key) {
 		Object value = getProperty(key);
 		try {
-			return (List) Caster.arrayCast((List) value, List.class);
+			return (List) Caster.arrayCast((List) value, ArrayList.class);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed", e);
@@ -584,7 +577,7 @@ public final class Config extends NonCloneableBaseObject {
 	public Set getSet(String key) {
 		Object value = getProperty(key);
 		try {
-			return (Set) Caster.arrayCast((List) value, Set.class);
+			return (Set) Caster.arrayCast((List) value, HashSet.class);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed", e);
