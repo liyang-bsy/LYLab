@@ -218,7 +218,7 @@ public final class Caster extends NonCloneableBaseObject {public static void mai
 				try {
 					// Generic instance, if this type could be initialized
 					targetArray = targetClass.newInstance();
-				} catch (InstantiationException e) {
+				} catch (Exception e) {
 					// If can't initialize, it maybe an interface
 					if (List.class.isAssignableFrom(targetClass))
 						targetArray = new ArrayList();
@@ -242,7 +242,7 @@ public final class Caster extends NonCloneableBaseObject {public static void mai
 				throw new LYException("Unsupport target type:" + targetClass.getName());
 			return targetArray;
 		} catch (Exception e) {
-			throw new LYException("Cast failed from ArrayList [" + originalArray + "] to " + targetClass.getName(), e);
+			throw new LYException("Cast failed from " + originalArray.getClass().getName() + " {" + originalArray + "} to " + targetClass.getName(), e);
 		}
 	}
 
