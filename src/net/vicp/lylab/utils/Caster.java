@@ -6,136 +6,9 @@ import java.util.concurrent.*;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
-public final class Caster extends NonCloneableBaseObject {public static void main(String[] args) throws InstantiationException, IllegalAccessException {
-	Class<?>[] classes = new Class<?>[] {
-		java.util.AbstractCollection.class	,
-		java.util.AbstractList.class	,
-		java.util.AbstractMap.class	,
-		java.util.AbstractQueue.class	,
-		java.util.AbstractSequentialList.class	,
-		java.util.AbstractSet.class	,
-		java.util.ArrayDeque.class	,
-		java.util.ArrayList.class	,
-		java.util.Arrays.class	,
-		java.util.BitSet.class	,
-		java.util.Calendar.class	,
-		java.util.Collection.class	,
-		java.util.Collections.class	,
-//		java.util.ComparableTimSort.class	,
-		java.util.Comparator.class	,
-		java.util.ConcurrentModificationException.class	,
-		java.util.Currency.class	,
-		java.util.Date.class	,
-		java.util.Deque.class	,
-		java.util.Dictionary.class	,
-//		java.util.DualPivotQuicksort.class	,
-		java.util.DuplicateFormatFlagsException.class	,
-		java.util.EmptyStackException.class	,
-		java.util.Enumeration.class	,
-		java.util.EnumMap.class	,
-		java.util.EnumSet.class	,
-		java.util.EventListener.class	,
-		java.util.EventListenerProxy.class	,
-		java.util.EventObject.class	,
-		java.util.FormatFlagsConversionMismatchException.class	,
-		java.util.Formattable.class	,
-		java.util.FormattableFlags.class	,
-		java.util.Formatter.class	,
-		java.util.FormatterClosedException.class	,
-		java.util.GregorianCalendar.class	,
-		java.util.HashMap.class	,
-		java.util.HashSet.class	,
-		java.util.Hashtable.class	,
-		java.util.IdentityHashMap.class	,
-		java.util.IllegalFormatCodePointException.class	,
-		java.util.IllegalFormatConversionException.class	,
-		java.util.IllegalFormatException.class	,
-		java.util.IllegalFormatFlagsException.class	,
-		java.util.IllegalFormatPrecisionException.class	,
-		java.util.IllegalFormatWidthException.class	,
-		java.util.IllformedLocaleException.class	,
-		java.util.InputMismatchException.class	,
-		java.util.InvalidPropertiesFormatException.class	,
-		java.util.Iterator.class	,
-//		java.util.JapaneseImperialCalendar.class	,
-//		java.util.JumboEnumSet.class	,
-		java.util.LinkedHashMap.class	,
-		java.util.LinkedHashSet.class	,
-		java.util.LinkedList.class	,
-		java.util.List.class	,
-		java.util.ListIterator.class	,
-		java.util.ListResourceBundle.class	,
-		java.util.Locale.class	,
-//		java.util.LocaleISOData.class	,
-		java.util.Map.class	,
-		java.util.MissingFormatArgumentException.class	,
-		java.util.MissingFormatWidthException.class	,
-		java.util.MissingResourceException.class	,
-		java.util.NavigableMap.class	,
-		java.util.NavigableSet.class	,
-		java.util.NoSuchElementException.class	,
-		java.util.Objects.class	,
-		java.util.Observable.class	,
-		java.util.Observer.class	,
-		java.util.PriorityQueue.class	,
-		java.util.Properties.class	,
-		java.util.PropertyPermission.class	,
-//		java.util.PropertyPermissionCollection.class	,
-		java.util.PropertyResourceBundle.class	,
-		java.util.Queue.class	,
-		java.util.Random.class	,
-		java.util.RandomAccess.class	,
-//		java.util.RandomAccessSubList.class	,
-//		java.util.RegularEnumSet.class	,
-		java.util.ResourceBundle.class	,
-		java.util.Scanner.class	,
-		java.util.ServiceConfigurationError.class	,
-		java.util.ServiceLoader.class	,
-		java.util.Set.class	,
-		java.util.SimpleTimeZone.class	,
-		java.util.SortedMap.class	,
-		java.util.SortedSet.class	,
-		java.util.Stack.class	,
-		java.util.StringTokenizer.class	,
-//		java.util.SubList.class	,
-//		java.util.TaskQueue.class	,
-		java.util.Timer.class	,
-		java.util.TimerTask.class	,
-//		java.util.TimerThread.class	,
-		java.util.TimeZone.class	,
-//		java.util.TimSort.class	,
-		java.util.TooManyListenersException.class	,
-		java.util.TreeMap.class	,
-		java.util.TreeSet.class	,
-		java.util.UnknownFormatConversionException.class	,
-		java.util.UnknownFormatFlagsException.class	,
-		java.util.UUID.class	,
-		java.util.Vector.class	,
-		java.util.WeakHashMap.class	,
-//		java.util.XMLUtils.class	,
-
-
-	};
-	for (Class<?> targetClass : classes) {
-		try {
-			if(targetClass.isInterface())
-			{
-				System.out.println(targetClass.getName() + "\tis interface");
-				continue;
-			}
-				
-			targetClass.newInstance();
-			System.out.println(targetClass.getName() + "\tcan");
-		} catch (InstantiationException e) {
-//			System.out.println(targetClass.getName() + "\tcan't initialize");
-		} catch (IllegalAccessException e) {
-//			System.out.println(targetClass.getName() + "\tcan't access");
-		}
-	}
-}
-
+public final class Caster extends NonCloneableBaseObject {
 	/**
-	 * String-based simple cast, from one basic type to another basic type
+	 * String-based simple cast, from one basic type to another basic type.
 	 * @param originalObject
 	 * @param targetClass
 	 * @return
@@ -195,6 +68,7 @@ public final class Caster extends NonCloneableBaseObject {public static void mai
 
 	/**
 	 * ArrayList-based simple cast, from one {@link java.util.Collection} type to Array-based basic type
+	 * However, original sort may be changed based on the container you selected.
 	 * @param originalArray
 	 * @param targetClass
 	 * @return
