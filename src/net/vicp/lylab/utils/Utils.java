@@ -21,7 +21,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
-public class Utils extends NonCloneableBaseObject {
+public abstract class Utils extends NonCloneableBaseObject {
 
 	/**
 	 * delete CRLF; delete empty line ;delete blank lines

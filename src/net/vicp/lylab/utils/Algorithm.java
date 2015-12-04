@@ -2,7 +2,7 @@ package net.vicp.lylab.utils;
 
 import java.util.Arrays;
 
-public class Algorithm {
+public abstract class Algorithm {
 
     /**
      * Prevents instantiation.

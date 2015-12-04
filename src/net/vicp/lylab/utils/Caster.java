@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
-public final class Caster extends NonCloneableBaseObject {
+public abstract class Caster extends NonCloneableBaseObject {
 	/**
 	 * String-based simple cast, from one basic type to another basic type.
 	 * @param originalObject

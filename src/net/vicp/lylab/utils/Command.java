@@ -9,7 +9,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.model.Pair;
 
-public class Command extends NonCloneableBaseObject {
+public abstract class Command extends NonCloneableBaseObject {
 	private static final Runtime rt = Runtime.getRuntime();
 	private static String defaultShellEncoding = "GBK";
 

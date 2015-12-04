@@ -6,7 +6,7 @@ import java.util.Map;
 
 import net.vicp.lylab.core.CloneableBaseObject;
 
-public class DNS extends CloneableBaseObject {
+public abstract class DNS extends CloneableBaseObject {
 	protected static Map<String, String> DNSCache;
 	
 	public static void main(String[] args) throws UnknownHostException {

@@ -27,7 +27,7 @@ import net.vicp.lylab.core.model.Pair;
  * <br>*object1=com.java.ExampleClass
  * <br>You can access "object1" by {@link #getObject(String key)}: {@code config.getObject("object1")};
  * <br><b>[!]</b>ExampleClass <b>MUST</b> have a default constructor
- * <br><br><b>Parameter mark:</b> the value of key(start with ^) will be set to last Object(* mark). If value(start with &), will be regard as key and try to find any the key from itself or its parents.
+ * <br><br><b>Parameter mark:</b> the value of key(start with ^) will be set to last Object(* mark). If value starts with &, will be regard as key and try to find any the key from itself or its parents.
  * <br>Example:
  * <br>^value1=123.45
  * <br>{@code exampleClass.setValue1(123.45);}
@@ -44,6 +44,10 @@ import net.vicp.lylab.core.model.Pair;
  * <br>[]item=def
  * <br>You will get an {@link ArrayList} contains { "abc","def" };
  * <br>The key will be retained at current config, you may reference to it somewhere else.
+ * <br><br><b>Extract mark:</b> the value(start by '&' and contains '->' mark) of key(start with ^/[]/*), is the reference value's getter.
+ * <br>Example:
+ * <br>*a=^b->c
+ * <br>Then a=b.getC();
  * <br>
  * <br>Different between Tree/Plain {@link Config}
  * <br>Tree-Configuration {@link Config} could get it sub-config by {@link #getConfig(String key)}
@@ -84,13 +88,16 @@ public final class Config extends NonCloneableBaseObject {
 	public static final String VALID_NAME = "(([*^]|\\[\\]|\\$\\+|\\$)[_\\w]*)|([_\\w]*)";
 	public static final String VALID_VALUE = "([&][^&]*)|([^&]*)";
 
-	public static final Map<Character, Integer> sortRule = new HashMap<Character, Integer>();
-	public static final Set<Character> lazyLoadSet;
+	public static final Map<String, Integer> sortRule = new HashMap<String, Integer>();
+	public static final Set<String> lazyLoadSet;
+	/**
+	 * The higher, the later.
+	 */
 	static {
-		sortRule.put('*', 50);
-		sortRule.put('[', 50);
-		sortRule.put('^', 50);
-		sortRule.put('$', 100);
+		sortRule.put("*", 50);
+		sortRule.put("[]", 50);
+		sortRule.put("^", 50);
+		sortRule.put("$", 100);
 		lazyLoadSet = sortRule.keySet();
 	}
 
@@ -154,7 +161,7 @@ public final class Config extends NonCloneableBaseObject {
 					continue;
 				}
 				// lazy load or instant load
-				if (isLazyLoad(propertyName))
+				if (isLazyLoad(property))
 					insertLazyLoad(property);
 				else
 					putToMap(dataMap, propertyName, property.getRight());
@@ -203,9 +210,9 @@ public final class Config extends NonCloneableBaseObject {
 	 * @return
 	 * true if this property should do lazy load
 	 */
-	private boolean isLazyLoad(String propertyName) {
-		for (char singal : lazyLoadSet) {
-			if (propertyName.charAt(0) == singal)
+	private boolean isLazyLoad(Pair<String, String> property) {
+		for (String signal : lazyLoadSet) {
+			if (property.getLeft().contains(signal) || property.getRight().contains(signal))
 				return true;
 		}
 		return false;
@@ -215,12 +222,40 @@ public final class Config extends NonCloneableBaseObject {
 	private void insertLazyLoad(Pair<String, String> property) {
 		int i = 0;
 		for (; i < lazyLoad.size(); i++)
-			if (sortRule.get(property.getLeft().charAt(0))
-					< sortRule.get(lazyLoad.get(i).getLeft().charAt(0)))
+			if (checkLazyLoadMaxValue(property)
+					< checkLazyLoadMaxValue(lazyLoad.get(i)))
 				break;
 		lazyLoad.add(i, property);
 		log.debug("[Transcribe]:" + property);
-
+	}
+	
+	private int checkLazyLoadMaxValue(Pair<String, String> property) {
+		int min = Integer.MIN_VALUE;
+		int value = Integer.MIN_VALUE;
+		for (String rule : lazyLoadSet) {
+			if (property.getLeft().contains(rule) || property.getRight().contains(rule)) {
+				value = sortRule.get(rule);
+				if (value > min)
+					min = value;
+			}
+		}
+		return min;
+	}
+	
+	private String checkLazyLoadMinRule(Pair<String, String> property) {
+		int min = Integer.MAX_VALUE;
+		int value = Integer.MAX_VALUE;
+		String signal = "";
+		for (String rule : lazyLoadSet) {
+			if (property.getLeft().contains(rule) || property.getRight().contains(rule)) {
+				value = sortRule.get(rule);
+				if (value < min) {
+					min = value;
+					signal = rule;
+				}
+			}
+		}
+		return signal;
 	}
 
 	private void lazyLoad() {
@@ -233,8 +268,9 @@ public final class Config extends NonCloneableBaseObject {
 				log.debug("[Execute]:" + property);
 				String propertyName = property.getLeft();
 				String propertyValue = property.getRight();
-				switch (propertyName.charAt(0)) {
-				case '$': {
+				String rule = checkLazyLoadMinRule(property);
+				switch (rule) {
+				case "$": {
 					// sub-config reference
 					String propertyRealName = propertyName.substring(1);
 					String realFileName = propertyValue;
@@ -246,7 +282,9 @@ public final class Config extends NonCloneableBaseObject {
 						if (testExist.exists() && testExist.isFile())
 							break testfilepath;
 						// canonical path
-						int index = fileName.lastIndexOf(File.separator);
+						int index1 = fileName.lastIndexOf("/");
+						int index2 = fileName.lastIndexOf("\\");
+						int index = (index1 > index2 ? index1 : index2);
 						String filePath = fileName.substring(0, index + 1);
 						testExist = new File(filePath + realFileName);
 						if (testExist.exists() && testExist.isFile())
@@ -258,8 +296,10 @@ public final class Config extends NonCloneableBaseObject {
 								"Circle reference was found in config file["
 										+ realFileName + "]");
 					int inputMode = mode;
-					if(propertyRealName.startsWith("+"))
+					if(propertyRealName.startsWith("+")) {
+						propertyRealName = propertyRealName.substring(1);
 						inputMode = 1;
+					}
 					switch (inputMode) {
 					case 0:
 						config = new Config(realFileName, fileNameTrace, this);
@@ -274,24 +314,12 @@ public final class Config extends NonCloneableBaseObject {
 					}
 				}
 					break;
-				case '*': {
+				case "*": {
 					// object reference
 					String propertyRealName = propertyName.substring(1);
 					Object target = null;
 					if (propertyValue.startsWith("&")) {
-						String propertyRealValue = propertyValue.substring(1);
-						Object obj = null;
-						Config root = this;
-						while (true) {
-							obj = root.dataMap.get(propertyRealValue);
-							if (obj != null || root.parent == null)
-								break;
-							root = parent;
-						}
-						if (obj == null)
-							throw new LYException("Cannot find reference ["
-									+ propertyRealValue
-									+ "] in this Config or parent Config");
+						Object obj = searchObjectReference(propertyValue.substring(1));
 						target = obj;
 						putToMap(dataMap, propertyRealName, target);
 					} else {
@@ -302,7 +330,7 @@ public final class Config extends NonCloneableBaseObject {
 					lastObject = target;
 				}
 					break;
-				case '[': {
+				case "[]": {
 					if (propertyName.charAt(1) != ']')
 						throw new LYException("Bad array format ["
 								+ propertyName + "], missing ']'");
@@ -312,19 +340,7 @@ public final class Config extends NonCloneableBaseObject {
 					if (valueContainer == null)
 						valueContainer = new ArrayList();
 					if (propertyValue.startsWith("&")) {
-						String propertyRealValue = propertyValue.substring(1);
-						Object obj = null;
-						Config root = this;
-						while (true) {
-							obj = root.dataMap.get(propertyRealValue);
-							if (obj != null || root.parent == null)
-								break;
-							root = parent;
-						}
-						if (obj == null)
-							throw new LYException("Cannot find reference ["
-									+ propertyRealValue
-									+ "] in this Config or parent Config");
+						Object obj = searchObjectReference(propertyValue.substring(1));
 						valueContainer.add(obj);
 						// setter(lastObject, propertyRealName, obj);
 					} else
@@ -333,23 +349,11 @@ public final class Config extends NonCloneableBaseObject {
 					putToMap(dataMap, propertyRealName, valueContainer);
 				}
 					break;
-				case '^': {
+				case "^": {
 					// object parameter reference
 					String propertyRealName = propertyName.substring(1);
 					if (propertyValue.startsWith("&")) {
-						String propertyRealValue = propertyValue.substring(1);
-						Object obj = null;
-						Config root = this;
-						while (true) {
-							obj = root.dataMap.get(propertyRealValue);
-							if (obj != null || root.parent == null)
-								break;
-							root = parent;
-						}
-						if (obj == null)
-							throw new LYException("Cannot find reference ["
-									+ propertyRealValue
-									+ "] in this Config or parent Config");
+						Object obj = searchObjectReference(propertyValue.substring(1));
 						setter(lastObject, propertyRealName, obj);
 					} else
 						setter(lastObject, propertyRealName, propertyValue);
@@ -371,6 +375,28 @@ public final class Config extends NonCloneableBaseObject {
 			throw new LYException("Failed on lazy load config file[" + fileName
 					+ "] at line [" + getLine(property) + "]", e);
 		}
+	}
+	
+	private Object searchObjectReference(String propertyRealValue) {
+		String[] getters = new String[] {};
+		if (propertyRealValue.contains("->")) {
+			String[] valueFormat = propertyRealValue.split("->");
+			getters = Arrays.copyOfRange(valueFormat, 1, valueFormat.length);
+			propertyRealValue = valueFormat[0];
+		}
+		Object obj = null;
+		Config root = this;
+		while (true) {
+			obj = root.dataMap.get(propertyRealValue);
+			if (obj != null || root.parent == null)
+				break;
+			root = parent;
+		}
+		if (obj == null)
+			throw new LYException("Cannot find reference [" + propertyRealValue + "] in this Config or parent Config");
+		for (String getter : getters)
+			obj = getter(obj, getter);
+		return obj;
 	}
 
 	private int getLine(Pair<String, String> property) {
@@ -421,6 +447,19 @@ public final class Config extends NonCloneableBaseObject {
 		else
 			throw new LYException("No available setter[" + setter
 					+ "] was found for " + owner.getClass());
+	}
+
+	private static Object getter(Object owner, String fieldName) {
+		if (owner == null)
+			throw new NullPointerException("Owner is null for getter[" + fieldName + "]");
+		String getter = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+		// Get getter by java.lang.reflect.*
+		try {
+			Method getMethod = owner.getClass().getDeclaredMethod(getter);
+			return getMethod.invoke(owner);
+		} catch (Exception e) {
+			throw new LYException("Invoke getter[" + getter + "] for " + owner.getClass() + "failed", e);
+		}
 	}
 
 	private void rawLoader() {
