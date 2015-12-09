@@ -72,6 +72,9 @@ import net.vicp.lylab.core.model.Pair;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public final class Config extends NonCloneableBaseObject {
+	public static void main(String[] args) {
+		System.out.println(Utils.serialize(new Config("c:/config/config.txt").dataMap));
+	}
 	// Further multi-switch support will base on grammar "Key@switch:value=Value"
 
 	private transient String fileName;
@@ -99,6 +102,7 @@ public final class Config extends NonCloneableBaseObject {
 	 * The higher, the later.
 	 */
 	static {
+//		sortRule.put(":", 30);
 		sortRule.put("*", 50);
 		sortRule.put("[]", 50);
 		sortRule.put("^", 50);
@@ -227,21 +231,21 @@ public final class Config extends NonCloneableBaseObject {
 	// Simulate a safely insert-sort
 	private void insertLazyLoad(Pair<String, String> property) {
 		int i = 0;
+		int min = checkLazyLoadMinValue(property);
 		for (; i < lazyLoad.size(); i++)
-			if (checkLazyLoadMaxValue(property)
-					< checkLazyLoadMaxValue(lazyLoad.get(i)))
+			if (min < checkLazyLoadMinValue(lazyLoad.get(i)))
 				break;
 		lazyLoad.add(i, property);
 		log.debug("[Transcribe]:" + property);
 	}
 	
-	private int checkLazyLoadMaxValue(Pair<String, String> property) {
-		int min = Integer.MIN_VALUE;
-		int value = Integer.MIN_VALUE;
+	private int checkLazyLoadMinValue(Pair<String, String> property) {
+		int min = Integer.MAX_VALUE;
+		int value = Integer.MAX_VALUE;
 		for (String rule : lazyLoadSet) {
 			if (property.getLeft().contains(rule) || property.getRight().contains(rule)) {
 				value = sortRule.get(rule);
-				if (value > min)
+				if (value < min)
 					min = value;
 			}
 		}
@@ -360,11 +364,16 @@ public final class Config extends NonCloneableBaseObject {
 						setter(lastObject, propertyRealName, propertyValue);
 				}
 					break;
+//				case ":": {
+//					// object parameter reference
+//					String propertyRealName = propertyName.startsWith("*")?propertyName.substring(1):propertyName;
+//					putToMap(dataMap, propertyRealName, propertyValue);
+//				}
+//					break;
 				case "&": {
 					// object parameter reference
-					String propertyRealName = propertyName;
 					Object obj = searchObjectReference(propertyValue.substring(1));
-					putToMap(dataMap, propertyRealName, obj);
+					putToMap(dataMap, propertyName, obj);
 				}
 					break;
 				default:
@@ -532,8 +541,8 @@ public final class Config extends NonCloneableBaseObject {
 				return;
 			}
 		}
-		if (map.containsKey(key))
-			throw new LYException("Duplicated key[" + key + "] in file[" + fileName + "]");
+//		if (map.containsKey(key))
+//			throw new LYException("Duplicated key[" + key + "] in file[" + fileName + "]");
 		map.put(key, value);
 		keyList.add(key);
 	}
