@@ -17,7 +17,7 @@ import net.vicp.lylab.utils.internet.HeartBeat;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class DefaultAop extends NonCloneableBaseObject implements Aop {
+public class SimpleKeyDispatchAop extends NonCloneableBaseObject implements Aop {
 	protected List<Filter> filterChain = new ArrayList<Filter>();
 	protected Protocol protocol= null;
 	

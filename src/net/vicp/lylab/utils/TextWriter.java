@@ -1,5 +1,6 @@
 package net.vicp.lylab.utils;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.List;
@@ -8,7 +9,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
-public final class TextWriter extends NonCloneableBaseObject {
+public final class TextWriter extends NonCloneableBaseObject implements Closeable {
 	private String path = "";
 	private String suffix = "txt";
 	private int maxLine = 10000;
@@ -63,11 +64,13 @@ public final class TextWriter extends NonCloneableBaseObject {
 	public void open() {
 		try {
 			close();
-			File file = new File(path + "/");
+			if (!path.endsWith("/") && !path.endsWith("\\"))
+				path = path + File.separator;
+			File file = new File(path);
 			if (!file.exists()) {
 				file.mkdirs();
 			}
-			fileName = path + "/" + System.currentTimeMillis() + ".temp";
+			fileName = path + File.separator + System.currentTimeMillis() + ".temp";
 			file = new File(fileName);
 			if (file.exists())
 				throw new LYException("File existed, can not over write");
