@@ -48,12 +48,19 @@ import net.vicp.lylab.core.model.Pair;
  * <br>Example:
  * <br>*a=^b->c
  * <br>Then a=b.getC();
+ * <br><br><b>Global switch value mark:</b> the value of key(start with !), will be regard as switch-value. You may use it by {@link #getString(String key)} or ":" grammar
+ * <br>Example:
+ * <br>!a=0
+ * <br>b:0=apple
+ * <br>b:1=pear
+ * <br>Then 'b' is an "apple", you can also access 'a' by {@link #getString(String key)}, returns 0.
+ * <br>Use 'switch-value' on basic type is highly recommended
  * <br>
- * <br>Different between Tree/Plain {@link Config}
+ * <br><b>Different between Tree/Plain {@link Config}</b>
  * <br>Tree-Configuration {@link Config} could get it sub-config by {@link #getConfig(String key)}
  * <br>Plain-Configuration will obtain all sub-config into itself
  * <br>
- * <br>Entry rule:
+ * <br><b>Basic entry rule:</b>
  * <br>Entry start with "#" will be regard as comment and ignored for dataMap;
  * <br>Key may start with function mark "$"/"*"/"^"/"[]", itself contains underline, number or alphabet
  * <br>value may start with function mark "&", itself may contain any visible character except "&"
@@ -65,12 +72,7 @@ import net.vicp.lylab.core.model.Pair;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public final class Config extends NonCloneableBaseObject {
-	public static void main(String[] args) {
-		System.out.println(new Config("c:/config/config.txt"));
-	}
-	// Regular expression, start with any thing except '[', and end with '[number]'
-	// May used for future array/switch-value support
-	// Pattern.compile("^[^\\[]+[\\[][0-9]*[\\]]$").matcher("65435632[554234]").find()
+	// Further multi-switch support will base on grammar "Key@switch:value=Value"
 
 	private transient String fileName;
 	private Map<String, Object> dataMap;
@@ -100,6 +102,7 @@ public final class Config extends NonCloneableBaseObject {
 		sortRule.put("*", 50);
 		sortRule.put("[]", 50);
 		sortRule.put("^", 50);
+		sortRule.put("&", 80);
 		sortRule.put("$", 100);
 		lazyLoadSet = sortRule.keySet();
 	}
@@ -357,6 +360,13 @@ public final class Config extends NonCloneableBaseObject {
 						setter(lastObject, propertyRealName, propertyValue);
 				}
 					break;
+				case "&": {
+					// object parameter reference
+					String propertyRealName = propertyName;
+					Object obj = searchObjectReference(propertyValue.substring(1));
+					putToMap(dataMap, propertyRealName, obj);
+				}
+					break;
 				default:
 					throw new LYException("Unsupported grammar on property name:" + propertyName);
 				}
@@ -503,8 +513,7 @@ public final class Config extends NonCloneableBaseObject {
 	private void putToMap(Map map, String key, Object value) {
 		if (key.startsWith("!")) {
 			// switch reference
-//			key = key.substring(1);
-//			putToMap(switches, key, value);
+			key = key.substring(1);
 			if(globalSwitch == null)
 				globalSwitch = value.toString();
 			else throw new LYException("Global switch was redefined");
@@ -523,22 +532,6 @@ public final class Config extends NonCloneableBaseObject {
 				return;
 			}
 		}
-//		if (key.contains("@")) {
-//			String[] diff = key.split("@");
-//			key = diff[0];
-//			diff = diff[1].split(":");
-//			String switchName = diff[0];
-//			String switchValue = diff[1];
-//			if (switches.containsKey(switchName))
-//				if (switchValue.equals(switches.get(value)))
-//					watchList.put(key, true);
-//				else {
-//					if (watchList.containsKey(key))
-//						watchList.put(key, false);
-//				}
-//			else
-//				throw new LYException("Switch[" + switchName + "] not found");
-//		}
 		if (map.containsKey(key))
 			throw new LYException("Duplicated key[" + key + "] in file[" + fileName + "]");
 		map.put(key, value);
