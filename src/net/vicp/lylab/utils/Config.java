@@ -65,14 +65,18 @@ import net.vicp.lylab.core.model.Pair;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public final class Config extends NonCloneableBaseObject {
+	public static void main(String[] args) {
+		System.out.println(new Config("c:/config/config.txt"));
+	}
 	// Regular expression, start with any thing except '[', and end with '[number]'
 	// May used for future array/switch-value support
 	// Pattern.compile("^[^\\[]+[\\[][0-9]*[\\]]$").matcher("65435632[554234]").find()
 
 	private transient String fileName;
 	private Map<String, Object> dataMap;
-//	private transient Map<String, Object> tmpMap;
-//	private Map<String, List<Object>> arrayMap;
+//	private Map<String, String> switches;
+	private String globalSwitch = null;
+	private Map<String, Boolean> watchList = new HashMap<String, Boolean>();
 	private List<String> keyList = new ArrayList<String>();
 	private transient Config parent;
 	/**
@@ -84,8 +88,7 @@ public final class Config extends NonCloneableBaseObject {
 	private transient List<Pair<String, String>> properties = new ArrayList<Pair<String, String>>();
 	private transient List<Pair<String, String>> lazyLoad = new ArrayList<Pair<String, String>>();
 
-//	public static final String INVISIBLE_CHAR = "[\u0000-\u0020]";
-	public static final String VALID_NAME = "(([*^]|\\[\\]|\\$\\+|\\$)[_\\w]*)|([_\\w]*)";
+	public static final String VALID_NAME = "(([*^!]|\\[\\]|\\$\\+|\\$)[_\\w]*)|(([*^!]|\\[\\]|\\$\\+|\\$)[_\\w]*:[_\\w]*)|([_\\w]*:[_\\w]*)|([_\\w]*)";
 	public static final String VALID_VALUE = "([&][^&]*)|([^&]*)";
 
 	public static final Map<String, Integer> sortRule = new HashMap<String, Integer>();
@@ -121,6 +124,9 @@ public final class Config extends NonCloneableBaseObject {
 		this.fileNameTrace = fileNameTrace;
 		this.parent = parent;
 		dataMap = new ConcurrentHashMap<String, Object>();
+		if(parent != null && parent.globalSwitch != null)
+			globalSwitch = parent.globalSwitch;
+//		switches = new HashMap<String, String>();
 		reload();
 	}
 
@@ -138,8 +144,6 @@ public final class Config extends NonCloneableBaseObject {
 		fileNameTrace.push(fileName);
 		// initial
 		deepClose();
-		// arrayMap = new HashMap<String, List<Object>>();
-//		tmpMap = new ConcurrentHashMap<String, Object>();
 		// clear old data
 		lazyLoad.clear();
 		properties.clear();
@@ -172,11 +176,10 @@ public final class Config extends NonCloneableBaseObject {
 		}
 		if (!lazyLoad.isEmpty())
 			lazyLoad();
-//		dataMap = tmpMap;
-//		tmpMap = null;
-		// arrayMap.clear();
-		// arrayMap = null;
-		// System.gc();
+		if(watchList.containsValue(false))
+			for (String key : watchList.keySet())
+				if (!watchList.get(key))
+					throw new LYException("Config file[" + fileName + "] contains undefined switch values:" + key);
 		fileNameTrace.pop();
 	}
 	
@@ -292,9 +295,7 @@ public final class Config extends NonCloneableBaseObject {
 					}
 					// if exist circle
 					if (fileNameTrace.contains(realFileName))
-						throw new LYException(
-								"Circle reference was found in config file["
-										+ realFileName + "]");
+						throw new LYException("Circle reference was found in config file[" + realFileName + "]");
 					int inputMode = mode;
 					if(propertyRealName.startsWith("+")) {
 						propertyRealName = propertyRealName.substring(1);
@@ -321,11 +322,10 @@ public final class Config extends NonCloneableBaseObject {
 					if (propertyValue.startsWith("&")) {
 						Object obj = searchObjectReference(propertyValue.substring(1));
 						target = obj;
-						putToMap(dataMap, propertyRealName, target);
 					} else {
 						target = Class.forName(propertyValue).newInstance();
-						putToMap(dataMap, propertyRealName, target);
 					}
+					putToMap(dataMap, propertyRealName, target);
 					lazyInitialize.add(target);
 					lastObject = target;
 				}
@@ -342,10 +342,8 @@ public final class Config extends NonCloneableBaseObject {
 					if (propertyValue.startsWith("&")) {
 						Object obj = searchObjectReference(propertyValue.substring(1));
 						valueContainer.add(obj);
-						// setter(lastObject, propertyRealName, obj);
 					} else
 						valueContainer.add(propertyValue);
-					// setter(lastObject, propertyRealName, propertyValue);
 					putToMap(dataMap, propertyRealName, valueContainer);
 				}
 					break;
@@ -502,7 +500,47 @@ public final class Config extends NonCloneableBaseObject {
 			putToMap(container, key, other.getProperty(key));
 	}
 
-	private void putToMap(Map<String, Object> map, String key, Object value) {
+	private void putToMap(Map map, String key, Object value) {
+		if (key.startsWith("!")) {
+			// switch reference
+//			key = key.substring(1);
+//			putToMap(switches, key, value);
+			if(globalSwitch == null)
+				globalSwitch = value.toString();
+			else throw new LYException("Global switch was redefined");
+		}
+		if (key.contains(":")) {
+			String[] diff = key.split(":");
+			key = diff[0];
+			String switchValue = diff[1];
+			if (globalSwitch == null)
+				throw new LYException("Global switch hasn't been defined yet");
+			if (globalSwitch.equals(switchValue))
+				watchList.put(key, true);
+			else {
+				if (!watchList.containsKey(key))
+					watchList.put(key, false);
+				return;
+			}
+		}
+//		if (key.contains("@")) {
+//			String[] diff = key.split("@");
+//			key = diff[0];
+//			diff = diff[1].split(":");
+//			String switchName = diff[0];
+//			String switchValue = diff[1];
+//			if (switches.containsKey(switchName))
+//				if (switchValue.equals(switches.get(value)))
+//					watchList.put(key, true);
+//				else {
+//					if (watchList.containsKey(key))
+//						watchList.put(key, false);
+//				}
+//			else
+//				throw new LYException("Switch[" + switchName + "] not found");
+//		}
+		if (map.containsKey(key))
+			throw new LYException("Duplicated key[" + key + "] in file[" + fileName + "]");
 		map.put(key, value);
 		keyList.add(key);
 	}
