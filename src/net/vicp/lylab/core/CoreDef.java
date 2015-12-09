@@ -18,7 +18,7 @@ import net.vicp.lylab.utils.Config;
  * @version 1.0.7
  * 
  */
-public class CoreDef {
+public class CoreDef extends NonCloneableBaseObject {
 	public static final String VERSION = "1.0.7";
 
 	public static Config config = new Config();

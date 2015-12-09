@@ -7,7 +7,7 @@ package net.vicp.lylab.core;
  * 
  * @author isea533
  */
-public class OSInfo {
+public class OSInfo extends NonCloneableBaseObject {
 	private String OS = System.getProperty("os.name").toLowerCase();
 
 	private OSPlatform platform;
