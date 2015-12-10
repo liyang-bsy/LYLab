@@ -14,6 +14,13 @@ public final class MultiSourcesSession extends NonCloneableBaseObject implements
 	private SQLSessionFactory sqlSessionFactory;
 	private Map<String, SqlSession> sessions = new HashMap<String, SqlSession>();
 	
+	public MultiSourcesSession(SQLSessionFactory sqlSessionFactory) {
+		if (sqlSessionFactory == null)
+			throw new NullPointerException("Parameter sqlSessionFactory is null");
+		this.sqlSessionFactory = sqlSessionFactory;
+	}
+	
+	@Override
 	public void initialize() {
 		for(String env:sqlSessionFactory.getEnvironments())
 			sessions.put(env, sqlSessionFactory.getSqlSessionFactory(env).openSession(false));
