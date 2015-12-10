@@ -72,9 +72,6 @@ import net.vicp.lylab.core.model.Pair;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public final class Config extends NonCloneableBaseObject {
-	public static void main(String[] args) {
-		System.out.println(Utils.serialize(new Config("c:/config/config.txt").dataMap));
-	}
 	// Further multi-switch support will base on grammar "Key@switch:value=Value"
 
 	private transient String fileName;
@@ -541,8 +538,6 @@ public final class Config extends NonCloneableBaseObject {
 				return;
 			}
 		}
-//		if (map.containsKey(key))
-//			throw new LYException("Duplicated key[" + key + "] in file[" + fileName + "]");
 		map.put(key, value);
 		keyList.add(key);
 	}
