@@ -138,8 +138,15 @@ public final class Config extends NonCloneableBaseObject {
 	 * You may reload your configuration manually, it will close all current 'opened' object.
 	 * <br>[!]If you keep a Strong-Reference to an 'opened' Object, keep using it may result in an exception.
 	 * @param fileName
-	 * @param fileNameTrace
-	 * @param parent
+	 */
+	public synchronized void reload(String newFileName) {
+		fileName = newFileName;
+		reload();
+	}
+
+	/**
+	 * You may reload your configuration manually, it will close all current 'opened' object.
+	 * <br>[!]If you keep a Strong-Reference to an 'opened' Object, keep using it may result in an exception.
 	 */
 	public synchronized void reload() {
 		if (fileName == null)
