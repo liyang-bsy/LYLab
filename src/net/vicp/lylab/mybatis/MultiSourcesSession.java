@@ -4,16 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.utils.Utils;
-
 import org.apache.ibatis.session.SqlSession;
 
-public final class MultiSourcesSession extends NonCloneableBaseObject implements AutoCloseable {
+import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.interfaces.AutoLifeCycle;
+import net.vicp.lylab.utils.Utils;
+
+public final class MultiSourcesSession extends NonCloneableBaseObject implements AutoLifeCycle {
 	private SQLSessionFactory sqlSessionFactory;
 	private Map<String, SqlSession> sessions = new HashMap<String, SqlSession>();
 	
-	public MultiSourcesSession() {
+	public void initialize() {
 		for(String env:sqlSessionFactory.getEnvironments())
 			sessions.put(env, sqlSessionFactory.getSqlSessionFactory(env).openSession(false));
 	}
@@ -38,7 +39,7 @@ public final class MultiSourcesSession extends NonCloneableBaseObject implements
 			sessions.get(env).rollback();
 	}
 
-	public boolean containsKey(Object key) {
+	public boolean containsKey(String key) {
 		return sessions.containsKey(key);
 	}
 
@@ -46,7 +47,7 @@ public final class MultiSourcesSession extends NonCloneableBaseObject implements
 		return sessions.containsValue(value);
 	}
 
-	public SqlSession get(Object key) {
+	public SqlSession get(String key) {
 		return sessions.get(key);
 	}
 
