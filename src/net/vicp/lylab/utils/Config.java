@@ -112,7 +112,7 @@ public final class Config extends NonCloneableBaseObject {
 	 *  Create an empty config
 	 */
 	public Config() {
-		this(null, null, null);
+		this(null, new Stack<String>(), null);
 	}
 
 	/**
