@@ -41,4 +41,16 @@ public final class SQLSessionFactory extends NonCloneableBaseObject implements I
 		return sqlSessionFactories.keySet();
 	}
 
+	public String getResource() {
+		return resource;
+	}
+
+	public void setResource(String resource) {
+		this.resource = resource;
+	}
+
+	public void setEnvironments(String[] environments) {
+		this.environments = environments;
+	}
+
 }
