@@ -601,9 +601,22 @@ public final class Config extends NonCloneableBaseObject {
 	 * @return
 	 */
 	public Object getNewInstance(String key) {
+		return getNewInstance(key, false);
+	}
+
+	/**
+	 * Create a new instance from config, entry with key <b>MUST</b> be a class name, and it <b>MUST</b> have a default constructor
+	 * @param key
+	 * @param autoInitialize If this implemented Initializable, it will be initialize before return to user
+	 * @return
+	 */
+	public Object getNewInstance(String key, boolean autoInitialize) {
 		try {
 			String className = (String) getProperty(key);
-			return Class.forName(className).newInstance();
+			Object instance = Class.forName(className).newInstance();
+			if(instance instanceof Initializable && autoInitialize)
+				((Initializable) instance).initialize();
+			return instance;
 		} catch (Exception e) {
 			throw new LYException("Can not make instance", e);
 		}
