@@ -46,7 +46,7 @@ import net.vicp.lylab.core.model.Pair;
  * <br>The key will be retained at current config, you may reference to it somewhere else.
  * <br><br><b>Extract mark:</b> the value(start by '&' and contains '->' mark) of key(start with ^/[]/*), is the reference value's getter.
  * <br>Example:
- * <br>*a=^b->c
+ * <br>*a=&b->c
  * <br>Then a=b.getC();
  * <br><br><b>Global switch value mark:</b> the value of key(start with !), will be regard as switch-value. You may use it by {@link #getString(String key)} or ":" grammar
  * <br>Example:
