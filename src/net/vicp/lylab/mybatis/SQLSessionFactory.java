@@ -33,6 +33,12 @@ public final class SQLSessionFactory extends NonCloneableBaseObject implements I
 		}
 	}
 
+	public MultiSourcesSession getSessions() {
+		MultiSourcesSession mss = new MultiSourcesSession(this);
+		mss.initialize();
+		return mss;
+	}
+
 	public SqlSessionFactory getSqlSessionFactory(String env) {
 		return sqlSessionFactories.get(env);
 	}
