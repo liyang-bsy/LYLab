@@ -62,8 +62,9 @@ import net.vicp.lylab.core.model.Pair;
  * <br>
  * <br><b>Basic entry rule:</b>
  * <br>Entry start with "#" will be regard as comment and ignored for dataMap;
- * <br>Key may start with function mark "$"/"*"/"^"/"[]", itself contains underline, number or alphabet
- * <br>value may start with function mark "&", itself may contain any visible character except "&"
+ * <br>Entry will split itself with first equal sign("="), more equal sign(=) will be regard as String inside of value;
+ * <br>Key may start with function mark "$"/"*"/"^"/"[]"/"$", itself contains underline, number or alphabet(case-sensitive);
+ * <br>value may start with function mark "&", but itself may contain any visible character EXCEPT "&";
  * 
  * @author Young
  * @since 2015.07.29
@@ -491,7 +492,7 @@ public final class Config extends NonCloneableBaseObject {
 			// Remove comment
 			rawPair = rawPair.replaceAll("([#][\\S]*)", "");
 
-			String[] pair = rawPair.split("=");
+			String[] pair = rawPair.split("=", 2);
 			if (pair.length == 1) {
 				if (i == 0 && pair[0].startsWith("[") && pair[0].endsWith("]"))
 					properties.add(new Pair<String, String>(pair[0], null));
