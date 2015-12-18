@@ -94,19 +94,18 @@ public final class Config extends NonCloneableBaseObject {
 	public static final String VALID_NAME = "(([*^!]|\\[\\]|\\$\\+|\\$)[_\\w]*)|(([*^!]|\\[\\]|\\$\\+|\\$)[_\\w]*:[_\\w]*)|([_\\w]*:[_\\w]*)|([_\\w]*)";
 	public static final String VALID_VALUE = "([&][^&]*)|([^&]*)";
 
-	public static final Map<String, Integer> sortRule = new HashMap<String, Integer>();
-	public static final Set<String> lazyLoadSet;
+	public static final Map<String, Integer> keySortRule = new HashMap<String, Integer>();
+	public static final Map<String, Integer> valueSortRule = new HashMap<String, Integer>();
 	/**
 	 * The higher, the later.
 	 */
 	static {
 //		sortRule.put(":", 30);
-		sortRule.put("*", 50);
-		sortRule.put("[]", 50);
-		sortRule.put("^", 50);
-		sortRule.put("&", 80);
-		sortRule.put("$", 100);
-		lazyLoadSet = sortRule.keySet();
+		keySortRule.put("*", 50);
+		keySortRule.put("[]", 50);
+		keySortRule.put("^", 50);
+		valueSortRule.put("&", 80);
+		keySortRule.put("$", 100);
 	}
 
 	/**
@@ -226,8 +225,12 @@ public final class Config extends NonCloneableBaseObject {
 	 * true if this property should do lazy load
 	 */
 	private boolean isLazyLoad(Pair<String, String> property) {
-		for (String signal : lazyLoadSet) {
-			if (property.getLeft().contains(signal) || property.getRight().contains(signal))
+		for (String signal : keySortRule.keySet()) {
+			if (property.getLeft().contains(signal))
+				return true;
+		}
+		for (String signal : valueSortRule.keySet()) {
+			if (property.getRight().contains(signal))
 				return true;
 		}
 		return false;
@@ -247,9 +250,16 @@ public final class Config extends NonCloneableBaseObject {
 	private int checkLazyLoadMinValue(Pair<String, String> property) {
 		int min = Integer.MAX_VALUE;
 		int value = Integer.MAX_VALUE;
-		for (String rule : lazyLoadSet) {
-			if (property.getLeft().contains(rule) || property.getRight().contains(rule)) {
-				value = sortRule.get(rule);
+		for (String rule : keySortRule.keySet()) {
+			if (property.getLeft().contains(rule)) {
+				value = keySortRule.get(rule);
+				if (value < min)
+					min = value;
+			}
+		}
+		for (String rule : valueSortRule.keySet()) {
+			if (property.getRight().contains(rule)) {
+				value = valueSortRule.get(rule);
 				if (value < min)
 					min = value;
 			}
@@ -261,9 +271,18 @@ public final class Config extends NonCloneableBaseObject {
 		int min = Integer.MAX_VALUE;
 		int value = Integer.MAX_VALUE;
 		String signal = "";
-		for (String rule : lazyLoadSet) {
-			if (property.getLeft().contains(rule) || property.getRight().contains(rule)) {
-				value = sortRule.get(rule);
+		for (String rule : keySortRule.keySet()) {
+			if (property.getLeft().contains(rule)) {
+				value = keySortRule.get(rule);
+				if (value < min) {
+					min = value;
+					signal = rule;
+				}
+			}
+		}
+		for (String rule : valueSortRule.keySet()) {
+			if (property.getRight().contains(rule)) {
+				value = valueSortRule.get(rule);
 				if (value < min) {
 					min = value;
 					signal = rule;
