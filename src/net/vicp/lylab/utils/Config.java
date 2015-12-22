@@ -507,9 +507,9 @@ public final class Config extends NonCloneableBaseObject {
 		List<String> rawList = Utils.readFileByLines(fileName, false);
 		for (int i = 0; i < rawList.size(); i++) {
 			// Trim
-			String rawPair = rawList.get(i).replaceAll("([\\s\b\\u0000-\\00032]*)", "");
+			String rawPair = rawList.get(i).replaceAll("([\\s\b\\u0000-\\u0032]*)", "");
 			// Remove comment
-			rawPair = rawPair.replaceAll("([#][\\S\\s\b\\u0000-\\00032]*)", "");
+			rawPair = rawPair.replaceAll("([#][\\S\\s\b\\u0000-\\u0032]*)", "");
 
 			String[] pair = rawPair.split("=", 2);
 			if (pair.length == 1) {
