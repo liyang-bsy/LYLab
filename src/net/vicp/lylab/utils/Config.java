@@ -64,7 +64,7 @@ import net.vicp.lylab.core.model.Pair;
  * <br>Entry start with "#" will be regard as comment and ignored for dataMap;
  * <br>Entry will split itself with first equal sign("="), more equal sign(=) will be regard as String inside of value;
  * <br>Key may start with function mark "$"/"*"/"^"/"[]"/"$", itself contains underline, number or alphabet(case-sensitive);
- * <br>value may start with function mark "&", but itself may contain any visible character EXCEPT "&";
+ * <br>value start with function mark "&" will be regard as "Object reference"(see <b>Object mark</b>), but itself may contain any visible character INCLUDE "&";
  * 
  * @author Young
  * @since 2015.07.29
@@ -226,11 +226,11 @@ public final class Config extends NonCloneableBaseObject {
 	 */
 	private boolean isLazyLoad(Pair<String, String> property) {
 		for (String signal : keySortRule.keySet()) {
-			if (property.getLeft().contains(signal))
+			if (property.getLeft().startsWith(signal))
 				return true;
 		}
 		for (String signal : valueSortRule.keySet()) {
-			if (property.getRight().contains(signal))
+			if (property.getRight().startsWith(signal))
 				return true;
 		}
 		return false;
@@ -251,14 +251,14 @@ public final class Config extends NonCloneableBaseObject {
 		int min = Integer.MAX_VALUE;
 		int value = Integer.MAX_VALUE;
 		for (String rule : keySortRule.keySet()) {
-			if (property.getLeft().contains(rule)) {
+			if (property.getLeft().startsWith(rule)) {
 				value = keySortRule.get(rule);
 				if (value < min)
 					min = value;
 			}
 		}
 		for (String rule : valueSortRule.keySet()) {
-			if (property.getRight().contains(rule)) {
+			if (property.getRight().startsWith(rule)) {
 				value = valueSortRule.get(rule);
 				if (value < min)
 					min = value;
@@ -272,7 +272,7 @@ public final class Config extends NonCloneableBaseObject {
 		int value = Integer.MAX_VALUE;
 		String signal = "";
 		for (String rule : keySortRule.keySet()) {
-			if (property.getLeft().contains(rule)) {
+			if (property.getLeft().startsWith(rule)) {
 				value = keySortRule.get(rule);
 				if (value < min) {
 					min = value;
@@ -281,7 +281,7 @@ public final class Config extends NonCloneableBaseObject {
 			}
 		}
 		for (String rule : valueSortRule.keySet()) {
-			if (property.getRight().contains(rule)) {
+			if (property.getRight().startsWith(rule)) {
 				value = valueSortRule.get(rule);
 				if (value < min) {
 					min = value;
