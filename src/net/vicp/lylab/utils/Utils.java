@@ -32,6 +32,16 @@ public abstract class Utils extends NonCloneableBaseObject {
 	public static String deleteCRLF(String input) {
 		return input.replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1").replaceAll("^((\r\n)|\n)", "");
 	}
+	
+	/**
+	 * delete ALL invisible chars
+	 * 
+	 * @param input
+	 * @return
+	 */
+	public static String deleteInvisible(String input) {
+		return input.replaceAll("([\\s\b\\u0000-\\u0020]*)", "");
+	}
 
 	/**
 	 * 路径为文件且不为空则进行删除
@@ -84,6 +94,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 
 	/**
 	 * Test a char is ASCII code
+	 * 
 	 * @param c
 	 * @return
 	 */
@@ -92,6 +103,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 			return true;
 		return false;
 	}
+	
 	/**
 	 * 识别字符是否是中文编码
 	 * 
@@ -113,31 +125,53 @@ public abstract class Utils extends NonCloneableBaseObject {
 
 	/**
 	 * 格式化数字
+	 * 
 	 * @param value
 	 * @param pattern
 	 * @return
 	 */
-	public static String format(Double value, String pattern)
-	{
-		if(value == null) return null;
+	public static String format(Double value, String pattern) {
+		if (value == null)
+			return null;
 		return new DecimalFormat(pattern).format(value);
 	}
 
 	/**
 	 * 格式化时间
+	 * 
 	 * @param value
 	 * @param pattern
 	 * @return
 	 */
-	public static String format(Date date, String pattern)
-	{
+	public static String format(Date date, String pattern) {
 		try {
-			if(date == null) return null;
-			return DateFormatUtils.format(date,pattern);
+			if (date == null)
+				return null;
+			return DateFormatUtils.format(date, pattern);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	/**
+	 * 创建目录
+	 * 
+	 * @param fileName
+	 * @return
+	 */
+	public static boolean createDirectoryByFileName(String fileName) {
+		try {
+			if (existsFolder(fileName))
+				return true;
+			int max = fileName.lastIndexOf("\\");
+			int b = fileName.lastIndexOf("/");
+			max = (max > b ? max : b);
+			File file = new File(fileName.substring(0, max));
+			return file.mkdirs();
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 	/**
@@ -155,7 +189,6 @@ public abstract class Utils extends NonCloneableBaseObject {
 		} catch (Exception e) {
 			return false;
 		}
-
 	}
 
 	/**
