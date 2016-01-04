@@ -216,6 +216,7 @@ public final class Config extends NonCloneableBaseObject {
 			}
 			dataMap.clear();
 			keyList.clear();
+			globalSwitch = null;
 		}
 	}
 
@@ -453,6 +454,8 @@ public final class Config extends NonCloneableBaseObject {
 			InvocationTargetException {
 		if (owner == null)
 			throw new NullPointerException("Owner is null for setter[" + fieldName + "]");
+		if (fieldName == null)
+			throw new NullPointerException("Parameter fieldName is null");
 		if (param == null)
 			throw new NullPointerException("Parameter is null for setter[" + fieldName + "]");
 		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
