@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,6 +24,81 @@ import net.vicp.lylab.core.exceptions.LYException;
 
 public abstract class Utils extends NonCloneableBaseObject {
 
+	/**
+	 * Set value(param) to owner's field(based on fieldName)
+	 * @param owner
+	 * @param fieldName
+	 * @param param
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public static void setter(Object owner, String fieldName, Object param) {
+		if (owner == null)
+			throw new NullPointerException("Owner is null for setter[" + fieldName + "]");
+		if (fieldName == null)
+			throw new NullPointerException("Parameter fieldName is null");
+		if (param == null)
+			throw new NullPointerException("Parameter is null for setter[" + fieldName + "]");
+		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+
+		// Get setter by java.lang.reflect.*
+		Method setMethod = null;
+		Class<?> parameterClass = String.class;
+		try {
+			setMethod = owner.getClass().getDeclaredMethod(setter, parameterClass);
+		} catch (Exception e) { }
+		if (setMethod == null)
+			for (Method method : owner.getClass().getDeclaredMethods()) {
+				if (method.getName().equals(setter)) {
+					Class<?>[] pts = method.getParameterTypes();
+					if (pts.length != 1)
+						continue;
+					parameterClass = pts[0];
+					setMethod = method;
+					break;
+				}
+			}
+		try {
+			if (setMethod != null) {
+				// Should I throw exception?
+				if (!setMethod.isAccessible())
+					setMethod.setAccessible(true);
+				// If we got its setter, then invoke it
+				if (Caster.isGenericArrayType(param))
+					setMethod.invoke(owner, Caster.arrayCast((List<Object>) param, parameterClass));
+				else if (param.getClass() == String.class)
+					setMethod.invoke(owner, Caster.simpleCast((String) param, parameterClass));
+				else
+					setMethod.invoke(owner, param);
+			} else
+				throw new LYException("No available setter[" + setter + "] was found for " + owner.getClass());
+		} catch (Exception e) {
+			throw new LYException("Cannot invoke setter[" + setter + "] for " + owner.getClass(), e);
+		}
+	}
+	
+	/**
+	 * Get value from owner's field(based on fieldName)
+	 * @param owner
+	 * @param fieldName
+	 * @return
+	 */
+	public static Object getter(Object owner, String fieldName) {
+		if (owner == null)
+			throw new NullPointerException("Owner is null for getter[" + fieldName + "]");
+		String getter = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+		// Get getter by java.lang.reflect.*
+		try {
+			Method getMethod = owner.getClass().getDeclaredMethod(getter);
+			// Should I throw exception?
+			if(!getMethod.isAccessible())
+				getMethod.setAccessible(true);
+			return getMethod.invoke(owner);
+		} catch (Exception e) {
+			throw new LYException("Invoke getter[" + getter + "] for " + owner.getClass() + "failed", e);
+		}
+	}
+	
 	/**
 	 * delete CRLF; delete empty line ;delete blank lines
 	 * 
