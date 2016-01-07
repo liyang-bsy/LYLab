@@ -21,8 +21,8 @@ import net.vicp.lylab.utils.tq.LoneWolf;
  * Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee
- * @since 2015.06.26
- * @version 2.0.0
+ * @since 2016.01.07
+ * @version 2.0.1
  */
 public final class TimeoutController extends LoneWolf implements LifeCycle {
 	private static final long serialVersionUID = -4494667245957319328L;
@@ -41,7 +41,7 @@ public final class TimeoutController extends LoneWolf implements LifeCycle {
 	
 	@Override
 	public void close() {
-		this.callStop();
+		getInstance().callStop();
 	}
 	
 	/**
