@@ -1,9 +1,14 @@
 package net.vicp.lylab.utils;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -384,9 +389,9 @@ public final class Config extends NonCloneableBaseObject {
 					String propertyRealName = propertyName.substring(1);
 					if (propertyValue.startsWith("&")) {
 						Object obj = searchObjectReference(propertyValue.substring(1));
-						setter(lastObject, propertyRealName, obj);
+						Utils.setter(lastObject, propertyRealName, obj);
 					} else
-						setter(lastObject, propertyRealName, propertyValue);
+						Utils.setter(lastObject, propertyRealName, propertyValue);
 				}
 					break;
 //				case ":": {
@@ -437,7 +442,7 @@ public final class Config extends NonCloneableBaseObject {
 		if (obj == null)
 			throw new LYException("Cannot find reference [" + propertyRealValue + "] in this Config or parent Config");
 		for (String getter : getters)
-			obj = getter(obj, getter);
+			obj = Utils.getter(obj, getter);
 		return obj;
 	}
 
@@ -448,63 +453,63 @@ public final class Config extends NonCloneableBaseObject {
 		return -1;
 	}
 
-	private void setter(Object owner, String fieldName, Object param)
-			throws NoSuchMethodException, SecurityException,
-			IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException {
-		if (owner == null)
-			throw new NullPointerException("Owner is null for setter[" + fieldName + "]");
-		if (fieldName == null)
-			throw new NullPointerException("Parameter fieldName is null");
-		if (param == null)
-			throw new NullPointerException("Parameter is null for setter[" + fieldName + "]");
-		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-
-		// Get setter by java.lang.reflect.*
-		Method setMethod = null;
-		Class<?> parameterClass = null;
-		try {
-			setMethod = owner.getClass().getDeclaredMethod(setter, String.class);
-			parameterClass = String.class;
-		} catch (Exception e) { }
-		if (setMethod == null)
-			for (Method method : owner.getClass().getDeclaredMethods()) {
-				if (method.getName().equals(setter)) {
-					Class<?>[] pts = method.getParameterTypes();
-					if (pts.length != 1)
-						continue;
-					parameterClass = pts[0];
-					setMethod = method;
-					break;
-				}
-			}
-		// If we got its setter, then invoke it
-		if (setMethod != null)
-			if (param.getClass().getName().matches("^\\[L[a-zA-Z0-9_.]*;$")
-					|| Collection.class.isAssignableFrom(param.getClass()))
-				setMethod.invoke(owner, Caster.arrayCast((List<Object>) param, parameterClass));
-			else if (param.getClass() == String.class)
-				// But sometimes we may need casting parameter before invoking
-				setMethod.invoke(owner, Caster.simpleCast((String) param, parameterClass));
-			else
-				setMethod.invoke(owner, param);
-		else
-			throw new LYException("No available setter[" + setter
-					+ "] was found for " + owner.getClass());
-	}
-
-	private static Object getter(Object owner, String fieldName) {
-		if (owner == null)
-			throw new NullPointerException("Owner is null for getter[" + fieldName + "]");
-		String getter = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-		// Get getter by java.lang.reflect.*
-		try {
-			Method getMethod = owner.getClass().getDeclaredMethod(getter);
-			return getMethod.invoke(owner);
-		} catch (Exception e) {
-			throw new LYException("Invoke getter[" + getter + "] for " + owner.getClass() + "failed", e);
-		}
-	}
+//	private void setter(Object owner, String fieldName, Object param)
+//			throws NoSuchMethodException, SecurityException,
+//			IllegalAccessException, IllegalArgumentException,
+//			InvocationTargetException {
+//		if (owner == null)
+//			throw new NullPointerException("Owner is null for setter[" + fieldName + "]");
+//		if (fieldName == null)
+//			throw new NullPointerException("Parameter fieldName is null");
+//		if (param == null)
+//			throw new NullPointerException("Parameter is null for setter[" + fieldName + "]");
+//		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+//
+//		// Get setter by java.lang.reflect.*
+//		Method setMethod = null;
+//		Class<?> parameterClass = null;
+//		try {
+//			setMethod = owner.getClass().getDeclaredMethod(setter, String.class);
+//			parameterClass = String.class;
+//		} catch (Exception e) { }
+//		if (setMethod == null)
+//			for (Method method : owner.getClass().getDeclaredMethods()) {
+//				if (method.getName().equals(setter)) {
+//					Class<?>[] pts = method.getParameterTypes();
+//					if (pts.length != 1)
+//						continue;
+//					parameterClass = pts[0];
+//					setMethod = method;
+//					break;
+//				}
+//			}
+//		// If we got its setter, then invoke it
+//		if (setMethod != null)
+//			if (param.getClass().getName().matches("^\\[L[a-zA-Z0-9_.]*;$")
+//					|| Collection.class.isAssignableFrom(param.getClass()))
+//				setMethod.invoke(owner, Caster.arrayCast((List<Object>) param, parameterClass));
+//			else if (param.getClass() == String.class)
+//				// But sometimes we may need casting parameter before invoking
+//				setMethod.invoke(owner, Caster.simpleCast((String) param, parameterClass));
+//			else
+//				setMethod.invoke(owner, param);
+//		else
+//			throw new LYException("No available setter[" + setter
+//					+ "] was found for " + owner.getClass());
+//	}
+//
+//	private static Object getter(Object owner, String fieldName) {
+//		if (owner == null)
+//			throw new NullPointerException("Owner is null for getter[" + fieldName + "]");
+//		String getter = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+//		// Get getter by java.lang.reflect.*
+//		try {
+//			Method getMethod = owner.getClass().getDeclaredMethod(getter);
+//			return getMethod.invoke(owner);
+//		} catch (Exception e) {
+//			throw new LYException("Invoke getter[" + getter + "] for " + owner.getClass() + "failed", e);
+//		}
+//	}
 
 	private void rawLoader() {
 		List<String> rawList = Utils.readFileByLines(fileName, false);
