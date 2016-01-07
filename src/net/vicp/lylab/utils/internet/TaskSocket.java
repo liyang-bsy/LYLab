@@ -39,18 +39,23 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 	protected Protocol protocol = null;
 
 	public TaskSocket(ServerSocket serverSocket) {
-		if(serverSocket == null) throw new LYException("Parameter serverSocket is null");
+		if (serverSocket == null)
+			throw new LYException("Parameter serverSocket is null");
 		try {
 			this.socket = serverSocket.accept();
-			this.host = socket.getInetAddress().getHostAddress();
-			this.port = socket.getPort();
+		} catch (Exception e) {
+			throw new LYException("ServerSocket accept from client socket failed", e);
+		}
+		this.host = socket.getInetAddress().getHostAddress();
+		this.port = socket.getPort();
+		try {
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
-			setIsServer(true);
-			setSoTimeout(CoreDef.DEFAULT_SOCKET_TTIMEOUT);
 		} catch (Exception e) {
-			throw new LYException("Can not establish connection to socket", e);
+			throw new LYException("Can not open input/output stream from client socket", e);
 		}
+		setIsServer(true);
+		setSoTimeout(CoreDef.DEFAULT_SOCKET_TTIMEOUT);
 	}
 	
 	public TaskSocket(String host, Integer port, Protocol protocol) {

@@ -53,8 +53,8 @@ public class SyncServer extends Task implements LifeCycle {
 	public void close() throws Exception {
 		if(!isClosed.compareAndSet(false, true))
 			return;
-		this.callStop();
 		serverSocket.close();
+		this.callStop();
 	}
 
 	@Override
