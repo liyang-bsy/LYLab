@@ -21,7 +21,6 @@ import net.vicp.lylab.core.pool.Pool;
 import net.vicp.lylab.core.pool.SequencePool;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
 /**
@@ -39,21 +38,19 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	private static final long serialVersionUID = -406430325838413029L;
 
 	private volatile Boolean useWatchDog = false;
-	private volatile AtomicBoolean isRunning = new AtomicBoolean(false);
-	private volatile AtomicBoolean closed = new AtomicBoolean(false);
 	
 	private String permanentFileName = null;
 
 	private volatile boolean recordFailed = false;
 	private List<Task> forewarnList = new ArrayList<Task>();
 
-	private volatile Integer maxQueue = 100000;
-	private volatile Integer maxThread = 200;
+//	private volatile Integer maxQueue = 100000;
+//	private volatile Integer maxThread = 200;
 	private volatile Long tolerance = CoreDef.WAITING_TOLERANCE;
 
-	private Pool<Task> taskPool = new SequenceTemporaryPool<Task>(maxQueue);
-	private Pool<Task> threadPool = new SequencePool<Task>(maxThread);
-
+	private Pool<Task> taskPool = new SequenceTemporaryPool<Task>(100000);
+	private Pool<Task> threadPool = new SequencePool<Task>(200);
+	
 	/**
 	 * At your service!
 	 * 
@@ -72,7 +69,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 		Task task0 = (Task) task.clone();
 		if (task0 == null)
 			return -1L;
-		if (closed.get())
+		if (isStopped())
 			return -2L;
 		task0.setController(this);
 		if (taskPool.add(task0) == null)
@@ -80,40 +77,29 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 		synchronized (lock) {
 			lock.notifyAll();
 		}
-		if (isRunning.compareAndSet(false, true))
-			if(reset())
-				begin("LYTaskQueue");
 		return task0.getTaskId();
 	}
 
 	/**
-	 * Reserved entrance for multi-threaded. DO NOT call this method.
+	 * Main loop should live in another thread. DO NOT call this method manually.
 	 */
 	@Override
 	public final void exec() {
-		try {
-			while (!closed.get()) {
-				while (!closed.get()
-						&& !getTaskPool().isEmpty()
-						&& !isThreadPoolFull()) {
-					Task task = getTaskPool().accessOne();
-					synchronized (lock) {
-						task.begin();
-						threadPool.add(task);
-					}
-				}
-				try {
-					synchronized (lock) {
-						lock.wait(CoreDef.WAITING_SHORT);
-					}
-				} catch (Throwable t) {
-					log.error("Exception in this#exec wait():\n"
-							+ Utils.getStringFromThrowable(t));
+		while (!isStopped()) {
+			while (!isStopped() && !getTaskPool().isEmpty() && !isThreadPoolFull()) {
+				Task task = getTaskPool().accessOne();
+				synchronized (lock) {
+					task.begin();
+					threadPool.add(task);
 				}
 			}
-		} catch (Throwable e) {
-		} finally {
-			isRunning.set(false);
+			try {
+				synchronized (lock) {
+					lock.wait(CoreDef.WAITING_SHORT);
+				}
+			} catch (Throwable t) {
+				log.error("Exception in this#exec wait():\n" + Utils.getStringFromThrowable(t));
+			}
 		}
 	}
 
@@ -126,7 +112,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 *         false: cancel failed
 	 */
 	public synchronized Boolean cancel(long taskId) {
-		if (closed.get() || taskId < 0L)
+		if (isStopped() || taskId < 0L)
 			return false;
 		Task tk = removeFromTaskPool(taskId);
 		if (tk == null || tk.getState() != Task.BEGAN)
@@ -144,7 +130,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 *         false: cancel failed
 	 */
 	public synchronized Boolean stop(long taskId) {
-		if (closed.get() || taskId < 0L)
+		if (isStopped() || taskId < 0L)
 			return false;
 		Task tk = removeFromTaskPool(taskId);
 		if (tk == null)
@@ -158,7 +144,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 */
 	@Override
 	public void initialize() {
-		closed.set(false);
+		begin("LYTaskQueue");
 		if(permanentFileName != null)
 		{
 			File file = new File(permanentFileName);
@@ -180,6 +166,12 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 			}
 		}
 	}
+	
+	@Override
+	protected void aftermath() {
+		super.aftermath();
+		close();
+	}
 
 	/**
 	 * This action will call off the task queue, then wait tasks in running for
@@ -199,8 +191,9 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 *            waiting limit for running tasks in million second
 	 */
 	public void close(long timeout) {
-		if (!closed.compareAndSet(false, true))
+		if (isStopped())
 			return;
+		callStop();
 		if (timeout == 0L)
 			timeout = 1L;
 
@@ -210,8 +203,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 		}
 
 		if (!useWatchDog)
-			useWatchDog(useWatchDog);
-		useWatchDog = true;
+			useWatchDog(true);
 		try {
 			while (threadPool.size() > 0)
 				threadPool.accessOne().join();
@@ -382,7 +374,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 * <tt>true</tt> if the thread pool is full
 	 */
 	public Boolean isThreadPoolFull() {
-		return getThreadPool().size() == maxThread.intValue();
+		return getThreadPool().size() == getMaxThread().intValue();
 	}
 
 	/**
@@ -390,14 +382,14 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	 * <tt>true</tt> if the task pool is full
 	 */
 	public Boolean isTaskPoolFull() {
-		return taskPool.size() == maxQueue.intValue();
+		return taskPool.size() == getMaxQueue().intValue();
 	}
 
-	public Integer getWaitingTaskCount() {
+	public Integer getTaskCount() {
 		return taskPool.size();
 	}
 	
-	public Integer getRunningThreadCount() {
+	public Integer getThreadCount() {
 		return getThreadPool().size();
 	}
 
@@ -410,13 +402,11 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	
 	public void setMaxQueue(int maxQueue) {
 		if(maxQueue <= 0) throw new LYException("maxQueue must be positive");
-		this.maxQueue = maxQueue;
-		taskPool.setMaxSize(maxQueue);
+		getTaskPool().setMaxSize(maxQueue);
 	}
 
 	public void setMaxThread(int maxThread) {
 		if(maxThread <= 0) throw new LYException("maxThread must be positive");
-		this.maxThread = maxThread;
 		getThreadPool().setMaxSize(maxThread);
 	}
 	
@@ -429,16 +419,12 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	}
 
 	// getters & setters below
-	public boolean isClosed() {
-		return closed.get();
-	}
-
 	public Integer getMaxQueue() {
-		return maxQueue;
+		return getTaskPool().getMaxSize();
 	}
 
 	public Integer getMaxThread() {
-		return maxThread;
+		return getThreadPool().getMaxSize();
 	}
 
 	public Long getTolerance() {

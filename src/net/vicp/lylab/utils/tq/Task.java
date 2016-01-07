@@ -58,7 +58,6 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	@Override
 	public BaseObject clone() {
 		Task tk = (Task) super.clone();
-		tk.state.set(0);
 		tk.reset();
 		return tk;
 	}
@@ -155,8 +154,8 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			state.compareAndSet(BEGAN, CANCELLED);
 			state.compareAndSet(STARTED, STOPPED);
 //			state.compareAndSet(COMPLETED, COMPLETED);		// non-sense
-			if (thread != null)
-				thread.interrupt();
+			if (getThread() != null)
+				getThread().interrupt();
 			if (this instanceof AutoCloseable)
 				try {
 					((AutoCloseable) this).close();
@@ -171,13 +170,23 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 */
 	@Deprecated
 	public final void forceStop() {
-		callStop();
-		if (thread != null) {
-			getThread().stop(new LYException("Task " + getTaskId() + " timeout and killed"));
-			thread = null;
+		if(state.compareNotAndSet(COMPLETED, STOPPED)) {
+			if (getThread() != null) {
+				getThread().interrupt();
+				getThread().stop(new LYException("Task " + getTaskId() + " timeout and killed"));
+				setThread(null);
+			}
+			if(controller != null)
+				controller.taskEnded(this);
 		}
-		if(controller != null)
-			controller.taskEnded(this);
+	}
+
+	/**
+	 * @return
+	 * <tt>true</tt> if the task is still running
+	 */
+	public Boolean isRunning() {
+		return getThread() != null && getThread().isAlive();
 	}
 
 	/**
@@ -218,7 +227,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 * @return
 	 * The state of the task
 	 */
-	public Integer getState() {
+	public int getState() {
 		return state.get();
 	}
 
@@ -232,10 +241,11 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	public final boolean reset() {
 		if(state.get() == STARTED) return false;
 //		if(!state.compareAndSet(STOPPED, BEGAN)) return false;
-		if (thread != null && getThread().isAlive())
+		if (isRunning())
 			throw new LYException("Reset an alive task");
 		startTime = null;
 		thread = null;
+		state.set(0);
 		setObjectId(0);
 		return true;
 	}
