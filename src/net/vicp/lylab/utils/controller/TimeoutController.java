@@ -36,6 +36,7 @@ public final class TimeoutController extends LoneWolf implements LifeCycle {
 	 */
 	@Override
 	public void initialize() {
+		getInstance().reset();
 		getInstance().begin("TimeoutController");
 	}
 	
