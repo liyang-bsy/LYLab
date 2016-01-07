@@ -7,6 +7,61 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
 public abstract class Caster extends NonCloneableBaseObject {
+
+	public static boolean isBasicType(Object target) {
+		Class<?> targetClass = target.getClass();
+		if (targetClass == String.class)
+			return true;
+		else if (targetClass == Short.class)
+			return true;
+		else if (targetClass == Integer.class)
+			return true;
+		else if (targetClass == Long.class)
+			return true;
+		else if (targetClass == Double.class)
+			return true;
+		else if (targetClass == Float.class)
+			return true;
+		else if (targetClass == Boolean.class)
+			return true;
+		else if (targetClass == Byte.class)
+			return true;
+		else if (targetClass == Character.class)
+			return true;
+		else if (targetClass.getName().equals("short"))
+			return true;
+		else if (targetClass.getName().equals("int"))
+			return true;
+		else if (targetClass.getName().equals("long"))
+			return true;
+		else if (targetClass.getName().equals("double"))
+			return true;
+		else if (targetClass.getName().equals("float"))
+			return true;
+		else if (targetClass.getName().equals("boolean"))
+			return true;
+		else if (targetClass.getName().equals("byte"))
+			return true;
+		else if (targetClass.getName().equals("char"))
+			return true;
+		else
+			return false;
+	}
+	
+	/**
+	 * Test target type is java build-in Array type
+	 * @param target
+	 * @return
+	 */
+	public static boolean isGenericArrayType(Object target) {
+		Class<?> targetClass = target.getClass();
+		if (targetClass.getName().matches("^\\[L[a-zA-Z0-9_.]*;$")
+				|| Collection.class.isAssignableFrom(targetClass))
+			return true;
+		else
+			return false;
+	}
+	
 	/**
 	 * String-based simple cast, from one basic type to another basic type.
 	 * @param originalObject
@@ -60,7 +115,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 			else if(targetClass.getName().equals("char"))
 				return Character.valueOf((originalString).charAt(0));
 			else
-				throw new LYException("Unsupport target type:" + targetClass.getName());
+				throw new LYException("Unsupport target basic type:" + targetClass.getName());
 		} catch (Exception e) {
 			throw new LYException("Cast failed from String [" + originalString + "] to " + targetClass.getName(), e);
 		}
@@ -113,7 +168,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 				((Collection) targetArray).addAll(originalArray);
 			}
 			if(targetArray == null)
-				throw new LYException("Unsupport target type:" + targetClass.getName());
+				throw new LYException("Unsupport target Array type:" + targetClass.getName());
 			return targetArray;
 		} catch (Exception e) {
 			throw new LYException("Cast failed from " + originalArray.getClass().getName() + " {" + originalArray + "} to " + targetClass.getName(), e);
