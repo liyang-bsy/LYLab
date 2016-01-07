@@ -62,5 +62,24 @@ public abstract class AtomicObject<T> extends NonCloneableBaseObject {
 			return true;
 		}
 	}
+	
+    /**
+     * Atomically sets the value to the given updated value
+     * if the current value {@code !=} the expected value.
+     *
+     * @param expect the expected value
+     * @param update the new value
+     * @return true if successful. False return indicates that
+     * the actual value was equal to the expected value.
+     */
+	public boolean compareNotAndSet(T expect, T update)
+	{
+		synchronized (lock) {
+			if(value.equals(expect))
+				return false;
+			value = update;
+			return true;
+		}
+	}
 
 }
