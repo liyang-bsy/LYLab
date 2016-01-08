@@ -74,7 +74,14 @@ public class IndexedPool<T extends BaseObject> extends AbstractPool<T> {
 
 	@Override
 	public List<T> accessMany(int amount) {
+		return accessMany(amount, false);
+	}
+	
+	@Override
+	public List<T> accessMany(int amount, boolean absolute) {
 		synchronized (lock) {
+			if (absolute && keyContainer.size() < amount)
+				return null;
 			List<T> retList = new ArrayList<T>();
 			Iterator<Long> iterator = keyContainer.iterator();
 			for (int i = 0; !iterator.hasNext() && i < amount; i++) {

@@ -41,11 +41,15 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 
 	@Override
 	public int size() {
-		return availableSize() + busyContainer.size();
+		return availableSize() + busySize();
 	}
 	
 	protected int availableSize() {
 		return super.size();
+	}
+	
+	protected int busySize() {
+		return busyContainer.size();
 	}
 
 	@Override
@@ -53,25 +57,25 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
     {
 		return super.isEmpty() && busyContainer.isEmpty();
     }
+	
+	public static void tryClose(Object target)
+	{
+		if(target instanceof AutoCloseable)
+			try {
+				((AutoCloseable) target).close();
+			} catch (Exception e) {
+				log.error(Utils.getStringFromException(e));
+			}
+	}
 
-	protected void closeAllElement() {
+	private void closeAllElement() {
 		for(Long id:availableKeySet()) {
 			T tmp = availableContainer.get(id);
-			if(tmp instanceof AutoCloseable)
-				try {
-					((AutoCloseable) tmp).close();
-				} catch (Exception e) {
-					log.error(Utils.getStringFromException(e));
-				}
+			tryClose(tmp);
 		}
 		for(Long id:busyKeySet()) {
 			T tmp = busyContainer.get(id);
-			if(tmp instanceof AutoCloseable)
-				try {
-					((AutoCloseable) tmp).close();
-				} catch (Exception e) {
-					log.error(Utils.getStringFromException(e));
-				}
+			tryClose(tmp);
 		}
 	}
 
@@ -82,6 +86,7 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 			super.clear();
 			keyContainer.clear();
 			busyContainer.clear();
+			safeCheck();
 		}
 	}
 
@@ -90,7 +95,7 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 	}
 
 	public boolean recycle(T item) {
-		return recycle(item, false);
+		return recycle(item.getObjectId(), false);
 	}
 
 	public boolean recycle(long objId) {
@@ -102,8 +107,10 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 			safeCheck();
 			T tmp = busyContainer.remove(objId);
 			if (tmp != null) {
-				if(isBad)
+				if (isBad) {
 					keyContainer.remove(objId);
+					tryClose(tmp);
+				}
 				else
 					addToContainer(tmp);
 				return true;
@@ -112,41 +119,19 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 		}
 	}
 
-	public boolean recycle(T item, boolean isBad) {
-		synchronized (lock) {
-			safeCheck();
-			long objId = 0L;
-			if (item instanceof BaseObject)
-				objId = ((BaseObject) item).getObjectId();
-			else {
-				for (Long id : busyKeySet()) {
-					if (busyContainer.get(id).equals(item)) {
-						objId = id.longValue();
-						break;
-					}
-				}
-			}
-			if(objId > 0)
-				return recycle(objId, isBad);
-			return false;
-		}
-	}
-
 	@Override
 	public T remove(long objId) {
-		synchronized (lock) {
-			safeCheck();
-			T tmp = removeFromContainer(objId);
-			if(tmp != null)
-				keyContainer.remove(objId);
-			return tmp;
-		}
+		return remove(objId, true);
 	}
-
-	protected T removeFromBusyContainer(long objId) {
+	
+	public T remove(long objId, boolean isAvailable) {
 		synchronized (lock) {
 			safeCheck();
-			T tmp = busyContainer.remove(objId);
+			T tmp = null;
+			if (isAvailable)
+				tmp = removeFromContainer(objId);
+			else
+				tmp = busyContainer.remove(objId);
 			if(tmp != null)
 				keyContainer.remove(objId);
 			return tmp;
@@ -164,90 +149,52 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 			safeCheck();
 			T tmp = null;
 			if (objId > 0) {
-				tmp = removeFromContainer(objId);
+				tmp = remove(objId, true);
 				if(tmp == null)
-					tmp = removeFromBusyContainer(objId);
+					tmp = remove(objId, false);
 			}
-			if(tmp instanceof AutoCloseable)
-				try {
-					((AutoCloseable) tmp).close();
-				} catch (Exception e) { }
+//			tryClose(tmp);
 			return tmp;
 		}
 	}
 
-	protected T getFromAvailableContainer() {
-		Iterator<Long> iterator = availableKeySet().iterator();
-		if(!iterator.hasNext())
-			return null;
-		return getFromAvailableContainer(iterator.next());
+	@Override
+	public T accessOne() {
+		synchronized (lock) {
+			Iterator<Long> iterator = availableKeySet().iterator();
+			if(!iterator.hasNext())
+				return null;
+			return accessOne(iterator.next());
+		}
 	}
 	
-	protected T getFromAvailableContainer(long objId) {
-		safeCheck();
-		if (availableSize() > 0)
-		{
+	public T accessOne(long objId) {
+		synchronized (lock) {
+			safeCheck();
+			if (availableSize() == 0)
+				return null;
 			T tmp = removeFromContainer(objId);
 			if (tmp != null)
 				busyContainer.put(objId, tmp);
 			return tmp;
 		}
-		return null;
-	}
-
-	protected T getFromBusyContainer() {
-		Long objId = busyKeySet().iterator().next();
-		return getFromBusyContainer(objId);
 	}
 	
-	protected T getFromBusyContainer(long objId) {
-		safeCheck();
-		if (busyContainer.size() <= 0)
-			return null;
-		return busyContainer.get(objId);
-	}
-
 	@Override
-	public T accessOne()
-	{
-		return accessOne(true);
-	}
-	
-	public T accessOne(boolean available) {
-		safeCheck();
+	public List<T> accessMany(int amount) {
 		synchronized (lock) {
-			if (keyContainer.isEmpty())
-				return null;
-			T tmp = null;
-			if(available) tmp = getFromAvailableContainer();
-			else tmp = getFromBusyContainer();
-			return tmp;
-		}
-	}
-
-	@Override
-	public List<T> accessMany(int amount)
-	{
-		return accessMany(amount, false);
-	}
-
-	public List<T> accessMany(int amount, boolean available) {
-		safeCheck();
-		synchronized (lock) {
+			safeCheck();
 			List<T> retList = new ArrayList<T>();
 			Iterator<Long> iterator;
-			if(available) iterator = availableKeySet().iterator();
-			else iterator = busyKeySet().iterator();
+			iterator = availableKeySet().iterator();
 			for (int i = 0; !iterator.hasNext() && i < amount; i++) {
 				try {
-					Long key = iterator.next();
-					T tmp = null;
-					if(available) tmp = getFromAvailableContainer(key);
-					else tmp = getFromBusyContainer(key);
-					if(tmp!=null) {
+					long objId = iterator.next();
+					T tmp = removeFromContainer(objId);
+					if (tmp != null) {
+						busyContainer.put(objId, tmp);
 						retList.add(tmp);
 					}
-					iterator.remove();
 				} catch (Exception e) {
 					continue;
 				}
