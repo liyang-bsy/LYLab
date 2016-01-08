@@ -2,9 +2,9 @@ package net.vicp.lylab.core.pool;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
+import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
 
 /**
@@ -13,7 +13,7 @@ import net.vicp.lylab.core.CoreDef;
  * @author liyang
  *
  */
-public class SequenceTemporaryPool<T> extends SequencePool<T> {
+public class SequenceTemporaryPool<T extends BaseObject> extends SequencePool<T> {
 
 	public SequenceTemporaryPool() {
 		this(CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
@@ -29,10 +29,11 @@ public class SequenceTemporaryPool<T> extends SequencePool<T> {
 			safeCheck();
 			if (keyContainer.isEmpty())
 				return null;
-			T tmp = null;
-			Long key = ((LinkedList<Long>) keyContainer).get(0);
-			tmp = removeFromContainer(key);
-			keyContainer.remove(0);
+			Iterator<Long> iterator = keyContainer.iterator();
+			long key = iterator.next();
+			T tmp = removeFromContainer(key);
+			// Keep balance
+			iterator.remove();
 			return tmp;
 		}
 	}
@@ -45,6 +46,7 @@ public class SequenceTemporaryPool<T> extends SequencePool<T> {
 			Iterator<Long> iterator = keyContainer.iterator();
 			for (int i = 0; !iterator.hasNext() && i < amount; i++) {
 				retList.add(removeFromContainer(iterator.next()));
+				// Keep balance
 				iterator.remove();
 			}
 			return retList;

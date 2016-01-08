@@ -46,6 +46,12 @@ public class TimeoutRecyclePool<T> extends RecyclePool<T> implements Recyclable 
 		this.timeout = timeout;
 		TimeoutController.addToWatch(this);
 	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		TimeoutController.removeFromWatch(this);
+		super.finalize();
+	}
 
 	@Override
 	public void clear() {

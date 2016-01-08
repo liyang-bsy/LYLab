@@ -2,6 +2,7 @@ package net.vicp.lylab.core.pool;
 
 import java.util.LinkedList;
 
+import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
 
 /**
@@ -10,7 +11,7 @@ import net.vicp.lylab.core.CoreDef;
  * @author liyang
  *
  */
-public class SequencePool<T> extends IndexedPool<T> {
+public class SequencePool<T extends BaseObject> extends IndexedPool<T> {
 
 	public SequencePool() {
 		this(CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
@@ -23,9 +24,8 @@ public class SequencePool<T> extends IndexedPool<T> {
 	public Long add(int index, T t) {
 		synchronized (lock) {
 			safeCheck();
-			Long id = null;
-			id = addToContainer(t);
-			if(id != null && id >= 0)
+			Long id = addToContainer(t);
+			if(id != null && !keyContainer.contains(id))
 				((LinkedList<Long>) keyContainer).add(index, id);
 			return id;
 		}

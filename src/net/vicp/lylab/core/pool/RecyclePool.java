@@ -18,7 +18,7 @@ import net.vicp.lylab.utils.Utils;
  * @author liyang
  *
  */
-public class RecyclePool<T> extends IndexedPool<T> {
+public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 	protected Map<Long, T> busyContainer;
 
 	public RecyclePool() {
@@ -30,7 +30,8 @@ public class RecyclePool<T> extends IndexedPool<T> {
 		busyContainer = new ConcurrentHashMap<Long, T>();
 	}
 
-	public T viewById(long objId) {
+	@Override
+	public T view(long objId) {
 		safeCheck();
 		T tmp = getFromContainer(objId);
 		if(tmp == null)
@@ -53,16 +54,7 @@ public class RecyclePool<T> extends IndexedPool<T> {
 		return super.isEmpty() && busyContainer.isEmpty();
     }
 
-	@Override
-	public void close() {
-		synchronized (lock) {
-			clear();
-			super.close();
-			busyContainer = null;
-		}
-	}
-	
-	protected void closeAll() {
+	protected void closeAllElement() {
 		for(Long id:availableKeySet()) {
 			T tmp = availableContainer.get(id);
 			if(tmp instanceof AutoCloseable)
@@ -84,18 +76,9 @@ public class RecyclePool<T> extends IndexedPool<T> {
 	}
 
 	@Override
-	public boolean isClosed() {
-		synchronized (lock) {
-			return (busyContainer == null || super.isClosed());
-		}
-	}
-
-	@Override
 	public void clear() {
 		synchronized (lock) {
-			if (isClosed())
-				return;
-			closeAll();
+			closeAllElement();
 			super.clear();
 			keyContainer.clear();
 			busyContainer.clear();
@@ -171,39 +154,19 @@ public class RecyclePool<T> extends IndexedPool<T> {
 	}
 
 	/**
-	 * Search and remove from both available container and busy container.
+	 * Force remove object, not matter this item is saved in available container or busy container.
 	 * @param item to be removed
 	 * @return
 	 * removed item, null means not found
 	 */
-	protected T searchAndRemove(T item) {
+	protected T forceRemoveAndClose(long objId) {
 		synchronized (lock) {
-			if (isClosed() && item == null)
-				return null;
 			safeCheck();
-			long objId = 0L;
-			if (item instanceof BaseObject)
-				objId = ((BaseObject) item).getObjectId();
-			else {
-				for (Long id : availableKeySet()) {
-					if (availableContainer.get(id).equals(item)) {
-						objId = id.longValue();
-						break;
-					}
-				}
-				if (objId == 0)
-					for (Long id : busyKeySet()) {
-						if (busyContainer.get(id).equals(item)) {
-							objId = id.longValue();
-							break;
-						}
-					}
-			}
 			T tmp = null;
 			if (objId > 0) {
 				tmp = removeFromContainer(objId);
 				if(tmp == null)
-					removeFromBusyContainer(objId);
+					tmp = removeFromBusyContainer(objId);
 			}
 			if(tmp instanceof AutoCloseable)
 				try {

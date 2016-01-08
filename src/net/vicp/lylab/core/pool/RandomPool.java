@@ -2,6 +2,7 @@ package net.vicp.lylab.core.pool;
 
 import java.util.HashSet;
 
+import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
 
 /**
@@ -10,7 +11,7 @@ import net.vicp.lylab.core.CoreDef;
  * @author liyang
  *
  */
-public class RandomPool<T> extends IndexedPool<T> {
+public class RandomPool<T extends BaseObject> extends IndexedPool<T> {
 
 	public RandomPool() {
 		this(CoreDef.DEFAULT_CONTAINER_MAX_SIZE);

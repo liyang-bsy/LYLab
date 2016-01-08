@@ -1,10 +1,10 @@
 package net.vicp.lylab.core.pool;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
 
 /**
@@ -13,7 +13,7 @@ import net.vicp.lylab.core.CoreDef;
  * @author liyang
  *
  */
-public class RandomTemporaryPool<T> extends SequencePool<T> {
+public class RandomTemporaryPool<T extends BaseObject> extends SequencePool<T> {
 
 	public RandomTemporaryPool() {
 		this(CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
@@ -22,17 +22,18 @@ public class RandomTemporaryPool<T> extends SequencePool<T> {
 	public RandomTemporaryPool(int maxSize) {
 		super(maxSize);
 	}
-	
+
 	@Override
 	public T accessOne() {
 		synchronized (lock) {
 			safeCheck();
 			if (keyContainer.isEmpty())
 				return null;
-			T tmp = null;
-			Long key = ((HashSet<Long>) keyContainer).iterator().next();
-			tmp = removeFromContainer(key);
-			keyContainer.remove(0);
+			Iterator<Long> iterator = keyContainer.iterator();
+			long key = iterator.next();
+			T tmp = removeFromContainer(key);
+			// Keep balance
+			iterator.remove();
 			return tmp;
 		}
 	}
@@ -45,6 +46,7 @@ public class RandomTemporaryPool<T> extends SequencePool<T> {
 			Iterator<Long> iterator = keyContainer.iterator();
 			for (int i = 0; !iterator.hasNext() && i < amount; i++) {
 				retList.add(removeFromContainer(iterator.next()));
+				// Keep balance
 				iterator.remove();
 			}
 			return retList;

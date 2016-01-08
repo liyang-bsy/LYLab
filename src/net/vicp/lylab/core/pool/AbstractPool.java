@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.exceptions.LYException;
 
 /**
  * 抽象池
@@ -15,10 +14,10 @@ import net.vicp.lylab.core.exceptions.LYException;
  * @author liyang
  *
  */
-public abstract class AbstractPool<T> extends CloneableBaseObject implements Pool<T> {
+public abstract class AbstractPool<T extends BaseObject> extends CloneableBaseObject implements Pool<T> {
 	
 	protected Map<Long, T> availableContainer;
-	protected Long idIndicator = 1L;
+	protected long idIndicator = 1L;
 	protected int maxSize;
 
 	public AbstractPool() {
@@ -36,83 +35,60 @@ public abstract class AbstractPool<T> extends CloneableBaseObject implements Poo
 	}
 
 	@Override
-    public boolean isEmpty()
-    {
+	public boolean isEmpty() {
 		return availableContainer.isEmpty();
-    }
+	}
 
 	@Override
-    public boolean isFull()
-    {
+	public boolean isFull() {
 		return availableContainer.size() == maxSize;
     }
 
 	@Override
-	public void close() {
-		synchronized (lock) {
-			if (availableContainer != null)
-				availableContainer.clear();
-			availableContainer = null;
-		}
-	}
-
-	@Override
-	public boolean isClosed() {
-		return availableContainer == null;
-	}
-
-	@Override
 	public void clear() {
 		synchronized (lock) {
-			if (isClosed())
-				throw new LYException("This pool is already closed");
 			availableContainer.clear();
 			lock.notifyAll();
 		}
 	}
 
 	protected T getFromContainer(long objId) {
-		if (isClosed())
-			return null;
 		return availableContainer.get(objId);
 	}
 
 	protected T removeFromContainer(long objId) {
-		if (isClosed())
-			return null;
 		T tmp = availableContainer.remove(objId);
 		lock.notifyAll();
 		return tmp;
 	}
 	
+	/**
+	 * @param target
+	 * @return
+	 * id(>0) if success, null if is full
+	 */
 	protected Long addToContainer(T t) {
 		synchronized (lock) {
-			if (isClosed() || size() >= maxSize)
+			if (size() >= maxSize)
 				return null;
-			Long savedId = null;
-			do {
-				if (idIndicator == Long.MAX_VALUE)
-					idIndicator = 1L;
-				idIndicator++;
-			} while(availableContainer.get(idIndicator) != null);
-			savedId = idIndicator;
-			if (t instanceof BaseObject) {
-				Long id = ((BaseObject) t).getObjectId();
-				if (id == null || id.longValue() <= 0L) {
-					((BaseObject) t).setObjectId(savedId.longValue());
-					availableContainer.put(savedId, t);
-				} else {
-					availableContainer.put(((BaseObject) t).getObjectId(), t);
-					savedId = ((BaseObject) t).getObjectId();
-				}
-			} else
+//			do {
+//				if (idIndicator == Long.MAX_VALUE)
+//					idIndicator = 1L;
+//					idIndicator++;
+//			} while(!availableContainer.containsKey(idIndicator));
+			long savedId = idIndicator;
+			if (t.getObjectId() <= 0L) {
+				t.setObjectId(savedId);
 				availableContainer.put(savedId, t);
+			} else {
+				availableContainer.put(t.getObjectId(), t);
+				savedId = t.getObjectId();
+			}
 			return savedId;
 		}
 	}
 	
-	public Set<Long> availableKeySet()
-	{
+	public Set<Long> availableKeySet() {
 		return availableContainer.keySet();
 	}
 
