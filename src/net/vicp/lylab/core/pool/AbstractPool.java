@@ -41,7 +41,7 @@ public abstract class AbstractPool<T extends BaseObject> extends CloneableBaseOb
 
 	@Override
 	public boolean isFull() {
-		return availableContainer.size() == maxSize;
+		return size() == maxSize;
     }
 
 	@Override

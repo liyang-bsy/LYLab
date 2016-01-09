@@ -20,13 +20,34 @@ public class SequencePool<T extends BaseObject> extends IndexedPool<T> {
 	public SequencePool(int maxSize) {
 		super(new LinkedList<Long>(), maxSize);
 	}
+
+	@Override
+	public Long add(T t) {
+//		synchronized (lock) {
+//			safeCheck();
+//			Long id = addToContainer(t);
+//			if(id != null && !keyContainer.contains(id))
+//				((LinkedList<Long>) keyContainer).add(id);
+//			return id;
+		return add(-1, t);
+//		}
+	}
 	
+	/**
+	 * Add to pool with index
+	 * @param index -1 means addLast
+	 * @param t
+	 * @return
+	 */
 	public Long add(int index, T t) {
 		synchronized (lock) {
 			safeCheck();
 			Long id = addToContainer(t);
 			if(id != null && !keyContainer.contains(id))
-				((LinkedList<Long>) keyContainer).add(index, id);
+				if (index == -1)
+					((LinkedList<Long>) keyContainer).addLast(id);
+				else
+					((LinkedList<Long>) keyContainer).add(index, id);
 			return id;
 		}
 	}

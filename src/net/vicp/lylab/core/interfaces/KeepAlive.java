@@ -12,6 +12,10 @@ package net.vicp.lylab.core.interfaces;
 public interface KeepAlive extends Initializable {
 	public void setInterval(long interval);
 	public boolean isAlive();
-	public boolean isDying();
+	public boolean isOutdated();
+	/**
+	 * <b>[Attention]</b>, this method should be thread-safely
+	 * @return
+	 */
 	public boolean keepAlive();
 }

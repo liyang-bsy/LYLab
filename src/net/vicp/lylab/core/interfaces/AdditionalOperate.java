@@ -11,7 +11,7 @@ package net.vicp.lylab.core.interfaces;
  * 
  */
 
-public interface AdditionalOp<T> {
+public interface AdditionalOperate<T> {
 	/**
 	 * Do some thing before use an item in AutoGeneratePool
 	 * @param t

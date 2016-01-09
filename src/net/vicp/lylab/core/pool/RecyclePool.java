@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.exceptions.LYError;
 import net.vicp.lylab.utils.Utils;
 
 /**
@@ -30,6 +31,10 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 		busyContainer = new ConcurrentHashMap<Long, T>();
 	}
 
+	protected T getFromBusyContainer(long objId) {
+		return busyContainer.get(objId);
+	}
+	
 	@Override
 	public T view(long objId) {
 		safeCheck();
@@ -53,29 +58,23 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 	}
 
 	@Override
-    public boolean isEmpty()
-    {
+	public boolean isEmpty() {
 		return super.isEmpty() && busyContainer.isEmpty();
     }
-	
-	public static void tryClose(Object target)
-	{
-		if(target instanceof AutoCloseable)
-			try {
-				((AutoCloseable) target).close();
-			} catch (Exception e) {
-				log.error(Utils.getStringFromException(e));
-			}
-	}
+
+	@Override
+	public boolean isFull() {
+		return size() == maxSize;
+    }
 
 	private void closeAllElement() {
 		for(Long id:availableKeySet()) {
 			T tmp = availableContainer.get(id);
-			tryClose(tmp);
+			Utils.tryClose(tmp);
 		}
 		for(Long id:busyKeySet()) {
 			T tmp = busyContainer.get(id);
-			tryClose(tmp);
+			Utils.tryClose(tmp);
 		}
 	}
 
@@ -83,9 +82,8 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 	public void clear() {
 		synchronized (lock) {
 			closeAllElement();
-			super.clear();
-			keyContainer.clear();
 			busyContainer.clear();
+			super.clear();
 			safeCheck();
 		}
 	}
@@ -95,7 +93,11 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 	}
 
 	public boolean recycle(T item) {
-		return recycle(item.getObjectId(), false);
+		return recycle(item.getObjectId());
+	}
+
+	public boolean recycle(T item, boolean isBad) {
+		return recycle(item.getObjectId(), isBad);
 	}
 
 	public boolean recycle(long objId) {
@@ -109,7 +111,7 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 			if (tmp != null) {
 				if (isBad) {
 					keyContainer.remove(objId);
-					tryClose(tmp);
+					Utils.tryClose(tmp);
 				}
 				else
 					addToContainer(tmp);
@@ -144,7 +146,7 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 	 * @return
 	 * removed item, null means not found
 	 */
-	protected T forceRemoveAndClose(long objId) {
+	protected T forceRemove(long objId) {
 		synchronized (lock) {
 			safeCheck();
 			T tmp = null;
@@ -181,9 +183,10 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 	}
 	
 	@Override
-	public List<T> accessMany(int amount) {
+	public List<T> accessMany(int amount, boolean absolute) {
 		synchronized (lock) {
-			safeCheck();
+			if (absolute && keyContainer.size() < amount)
+				return null;
 			List<T> retList = new ArrayList<T>();
 			Iterator<Long> iterator;
 			iterator = availableKeySet().iterator();
@@ -206,15 +209,16 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 	protected void safeCheck()
 	{
 		synchronized (lock) {
-			if(isClosed() || keyContainer.size() == size())
+			if(keyContainer.size() == size())
 				return;
-			keyContainer.clear();
-			keyContainer.addAll(availableKeySet());
-			keyContainer.addAll(busyKeySet());
-//			if(keyContainer.size() != size())
-//				throw new LYError("Pool maintainence failed! To continue use, please clear before next use"
-//						+ "\nkey list size is:" + keyContainer.size()
-//						+ "\ncontainer size is:" + size());
+//			keyContainer.clear();
+//			keyContainer.addAll(availableKeySet());
+//			keyContainer.addAll(busyKeySet());
+			throw new LYError("Pool maintainence failed! To continue use, please clear before next use"
+					+ "\nkey list size is:" + keyContainer.size()
+					+ "\ncontainer size is:" + size()
+					+ "\nkey list is:" + keyContainer
+					+ "\ncontainer is:" + availableContainer);
 		}
 	}
 	

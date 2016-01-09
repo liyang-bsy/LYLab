@@ -20,11 +20,9 @@ import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Transmission;
-import net.vicp.lylab.core.pool.AutoGeneratePool;
+import net.vicp.lylab.core.model.ObjectContainer;
 import net.vicp.lylab.core.pool.RecyclePool;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.creator.AutoGenerate;
-import net.vicp.lylab.utils.creator.SelectorCreator;
 import net.vicp.lylab.utils.internet.BaseSocket;
 import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
@@ -49,7 +47,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 	
 	// IP mapping
 	protected Map<String, SocketChannel> ipMap = new ConcurrentHashMap<String, SocketChannel>();
-	protected RecyclePool<Selector> selectorPool;
+	protected RecyclePool<ObjectContainer<Selector>> selectorPool;
 	protected Transfer transport;
 
 	// Long socket keep alive
@@ -322,7 +320,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 				bytesProduced += len;
 				if (len == 0) {
 	                if (writeSelector == null){
-						writeSelector = selectorPool.accessOne();
+						writeSelector = selectorPool.accessOne().getObject();
 	                    if (writeSelector == null){
 	                        // Continue using the main one
 	                        continue;
@@ -353,7 +351,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 			if (writeSelector != null) {
 				// Cancel the key.
 				writeSelector.selectNow();
-				selectorPool.recycle(writeSelector);
+				selectorPool.recycle(ObjectContainer.fromObject(writeSelector));
 			}
 		}
 		return bytesProduced;
@@ -375,14 +373,14 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 	public void initialize() {
 		// TODO
 		if(!CoreDef.config.containsKey("AsyncSocket")) {
-			AutoGenerate<Selector> creator = new SelectorCreator();
-			selectorPool = new AutoGeneratePool<>(creator, null, CoreDef.DEFAULT_CONTAINER_TIMEOUT, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
+//			AutoGenerate<Selector> creator = new SelectorCreator();
+//			selectorPool = new AutoGeneratePool<ObjectContainer<Selector>>(creator, null, CoreDef.DEFAULT_CONTAINER_TIMEOUT, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 		}
 		else {
-			selectorPool = new RecyclePool<Selector>(CoreDef.config.getConfig("AsyncSocket").getInteger("maxSelectorPool"));
+			selectorPool = new RecyclePool<ObjectContainer<Selector>>(CoreDef.config.getConfig("AsyncSocket").getInteger("maxSelectorPool"));
 			for (int i = 0; i < CoreDef.config.getConfig("AsyncSocket").getInteger("maxSelectorPool"); i++) {
 				try {
-					selectorPool.add(Selector.open());
+					selectorPool.add(ObjectContainer.fromObject(Selector.open()));
 				} catch (Exception e) {
 					log.error(Utils.getStringFromException(e));
 				}
@@ -427,7 +425,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 	}
 
 	@Override
-	public boolean isDying() {
+	public boolean isOutdated() {
 		long earliest = Long.MAX_VALUE;
 		for (String key : lastActivityMap.keySet()) {
 			long tmp = lastActivityMap.get(key);
@@ -441,7 +439,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 
 	@Override
 	public boolean keepAlive() {
-		if(!isDying()) return true;
+		if(!isOutdated()) return true;
 		try {
 			if(protocol == null)
 				return true;

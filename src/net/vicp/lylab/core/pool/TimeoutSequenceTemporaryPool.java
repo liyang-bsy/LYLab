@@ -5,8 +5,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.controller.TimeoutController;
@@ -17,8 +19,7 @@ import net.vicp.lylab.utils.controller.TimeoutController;
  * @author liyang
  *
  */
-public class TimeoutSequenceTemporaryPool<T> extends SequenceTemporaryPool<T>
-		implements Recyclable {
+public class TimeoutSequenceTemporaryPool<T extends BaseObject> extends SequenceTemporaryPool<T> implements Recyclable {
 	protected Map<Long, Long> startTime;
 	protected Long timeout;
 
@@ -45,77 +46,69 @@ public class TimeoutSequenceTemporaryPool<T> extends SequenceTemporaryPool<T>
 	}
 
 	@Override
-	public T accessOne() {
+	public void clear() {
+		synchronized (lock) {
+			super.clear();
+			startTime.clear();
+		}
+	}
+	
+	@Override
+	public void close() {
+		synchronized (lock) {
+			clear();
+			TimeoutController.removeFromWatch(this);
+			startTime = null;
+			keyContainer = null;
+			availableContainer = null;
+		}
+	}
+
+	/**
+	 * Add to pool with index
+	 * @param index -1 means addLast
+	 * @param t
+	 * @return
+	 */
+	@Override
+	public Long add(int index, T t) {
 		synchronized (lock) {
 			safeCheck();
-			if (keyContainer.isEmpty())
-				return null;
-			T tmp = null;
-			Long key = ((LinkedList<Long>) keyContainer).get(0);
-			tmp = removeFromContainer(key);
-			keyContainer.remove(0);
+			Long id = addToContainer(t);
+			if (id != null && !keyContainer.contains(id)) {
+				if (index == -1)
+					((LinkedList<Long>) keyContainer).addLast(id);
+				else
+					((LinkedList<Long>) keyContainer).add(index, id);
+				startTime.put(id, System.currentTimeMillis());
+			}
+			return id;
+		}
+	}
+
+	@Override
+	public T accessOne() {
+		synchronized (lock) {
+			T tmp = super.accessOne();
+			startTime.remove(tmp.getObjectId());
 			return tmp;
 		}
 	}
 
 	@Override
-	public List<T> accessMany(int amount) {
+	public List<T> accessMany(int amount, boolean absolute) {
 		synchronized (lock) {
 			safeCheck();
+			if (absolute && keyContainer.size() < amount)
+				return null;
 			List<T> retList = new ArrayList<T>();
 			Iterator<Long> iterator = keyContainer.iterator();
 			for (int i = 0; !iterator.hasNext() && i < amount; i++) {
 				retList.add(removeFromContainer(iterator.next()));
+				// Keep balance
 				iterator.remove();
 			}
 			return retList;
-		}
-	}
-
-	@Override
-	public void clear() {
-		synchronized (lock) {
-			if (isClosed())
-				return;
-			super.clear();
-			startTime.clear();
-		}
-	}
-
-	@Override
-	public void close() {
-		synchronized (lock) {
-			clear();
-			super.close();
-			startTime = null;
-		}
-	}
-
-	@Override
-	public Long add(int index, T t) {
-		synchronized (lock) {
-			safeCheck();
-			Long id = null;
-			id = addToContainer(t);
-			if (id != null && id >= 0) {
-				startTime.put(id, System.currentTimeMillis());
-				((LinkedList<Long>) keyContainer).add(index, id);
-			}
-			return id;
-		}
-	}
-
-	@Override
-	public Long add(T t) {
-		synchronized (lock) {
-			safeCheck();
-			Long id = null;
-			id = addToContainer(t);
-			if (id != null && id >= 0) {
-				startTime.put(id, System.currentTimeMillis());
-				keyContainer.add(id);
-			}
-			return id;
 		}
 	}
 
@@ -126,16 +119,25 @@ public class TimeoutSequenceTemporaryPool<T> extends SequenceTemporaryPool<T>
 	
 	public void recycle(double rate) {
 		synchronized (lock) {
-			for (Long id : startTime.keySet()) {
-				long start = startTime.get(id);
-				if (System.currentTimeMillis() - start > timeout * rate) {
-					availableContainer.remove(id);
-					keyContainer.remove(id);
-					startTime.remove(id);
+			Iterator<Entry<Long, Long>> it = startTime.entrySet().iterator();
+			while (it.hasNext()) {
+				Entry<Long, Long> entry = it.next();
+				long start = entry.getValue();
+				if (System.currentTimeMillis() - start > timeout) {
+					remove(entry.getKey());
+					it.remove();
 				}
 			}
-			if (keyContainer.size() == size())
-				safeCheck();
+//			for (Long id : startTime.keySet()) {
+//				long start = startTime.get(id);
+//				if (System.currentTimeMillis() - start > timeout * rate) {
+//					availableContainer.remove(id);
+//					keyContainer.remove(id);
+//					startTime.remove(id);
+//				}
+//			}
+//			if (keyContainer.size() == size())
+			safeCheck();
 		}
 	}
 
@@ -153,16 +155,20 @@ public class TimeoutSequenceTemporaryPool<T> extends SequenceTemporaryPool<T>
 		this.timeout = timeout;
 	}
 	
-	@Override
-	protected void safeCheck() {
-		double amplify = 1.0;
-		if (1.0*size()/maxSize > 0.8) {
-			while(1.0*size()/maxSize > 0.5)
-			{
-				recycle(amplify);
-				amplify/=2;
-			}
-		}
-		super.safeCheck();
-	}
+	/**
+	 * Cancel tolerant
+	 */
+//	@Override
+//	protected void safeCheck() {
+//		double amplify = 1.0;
+//		if (1.0*size()/maxSize > 0.8) {
+//			while(1.0*size()/maxSize > 0.5)
+//			{
+//				recycle(amplify);
+//				amplify/=2;
+//			}
+//		}
+//		super.safeCheck();
+//	}
+
 }

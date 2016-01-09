@@ -25,6 +25,19 @@ import net.vicp.lylab.core.exceptions.LYException;
 public abstract class Utils extends NonCloneableBaseObject {
 
 	/**
+	 * Close an object, safe if item is null
+	 * @param target to be closed item
+	 */
+	public static void tryClose(Object target) {
+		if (target instanceof AutoCloseable)
+			try {
+				((AutoCloseable) target).close();
+			} catch (Exception e) {
+				log.error(Utils.getStringFromException(e));
+			}
+	}
+	
+	/**
 	 * Set value(param) to owner's field(based on fieldName)
 	 * @param owner
 	 * @param fieldName

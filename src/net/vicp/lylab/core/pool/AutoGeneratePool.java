@@ -1,7 +1,11 @@
 package net.vicp.lylab.core.pool;
 
+import java.util.Iterator;
+import java.util.List;
+
+import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
-import net.vicp.lylab.core.interfaces.AdditionalOp;
+import net.vicp.lylab.core.interfaces.AdditionalOperate;
 import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.creator.AutoGenerate;
@@ -18,9 +22,9 @@ import net.vicp.lylab.utils.creator.AutoGenerate;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class AutoGeneratePool<T> extends TimeoutRecyclePool<T> {
+public class AutoGeneratePool<T extends BaseObject> extends TimeoutRecyclePool<T> {
 	AutoGenerate<T> creator;
-	AdditionalOp<T> operator;
+	AdditionalOperate<T> operator;
 
 	public AutoGeneratePool(AutoGenerate<T> creator) {
 		super();
@@ -28,74 +32,182 @@ public class AutoGeneratePool<T> extends TimeoutRecyclePool<T> {
 		this.operator = null;
 	}
 
-	public AutoGeneratePool(AutoGenerate<T> creator, AdditionalOp<T> operator) {
+	public AutoGeneratePool(AutoGenerate<T> creator, AdditionalOperate<T> operator) {
 		super();
 		this.creator = creator;
 		this.operator = operator;
 	}
 
-	public AutoGeneratePool(AutoGenerate<T> creator, AdditionalOp<T> operator, long timeout, int maxSize) {
+	public AutoGeneratePool(AutoGenerate<T> creator, AdditionalOperate<T> operator, long timeout, int maxSize) {
 		super(timeout, maxSize);
 		this.creator = creator;
 		this.operator = operator;
 	}
 
-	protected T accessAndValidate() {
-		T tmp = null;
-		int attemptCount = 0;
-		 while (true) {
-			tmp = getFromAvailableContainer();
-			if (tmp == null) {
-				if (size() > maxSize)
-					return tmp;
-				Long id = null;
-				T passerby = null;
-				try {
-					passerby = creator.newInstance();
-				} catch (Throwable e) {
-					throw new LYException("Create new instance failed", e);
-				}
-				try {
-					if(passerby instanceof Initializable)
-						((Initializable) passerby).initialize();
-				} catch (Throwable e) {
-					throw new LYException("Initialize new instance failed", e);
-				}
-				while ((id = add(passerby)) == null) {
-					attemptCount++;
-					if (attemptCount > 10) {
-						if(passerby instanceof AutoCloseable)
-							try {
-								((AutoCloseable) passerby).close();
-							} catch (Exception e) { }
-						throw new LYException("Attempt to add new instance to pool for 10 times, the container is full");
-					}
-				}
-				tmp = getFromAvailableContainer(id);
-			}
+//	protected T accessAndValidate(T tmp) {
+//		int attemptCount = 0;
+//		 while (true) {
+////			tmp = super.accessOne();
+//			if (tmp == null) {
+//				if (size() > maxSize)
+//					return tmp;
+//				Long id = null;
+//				T passerby = null;
+//				try {
+//					passerby = creator.newInstance();
+//				} catch (Throwable e) {
+//					throw new LYException("Create new instance failed", e);
+//				}
+//				try {
+//					if(passerby instanceof Initializable)
+//						((Initializable) passerby).initialize();
+//				} catch (Throwable e) {
+//					throw new LYException("Initialize new instance failed", e);
+//				}
+//				while ((id = add(passerby)) == null) {
+//					attemptCount++;
+//					if (attemptCount > 10) {
+//						Utils.tryClose(passerby);
+//						throw new LYException("Attempt to add new instance to pool for 10 times, the container is full");
+//					}
+//				}
+//				tmp = accessOne(id);
+//			}
+//			try {
+//				if (operator == null || operator.operate(tmp))
+//					break;
+//			} catch (Exception e) {
+//				log.error("Validate available failed:" + Utils.getStringFromException(e));
+//			}
+//			forceRemove(tmp.getObjectId());
+//			Utils.tryClose(tmp);
+//			continue;
+//		}
+//		return tmp;
+//	}
+
+	/**
+	 * 
+	 * @return
+	 * true if success, false if failed.
+	 */
+	protected boolean createAndValidateAndAdd() {
+		if (isFull())
+			return false;
+		int attempt = 0;
+		while (attempt < 10) {
+			attempt++;
+			T passerby = null;
 			try {
-				if (operator == null || operator.operate(tmp))
-					break;
-			} catch (Exception e) {
-				log.error("Validate available failed:" + Utils.getStringFromException(e));
+				// Create
+				passerby = creator.newInstance();
+				try {
+					// Initialize
+					if (passerby instanceof Initializable)
+						((Initializable) passerby).initialize();
+				} catch (Throwable t) {
+					throw new LYException("Initialize new instance failed", t);
+				}
+				// Validate
+				if(!validate(passerby))
+					throw new LYException("Validation reported failed");
+				// Add to Pool;
+				if(add(passerby) == null)
+					throw new LYException("Add to pool failed, maybe its full?");
+			} catch (Throwable t) {
+				Utils.tryClose(passerby);
+				log.error("Create new instance failed" + Utils.getStringFromThrowable(t));
+				continue;
 			}
-			searchAndRemove(tmp);
-			continue;
+			return true;
 		}
-		return tmp;
+		throw new LYException("Create new instance failed, retried for too many times, lookup failure reasons from log.");
+	}
+	
+	protected boolean validate(T target) {
+		if (target == null)
+			return false;
+		if (operator == null)
+			return true;
+		try {
+			return operator.operate(target);
+		} catch (Exception e) {
+			log.error("Validation failed:" + Utils.getStringFromException(e));;
+			return false;
+		}
+	}
+
+//	@Override
+//	public T accessOne(boolean available) {
+//		safeCheck();
+//		synchronized (lock) {
+//			T tmp = null;
+//			if (available)
+//				tmp = accessAndValidate();
+//			else
+//				tmp = getFromBusyContainer();
+//			return tmp;
+//		}
+//	}
+	
+	@Override
+	public T accessOne() {
+		synchronized (lock) {
+			if (isFull()) {
+				// if full, recycle bad items and retry if is really full
+				recycle();
+				if (isFull())
+					return null;
+			}
+			// Create and validate
+			Iterator<Long> iterator = availableKeySet().iterator();
+			if (!iterator.hasNext()) {
+				if (!createAndValidateAndAdd())
+					return null;
+				iterator = availableKeySet().iterator();
+			}
+			return accessOne(iterator.next());
+		}
 	}
 
 	@Override
-	public T accessOne(boolean available) {
-		safeCheck();
+	public T accessOne(long objId) {
 		synchronized (lock) {
-			T tmp = null;
-			if (available)
-				tmp = accessAndValidate();
-			else
-				tmp = getFromBusyContainer();
+			safeCheck();
+			if (availableSize() == 0)
+				return null;
+			T tmp = removeFromContainer(objId);
+			if (tmp != null) {
+				busyContainer.put(objId, tmp);
+				startTime.put(objId, System.currentTimeMillis());
+			}
 			return tmp;
 		}
+	}
+	
+//	@Override
+//	public T accessOne(long objId) {
+//		synchronized (lock) {
+//			safeCheck();
+//			T tmp = null;
+//			int attempt = 0;
+//			do {
+//				if(attempt > 10)
+//					throw new LYException("Access item failed! Attempt for too many times!");
+//				tmp = removeFromContainer(objId);
+//				if (tmp != null) {
+//					busyContainer.put(objId, tmp);
+//					startTime.put(objId, System.currentTimeMillis());
+//				}
+//				attempt++;
+//			} while (!validate(tmp));
+//			return tmp;
+//		}
+//	}
+	
+	@Override
+	public List<T> accessMany(int amount, boolean t) {
+		throw new LYException("AccessMany() is not supported!");
 	}
 
 }

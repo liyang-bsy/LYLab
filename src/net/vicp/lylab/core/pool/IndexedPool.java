@@ -94,8 +94,8 @@ public class IndexedPool<T extends BaseObject> extends AbstractPool<T> {
 	@Override
 	public void clear() {
 		synchronized (lock) {
-			super.clear();
 			keyContainer.clear();
+			super.clear();
 			safeCheck();
 		}
 	}
@@ -111,7 +111,7 @@ public class IndexedPool<T extends BaseObject> extends AbstractPool<T> {
 					+ "\nkey list size is:" + keyContainer.size()
 					+ "\ncontainer size is:" + size()
 					+ "\nkey list is:" + keyContainer
-					+ "\ncontainer is:" + size());
+					+ "\ncontainer is:" + availableContainer);
 		}
 	}
 

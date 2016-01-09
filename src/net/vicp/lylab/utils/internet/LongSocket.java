@@ -7,6 +7,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.ObjectContainer;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.core.pool.TimeoutSequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
@@ -22,8 +23,8 @@ import net.vicp.lylab.utils.Utils;
  */
 public class LongSocket extends TaskSocket implements KeepAlive {
 	private static final long serialVersionUID = -4542553667467771646L;
-	protected SequenceTemporaryPool<byte[]> dataPool = new SequenceTemporaryPool<byte[]>();
-	protected TimeoutSequenceTemporaryPool<byte[]> responsePool = new TimeoutSequenceTemporaryPool<byte[]>();
+	protected SequenceTemporaryPool<ObjectContainer<byte[]>> dataPool = new SequenceTemporaryPool<ObjectContainer<byte[]>>();
+	protected TimeoutSequenceTemporaryPool<ObjectContainer<byte[]>> responsePool = new TimeoutSequenceTemporaryPool<ObjectContainer<byte[]>>();
 	
 	// Long socket keep alive
 	protected HeartBeat heartBeat;
@@ -63,7 +64,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 			} else {
 				initialize();
 				while (true) {
-					byte[] request = dataPool.accessOne();
+					byte[] request = dataPool.accessOne().getObject();
 					if (request == null) {
 						if (!keepAlive())
 							break;
@@ -74,7 +75,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 					byte[] response = doRequest(request);
 					if (response == null)
 						break;
-					responsePool.add(response);
+					responsePool.add(ObjectContainer.fromObject(response));
 				}
 			}
 		} catch (Throwable t) {
@@ -130,7 +131,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 		try {
 			result = request(request);
 			if (result == null)
-				dataPool.add(0, request);
+				dataPool.add(0, ObjectContainer.fromObject(request));
 			if(afterTransmission != null)
 				afterTransmission.callback(result);
 		} catch (Exception e) {
@@ -146,7 +147,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 	 * @return ObjectId of data, null if add failed
 	 */
 	public Long addToPool(byte[] data) {
-		Long objId = dataPool.add(data);
+		Long objId = dataPool.add(ObjectContainer.fromObject(data));
 		if (objId != null) {
 			signalAll();
 		}
@@ -161,8 +162,8 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 	 */
 	public Long addToPool_Force(Object data) {
 		Long objId = null;
-		byte[] dateBytes = protocol.encode(data);
-		while (((objId = dataPool.add(dateBytes)) == null))
+		byte[] dataBytes = protocol.encode(data);
+		while (((objId = dataPool.add(ObjectContainer.fromObject(dataBytes))) == null))
 			await(CoreDef.WAITING_LONG);
 		if (objId != null) {
 			signalAll();
@@ -185,7 +186,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 	}
 
 	@Override
-	public boolean isDying() {
+	public boolean isOutdated() {
 		synchronized (lock) {
 			if(System.currentTimeMillis() - lastActivity > interval)
 				return true;
@@ -196,7 +197,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 	@Override
 	public boolean keepAlive() {
 		synchronized (lock) {
-			if(!isDying()) return true;
+			if(!isOutdated()) return true;
 			try {
 				if(protocol == null)
 					return true;
