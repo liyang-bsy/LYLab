@@ -76,7 +76,7 @@ public abstract class AbstractPool<T extends BaseObject> extends CloneableBaseOb
 //					idIndicator = 1L;
 //					idIndicator++;
 //			} while(!availableContainer.containsKey(idIndicator));
-			long savedId = idIndicator;
+			long savedId = idIndicator++;
 			if (t.getObjectId() <= 0L) {
 				t.setObjectId(savedId);
 				availableContainer.put(savedId, t);
