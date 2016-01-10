@@ -6,7 +6,7 @@ import java.util.List;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.utils.Utils;
 
-public class AsyncDiskPermanent extends DiskPermanent {
+public class AsyncDiskStorage extends DiskStorage {
 	private static final long serialVersionUID = 6315043692230051343L;
 
 	protected String caller;
@@ -14,7 +14,7 @@ public class AsyncDiskPermanent extends DiskPermanent {
 	
 	protected List<String> container = new ArrayList<String>();
 
-	public AsyncDiskPermanent(String filePath, String fileSuffix, String caller) {
+	public AsyncDiskStorage(String filePath, String fileSuffix, String caller) {
 		super(filePath, fileSuffix);
 		this.caller = caller;
 		this.begin("AsyncDiskPermanent - " + caller);

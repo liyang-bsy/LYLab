@@ -5,14 +5,14 @@ import net.vicp.lylab.utils.TextWriter;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.tq.LoneWolf;
 
-public class DiskPermanent extends LoneWolf implements AutoCloseable {
+public class DiskStorage extends LoneWolf implements AutoCloseable {
 	private static final long serialVersionUID = 3954424314501852319L;
 	
 	TextWriter writer;
 	protected AtomicBoolean working = new AtomicBoolean(false);
 	protected String basePath;
 	
-	public DiskPermanent(String filePath, String fileSuffix) {
+	public DiskStorage(String filePath, String fileSuffix) {
 		basePath = filePath;
 		writer = new TextWriter(basePath);
 		writer.setSuffix(fileSuffix);

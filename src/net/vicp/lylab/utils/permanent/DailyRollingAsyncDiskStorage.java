@@ -7,10 +7,10 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 
 import net.vicp.lylab.utils.Utils;
 
-public class DailyRollingAsyncDiskPermanent extends AsyncDiskPermanent {
+public class DailyRollingAsyncDiskStorage extends AsyncDiskStorage {
 	private static final long serialVersionUID = -3151642054290000095L;
 
-	public DailyRollingAsyncDiskPermanent(String filePath, String fileSuffix,
+	public DailyRollingAsyncDiskStorage(String filePath, String fileSuffix,
 			String caller) {
 		super(filePath + getTodayDateString(), fileSuffix, caller);
 		basePath = filePath;
@@ -31,7 +31,7 @@ public class DailyRollingAsyncDiskPermanent extends AsyncDiskPermanent {
 					writer.close();
 					writer.setPath(basePath + getTodayDateString());
 				}
-				Thread.sleep(1000);
+				Thread.sleep(60000);
 			} catch (Exception e) {
 				log.error("Permanent procedure got an exception:"
 						+ Utils.getStringFromException(e));

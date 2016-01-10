@@ -1,11 +1,5 @@
 package net.vicp.lylab.utils.tq;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
@@ -22,6 +16,7 @@ import net.vicp.lylab.core.pool.SequencePool;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.controller.TimeoutController;
+import net.vicp.lylab.utils.permanent.Permanent;
 
 /**
  * Manager class to execute all task.<br>
@@ -39,7 +34,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 
 	private volatile Boolean useWatchDog = false;
 	
-	private String permanentFileName = null;
+	private Permanent permanent = null;
 
 	private volatile boolean recordFailed = false;
 	private List<Task> forewarnList = new ArrayList<Task>();
@@ -145,25 +140,10 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 	@Override
 	public void initialize() {
 		begin("LYTaskQueue");
-		if(permanentFileName != null)
-		{
-			File file = new File(permanentFileName);
-			if (file.exists()) {
-				try (ObjectInputStream ois = new ObjectInputStream(
-						new FileInputStream(file));) {
-					Integer total = (Integer) ois.readObject();
-					while (total-- > 0) {
-						Task tk = (Task) ois.readObject();
-						tk.reset();
-						addTask(tk);
-					}
-					ois.close();
-					Utils.deleteFile(permanentFileName);
-				} catch (Exception e) {
-					throw new LYException(
-							"Unable to load data from last permanent file", e);
-				}
-			}
+		if (permanent != null) {
+			List<Object> list = permanent.readFromDisk();
+			for (int i = 0; i < list.size(); i++)
+				addTask((Task) list.get(i));
 		}
 	}
 	
@@ -212,31 +192,8 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 		} finally {
 			stopWatchDog();
 		}
-		if (!getTaskPool().isEmpty()) {
-			if(permanentFileName != null)
-			{
-				File p = new File(permanentFileName);
-				if (!p.exists()) {
-					try {
-						p.createNewFile();
-					} catch (IOException e) {
-						log.error("LYTaskQueue - safely shutdown: Permanent process error (This may cause data loss!), reason:"
-								+ Utils.getStringFromException(e));
-					}
-				}
-				if (p.exists()) {
-					try (ObjectOutputStream oos = new ObjectOutputStream(
-							new FileOutputStream(p));) {
-						oos.writeObject(new Integer(taskPool.size()));
-						while (!taskPool.isEmpty())
-							oos.writeObject(taskPool.accessOne());
-					} catch (IOException e) {
-						log.error("LYTaskQueue - safely shutdown: Permanent process error (This will cause data loss!), reason:"
-								+ Utils.getStringFromException(e));
-					}
-				}
-			}
-		}
+		if (!getTaskPool().isEmpty() && permanent != null)
+			permanent.saveToDisk(taskPool);
 	}
 
 	// Functional methods
@@ -435,12 +392,12 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 		this.tolerance = tolerance;
 	}
 
-	public String getPermanentFileName() {
-		return permanentFileName;
+	public Permanent getPermanent() {
+		return permanent;
 	}
 
-	public void setPermanentFileName(String permanentFileName) {
-		this.permanentFileName = permanentFileName;
+	public void setPermanent(Permanent permanent) {
+		this.permanent = permanent;
 	}
 
 }
