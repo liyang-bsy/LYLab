@@ -14,7 +14,7 @@ public class TQTest extends Thread {
 		CoreDef.config.reload("C:/config.txt");
 		LYTaskQueue tq = (LYTaskQueue) CoreDef.config.getObject("LYTaskQueue");
 		tq.setMaxQueue(500000);
-		tq.setMaxThread(100);
+		tq.setMaxThread(200);
 
 		boolean recalc = true;
 		
@@ -28,11 +28,11 @@ public class TQTest extends Thread {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			while (tq.getTaskCount() < 100000)
-				for (int _i = 0; _i < 100000; _i++)
+			while (tq.getTaskCount() < 1000)
+				for (int _i = 0; _i < 200; _i++)
 					tq.addTask(new TTask());
-//			while (Thread.activeCount() < 100000)
-//				for(int _i =0 ;_i<100000;_i++)
+//			while (Thread.activeCount() < 1000)
+//				for(int _i =0 ;_i<200;_i++)
 //					new TThread().start();
 			int ta = a.getAndSet(0);
 			total.getAndAdd(ta);
@@ -52,9 +52,15 @@ public class TQTest extends Thread {
 		}
 
 		System.out.println(start - System.currentTimeMillis());
+		CoreDef.config.deepClose();
+		try {
+			Thread.sleep(100000L);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.exit(0);
 //		
-//		CoreDef.config.deepClose();
 	}
 	public static void main(String[] args) throws InterruptedException {
 		new TQTest().start();

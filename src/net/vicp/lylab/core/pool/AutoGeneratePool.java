@@ -5,10 +5,10 @@ import java.util.List;
 
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
-import net.vicp.lylab.core.interfaces.AdditionalOperate;
+import net.vicp.lylab.core.interfaces.AdditionalOperation;
 import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.creator.AutoGenerate;
+import net.vicp.lylab.utils.creator.AutoCreator;
 
 /**
  * You can access items one by one from an auto-generate pool, if no more the
@@ -23,22 +23,22 @@ import net.vicp.lylab.utils.creator.AutoGenerate;
  * @version 1.0.0
  */
 public class AutoGeneratePool<T extends BaseObject> extends TimeoutRecyclePool<T> {
-	AutoGenerate<T> creator;
-	AdditionalOperate<T> operator;
+	AutoCreator<T> creator;
+	AdditionalOperation<T> operator;
 
-	public AutoGeneratePool(AutoGenerate<T> creator) {
+	public AutoGeneratePool(AutoCreator<T> creator) {
 		super();
 		this.creator = creator;
 		this.operator = null;
 	}
 
-	public AutoGeneratePool(AutoGenerate<T> creator, AdditionalOperate<T> operator) {
+	public AutoGeneratePool(AutoCreator<T> creator, AdditionalOperation<T> operator) {
 		super();
 		this.creator = creator;
 		this.operator = operator;
 	}
 
-	public AutoGeneratePool(AutoGenerate<T> creator, AdditionalOperate<T> operator, long timeout, int maxSize) {
+	public AutoGeneratePool(AutoCreator<T> creator, AdditionalOperation<T> operator, long timeout, int maxSize) {
 		super(timeout, maxSize);
 		this.creator = creator;
 		this.operator = operator;
@@ -130,7 +130,7 @@ public class AutoGeneratePool<T extends BaseObject> extends TimeoutRecyclePool<T
 		if (operator == null)
 			return true;
 		try {
-			return operator.operate(target);
+			return operator.doOperate(target);
 		} catch (Exception e) {
 			log.error("Validation failed:" + Utils.getStringFromException(e));;
 			return false;

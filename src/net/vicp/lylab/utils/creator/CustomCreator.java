@@ -2,7 +2,7 @@ package net.vicp.lylab.utils.creator;
 
 import net.vicp.lylab.core.exceptions.LYException;
 
-public abstract class CustomCreator<T> extends AutoGenerate<T> {
+public abstract class CustomCreator<T> extends AutoCreator<T> {
 
 	public CustomCreator() {
 		super(null);

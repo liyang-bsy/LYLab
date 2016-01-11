@@ -11,12 +11,12 @@ package net.vicp.lylab.core.interfaces;
  * 
  */
 
-public interface AdditionalOperate<T> {
+public interface AdditionalOperation<T> {
 	/**
 	 * Do some thing before use an item in AutoGeneratePool
 	 * @param t
 	 * @return
 	 * true if it works fine
 	 */
-	public boolean operate(T item);
+	public boolean doOperate(T item);
 }

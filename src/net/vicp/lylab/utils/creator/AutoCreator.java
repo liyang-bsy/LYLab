@@ -8,11 +8,11 @@ import net.vicp.lylab.core.CloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
 
-public abstract class AutoGenerate<T> extends CloneableBaseObject implements AutoInitialize<T> {
+public abstract class AutoCreator<T> extends CloneableBaseObject implements AutoInitialize<T> {
 	Class<T> instanceClass;
 	Object[] params;
 
-	public AutoGenerate(Class<T> instanceClass, Object... params) {
+	public AutoCreator(Class<T> instanceClass, Object... params) {
 		this.instanceClass = instanceClass;
 		this.params = params;
 	}
