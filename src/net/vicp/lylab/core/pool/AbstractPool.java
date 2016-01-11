@@ -1,5 +1,6 @@
 package net.vicp.lylab.core.pool;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,16 +18,18 @@ import net.vicp.lylab.core.CoreDef;
 public abstract class AbstractPool<T extends BaseObject> extends CloneableBaseObject implements Pool<T> {
 	
 	protected Map<Long, T> availableContainer;
+	protected volatile Collection<Long> keyContainer;
 	protected long idIndicator = 1L;
 	protected int maxSize;
 
 	public AbstractPool() {
-		this(CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
+		this(null, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 	}
 
-	public AbstractPool(int maxSize) {
+	public AbstractPool(Collection<Long> keyContainer, int maxSize) {
 		this.maxSize = ((maxSize > 0)? maxSize : CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 		this.availableContainer = new ConcurrentHashMap<Long, T>();
+		this.keyContainer = keyContainer;
 	}
 	
 	@Override

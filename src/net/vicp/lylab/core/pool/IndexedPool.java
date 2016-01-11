@@ -16,15 +16,13 @@ import net.vicp.lylab.core.exceptions.LYError;
  * 
  */
 public class IndexedPool<T extends BaseObject> extends AbstractPool<T> {
-	protected volatile Collection<Long> keyContainer;
 
-	public IndexedPool(Collection<Long> keyContainerType) {
-		this(keyContainerType, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
+	public IndexedPool(Collection<Long> keyContainer) {
+		this(keyContainer, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 	}
 
-	public IndexedPool(Collection<Long> keyContainerType, int maxSize) {
-		super(maxSize);
-		keyContainer = keyContainerType;
+	public IndexedPool(Collection<Long> keyContainer, int maxSize) {
+		super(keyContainer, maxSize);
 	}
 	
 	public T view(long objId) {
