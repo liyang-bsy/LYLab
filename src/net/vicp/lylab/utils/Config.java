@@ -133,8 +133,6 @@ public final class Config extends NonCloneableBaseObject {
 		this.fileNameTrace = fileNameTrace;
 		this.parent = parent;
 		dataMap = new ConcurrentHashMap<String, Object>();
-		if(parent != null && parent.globalSwitch != null)
-			globalSwitch = parent.globalSwitch;
 //		switches = new HashMap<String, String>();
 		reload();
 	}
@@ -160,9 +158,9 @@ public final class Config extends NonCloneableBaseObject {
 		fileNameTrace.push(fileName);
 		// initial
 		deepClose();
-		// clear old data
-		lazyLoad.clear();
-		properties.clear();
+		// access globalSwitch from parent
+		if (parent != null)
+			globalSwitch = parent.globalSwitch;
 		// load key/value for loader
 		rawLoader();
 		for (int i = 0; i < properties.size(); i++) {
@@ -219,6 +217,10 @@ public final class Config extends NonCloneableBaseObject {
 				else if(tmp instanceof Config)
 					((Config) tmp).deepClose();
 			}
+			// clear old data
+			lazyLoad.clear();
+			properties.clear();
+			
 			dataMap.clear();
 			keyList.clear();
 			globalSwitch = null;
