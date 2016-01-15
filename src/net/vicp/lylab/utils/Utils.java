@@ -22,7 +22,6 @@ import net.vicp.lylab.utils.convert.JsonConverUtil;
 import net.vicp.lylab.utils.convert.XmlConverUtil;
 
 public abstract class Utils extends NonCloneableBaseObject {
-
 	/**
 	 * Close an object, safe if item is null
 	 * @param target to be closed item
@@ -35,7 +34,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 				log.error(Utils.getStringFromException(e));
 			}
 	}
-	
+
 	/**
 	 * Set value(param) to owner's field(based on fieldName)
 	 * @param owner
@@ -45,48 +44,49 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 */
 	@SuppressWarnings("unchecked")
 	public static void setter(Object owner, String fieldName, Object param) {
-		if (owner == null)
-			throw new NullPointerException("Owner is null for setter[" + fieldName + "]");
-		if (fieldName == null)
-			throw new NullPointerException("Parameter fieldName is null");
 		if (param == null)
 			throw new NullPointerException("Parameter is null for setter[" + fieldName + "]");
+		if (fieldName == null)
+			throw new NullPointerException("Parameter fieldName is null");
 		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-
-		// Get setter by java.lang.reflect.*
-		Method setMethod = null;
-		Class<?> parameterClass = String.class;
-		try {
-			setMethod = owner.getClass().getDeclaredMethod(setter, parameterClass);
-		} catch (Exception e) { }
+		Method setMethod = getSetter(owner, fieldName);
 		if (setMethod == null)
-			for (Method method : owner.getClass().getDeclaredMethods()) {
-				if (method.getName().equals(setter)) {
-					Class<?>[] pts = method.getParameterTypes();
-					if (pts.length != 1)
-						continue;
-					parameterClass = pts[0];
-					setMethod = method;
-					break;
-				}
-			}
+			throw new LYException("No available setter[" + setter + "] was found for " + owner.getClass());
+		Class<?> parameterClass = setMethod.getParameterTypes()[0];
 		try {
-			if (setMethod != null) {
-				// Should I throw exception?
-				if (!setMethod.isAccessible())
-					setMethod.setAccessible(true);
-				// If we got its setter, then invoke it
-				if (Caster.isGenericArrayType(param))
-					setMethod.invoke(owner, Caster.arrayCast((List<Object>) param, parameterClass));
-				else if (param.getClass() == String.class)
-					setMethod.invoke(owner, Caster.simpleCast((String) param, parameterClass));
-				else
-					setMethod.invoke(owner, param);
-			} else
-				throw new LYException("No available setter[" + setter + "] was found for " + owner.getClass());
+			// Should I throw exception?
+			if (!setMethod.isAccessible())
+				setMethod.setAccessible(true);
+			// If we got its setter, then invoke it
+			if (Caster.isGenericArrayType(param))
+				setMethod.invoke(owner, Caster.arrayCast((List<Object>) param, parameterClass));
+			else if (param.getClass() == String.class)
+				setMethod.invoke(owner, Caster.simpleCast((String) param, parameterClass));
+			else
+				setMethod.invoke(owner, param);
 		} catch (Exception e) {
 			throw new LYException("Cannot invoke setter[" + setter + "] for " + owner.getClass(), e);
 		}
+	}
+
+	public static Method getSetter(Object owner, String fieldName) {
+		if (fieldName == null)
+			throw new NullPointerException("Parameter fieldName is null");
+		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+		if (owner == null)
+			throw new NullPointerException("Owner is null for setter[" + setter + "]");
+		// Get setter by java.lang.reflect.*
+		Method setMethod = null;
+		for (Method method : owner.getClass().getDeclaredMethods()) {
+			if (method.getName().equals(setter)) {
+				Class<?>[] pts = method.getParameterTypes();
+				if (pts.length != 1)
+					continue;
+				setMethod = method;
+				break;
+			}
+		}
+		return setMethod;
 	}
 	
 	/**

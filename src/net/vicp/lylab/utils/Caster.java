@@ -1,12 +1,57 @@
 package net.vicp.lylab.utils;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TransferQueue;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
 public abstract class Caster extends NonCloneableBaseObject {
+
+	/**
+	 * Convert map to Object, java.util.Map field is not supported
+	 * 
+	 * @param xml
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map) {
+		try {
+			T owner = instanceClass.newInstance();
+			Set<String> names = map.keySet();
+			for (String name : names) {
+				try{
+					Object node = map.get(name);
+					if (Map.class.isAssignableFrom(node.getClass())) {
+						Method setter = Utils.getSetter(owner, name);
+						if (setter == null)
+							continue;
+						Class<?> paramClass = setter.getParameterTypes()[0];
+						Utils.setter(owner, name, map2Object(paramClass, (Map<String, ?>) node));
+					}
+					else
+						Utils.setter(owner, name, node);
+				} catch (LYException e) { }
+			}
+			return owner;
+		} catch (Exception e) {
+			throw new LYException("Convert map to Object(" + instanceClass.getName() + ") failed, reason:", e);
+		}
+	}
 
 	public static boolean isBasicType(Object target) {
 		if (target == null)
