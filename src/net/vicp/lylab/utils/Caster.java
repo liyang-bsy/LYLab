@@ -29,7 +29,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @return
 	 */
 	public static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map) {
-		return map2Object(instanceClass, map, new Stack<Map<?,?>>());
+		return map2Object(instanceClass, map, new Stack<Map<String, ?>>());
 	}
 
 	/**
@@ -39,10 +39,10 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map, Stack<Map<?,?>> mapStackTrace) {
+	private static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map, Stack<Map<String, ?>> mapStackTrace) {
+		if (mapStackTrace.contains(map))
+			return null;
 		try {
-			if (mapStackTrace.contains(map))
-				return null;
 			mapStackTrace.push(map);
 			T owner = instanceClass.newInstance();
 			Set<String> names = map.keySet();
@@ -69,6 +69,8 @@ public abstract class Caster extends NonCloneableBaseObject {
 			return owner;
 		} catch (Exception e) {
 			throw new LYException("Convert map to Object(" + instanceClass.getName() + ") failed, reason:", e);
+		} finally {
+			mapStackTrace.pop();
 		}
 	}
 
