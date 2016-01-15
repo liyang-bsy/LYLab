@@ -169,10 +169,10 @@ public abstract class Caster extends NonCloneableBaseObject {
 					else
 						targetArray = new ArrayList();
 				}
+				if (targetArray == null)
+					throw new LYException("Unsupport target Array type:" + targetClass.getName());
 				((Collection) targetArray).addAll(originalArray);
 			}
-			if (targetArray == null)
-				throw new LYException("Unsupport target Array type:" + targetClass.getName());
 			return targetArray;
 		} catch (Exception e) {
 			throw new LYException("Cast failed from " + originalArray.getClass().getName() + " {" + originalArray + "} to " + targetClass.getName(), e);

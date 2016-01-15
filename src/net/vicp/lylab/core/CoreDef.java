@@ -48,7 +48,9 @@ public class CoreDef extends NonCloneableBaseObject {
 		File file = new File("");
 		rootPath = file.getAbsolutePath();
 	}
-
+	
+	public static final String LINE_SEPARATOR = System.getProperty("line.separator", "\n");
+	
 	public static final double DOUBLE = 1.0;
 	
 	public static final int B = 1;
