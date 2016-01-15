@@ -37,8 +37,7 @@ public class BaseObject {
 	protected static class Lock { };
 	protected transient Lock lock = new Lock();
 
-	protected void await(long timeout)
-	{
+	protected void await(long timeout) {
 		synchronized (lock) {
 			try {
 				lock.wait(timeout);
@@ -48,8 +47,7 @@ public class BaseObject {
 		}
 	}
 
-	protected void await()
-	{
+	protected void await() {
 		synchronized (lock) {
 			try {
 				lock.wait();
@@ -59,15 +57,13 @@ public class BaseObject {
 		}
 	}
 	
-	protected void signal()
-	{
+	protected void signal() {
 		synchronized (lock) {
 			lock.notify();
 		}
 	}
-	
-	protected void signalAll()
-	{
+
+	protected void signalAll() {
 		synchronized (lock) {
 			lock.notifyAll();
 		}
