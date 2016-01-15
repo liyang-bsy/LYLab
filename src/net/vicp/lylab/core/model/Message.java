@@ -1,5 +1,7 @@
 package net.vicp.lylab.core.model;
 
+import java.util.UUID;
+
 /**
  * Generic message template
  * 
@@ -14,7 +16,7 @@ public class Message extends SimpleMessage {
 	public Message() {
 		super();
 		token = "";
-		uuid = "";
+		uuid = UUID.randomUUID().toString();
 		time = System.currentTimeMillis();
 	}
 
