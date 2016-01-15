@@ -3,6 +3,7 @@
 	<name>LYLab</name>
 	<comment></comment>
 	<projects>
+		<project>Dependents</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
