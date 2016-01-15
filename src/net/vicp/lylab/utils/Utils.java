@@ -42,16 +42,27 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param param
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	public static void setter(Object owner, String fieldName, Object param) {
-		if (param == null)
-			throw new NullPointerException("Parameter is null for setter[" + fieldName + "]");
 		if (fieldName == null)
 			throw new NullPointerException("Parameter fieldName is null");
-		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-		Method setMethod = getSetter(owner, fieldName);
+		Method setMethod = getSetterForField(owner, fieldName);
 		if (setMethod == null)
-			throw new LYException("No available setter[" + setter + "] was found for " + owner.getClass());
+			throw new LYException("No available setter was found for field[" + fieldName + "] " + owner.getClass());
+		setter(owner, setMethod, param);
+	}
+
+	/**
+	 * Set value(param) to owner's field(based on fieldName)
+	 * @param owner
+	 * @param fieldName
+	 * @param param
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public static void setter(Object owner, Method setMethod, Object param) {
+		if (param == null)
+			throw new NullPointerException("Parameter is null for setter[" + setMethod.getName() + "]");
+		String setter = setMethod.getName();
 		Class<?> parameterClass = setMethod.getParameterTypes()[0];
 		try {
 			// Should I throw exception?
@@ -62,6 +73,8 @@ public abstract class Utils extends NonCloneableBaseObject {
 				setMethod.invoke(owner, Caster.arrayCast((List<Object>) param, parameterClass));
 			else if (param.getClass() == String.class)
 				setMethod.invoke(owner, Caster.simpleCast((String) param, parameterClass));
+			else if (Caster.isBasicType(param))
+				setMethod.invoke(owner, Caster.simpleCast(param.toString(), parameterClass));
 			else
 				setMethod.invoke(owner, param);
 		} catch (Exception e) {
@@ -69,7 +82,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 		}
 	}
 
-	public static Method getSetter(Object owner, String fieldName) {
+	public static Method getSetterForField(Object owner, String fieldName) {
 		if (fieldName == null)
 			throw new NullPointerException("Parameter fieldName is null");
 		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);

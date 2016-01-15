@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.Stack;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
@@ -21,6 +22,15 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
 public abstract class Caster extends NonCloneableBaseObject {
+	/**
+	 * Convert map to Object
+	 * 
+	 * @param xml
+	 * @return
+	 */
+	public static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map) {
+		return map2Object(instanceClass, map, new Stack<Map<?,?>>());
+	}
 
 	/**
 	 * Convert map to Object, java.util.Map field is not supported
@@ -29,23 +39,32 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map) {
+	public static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map, Stack<Map<?,?>> mapStackTrace) {
 		try {
+			if (mapStackTrace.contains(map))
+				return null;
+			mapStackTrace.push(map);
 			T owner = instanceClass.newInstance();
 			Set<String> names = map.keySet();
 			for (String name : names) {
-				try{
+				try {
 					Object node = map.get(name);
-					if (Map.class.isAssignableFrom(node.getClass())) {
-						Method setter = Utils.getSetter(owner, name);
-						if (setter == null)
-							continue;
-						Class<?> paramClass = setter.getParameterTypes()[0];
-						Utils.setter(owner, name, map2Object(paramClass, (Map<String, ?>) node));
-					}
-					else
-						Utils.setter(owner, name, node);
-				} catch (LYException e) { }
+					Method setter = Utils.getSetterForField(owner, name);
+					if (setter == null)
+						continue;
+					Class<?> paramClass = setter.getParameterTypes()[0];
+					if (Map.class.isAssignableFrom(paramClass))		// && 
+							Utils.setter(owner, setter, node);
+					else if (Map.class.isAssignableFrom(node.getClass())) {
+						Object param = map2Object(paramClass, (Map<String, ?>) node, mapStackTrace);
+						if (param == null)
+							param = owner;
+						Utils.setter(owner, setter, param);
+					} else
+						Utils.setter(owner, setter, node);
+				} catch (LYException e) {
+					log.debug("Bad field:" + name + Utils.getStringFromException(e));
+				}
 			}
 			return owner;
 		} catch (Exception e) {
