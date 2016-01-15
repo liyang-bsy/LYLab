@@ -232,8 +232,6 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @return
 	 */
 	public static String format(Double value, String pattern) {
-		if (value == null)
-			return null;
 		return new DecimalFormat(pattern).format(value);
 	}
 
@@ -245,14 +243,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @return
 	 */
 	public static String format(Date date, String pattern) {
-		try {
-			if (date == null)
-				return null;
-			return DateFormatUtils.format(date, pattern);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
+		return DateFormatUtils.format(date, pattern);
 	}
 
 	/**
@@ -299,8 +290,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param fileSuffix
 	 * @return
 	 */
-	public static Object[] readJsonObjectFromFile(Class<?> instanceClass,
-			String filePath, String fileSuffix) {
+	public static Object[] readJsonObjectFromFile(Class<?> instanceClass, String filePath, String fileSuffix) {
 		List<String> fileNames = getFileList(filePath, fileSuffix);
 		List<Object> list = new ArrayList<Object>();
 		for (String fileName : fileNames) {
@@ -312,7 +302,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 		list.toArray(objects);
 		return objects;
 	}
-	
+
 	/**
 	 * 根据路径和文件名后缀，获取文件列表的绝对路径
 	 * @param filePath
@@ -328,9 +318,10 @@ public abstract class Utils extends NonCloneableBaseObject {
 				for (int i = 0; i < filelist.length; i++) {
 					String filename;
 					// 避免双斜杠目录
-					if(filePath.endsWith("/") || filePath.endsWith("\\"))
+					if (filePath.endsWith("/") || filePath.endsWith("\\"))
 						filename = filePath + filelist[i];
-					else filename = filePath + "\\" + filelist[i];
+					else
+						filename = filePath + "\\" + filelist[i];
 					// 如果以该后缀结尾，假如不是，否则忽略该文件
 					if (filename.endsWith(fileSuffix))
 						ret.add(filename);
@@ -353,13 +344,12 @@ public abstract class Utils extends NonCloneableBaseObject {
 	public static List<String> readFileByLines(String fileName, boolean ignoreEmptyLine) {
 		List<String> ret = new ArrayList<String>();
 		File file = new File(fileName);
-		if(!file.exists())
+		if (!file.exists())
 			throw new LYException("File not found:" + fileName);
-		if(!file.isFile())
+		if (!file.isFile())
 			throw new LYException("Given path is not a file:" + fileName);
 		try (FileInputStream in = new FileInputStream(file);
-				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(in, CoreDef.CHARSET()));) {
+				BufferedReader reader = new BufferedReader(new InputStreamReader(in, CoreDef.CHARSET()));) {
 			String tempString = null;
 			// 一次读入一行，直到读入null为文件结束
 			while ((tempString = reader.readLine()) != null) {
@@ -383,16 +373,16 @@ public abstract class Utils extends NonCloneableBaseObject {
 	}
 
 	public static <T> boolean inList(T[] list, Object item) {
-		if(list == null || item == null || list.length == 0) return false;
-		for(T o:list)
-			if(item.equals(o))
+		if (list == null || item == null || list.length == 0)
+			return false;
+		for (T o : list)
+			if (item.equals(o))
 				return true;
 		return false;
 	}
 
 	public static boolean inList(@SuppressWarnings("rawtypes") List list, Object item) {
-		if (list == null || item == null || list.isEmpty()
-				|| !list.contains(item))
+		if (list == null || item == null || list.isEmpty() || !list.contains(item))
 			return false;
 		return true;
 	}
@@ -406,7 +396,6 @@ public abstract class Utils extends NonCloneableBaseObject {
 		return getStringFromThrowable(e);
 	}
 
-
 	/**
 	 * 获取错误的字符串内容
 	 * @param e Error itself
@@ -415,7 +404,6 @@ public abstract class Utils extends NonCloneableBaseObject {
 	public static String getStringFromError(Error e) {
 		return getStringFromThrowable(e);
 	}
-
 
 	/**
 	 * 获取异常/错误的字符串内容
@@ -427,25 +415,6 @@ public abstract class Utils extends NonCloneableBaseObject {
 		PrintWriter pw = new PrintWriter(sw);
 		t.printStackTrace(pw);
 		return "\r\n" + sw.toString() + "\r\n";
-	}
-
-	private static final JsonFactory jsonFactory = new JsonFactory();
-	private static final ObjectMapper mapper = new ObjectMapper();
-
-	public static String serialize(Object obj)
-	{
-		if(obj == null)
-			throw new LYException("Parameter obj is null");
-		String str = null;
-		try {
-			StringWriter sw = new StringWriter();
-			JsonGenerator generator = jsonFactory.createGenerator(sw);
-			mapper.writeValue(generator, obj);
-			str = sw.toString();
-			generator.close();
-		} catch (Exception e) { throw new LYException("Serialize failed", e); }
-	    
-		return str;
 	}
 
 	/**
@@ -520,28 +489,46 @@ public abstract class Utils extends NonCloneableBaseObject {
 		}
 		return s;
 	}
-	
-	public static <T> T deserialize(Class<T> instanceClass, String json)
-	{
-		if(json == null)
+
+	private static final JsonFactory jsonFactory = new JsonFactory();
+	private static final ObjectMapper mapper = new ObjectMapper();
+
+	public static String serialize(Object obj) {
+		if (obj == null)
+			throw new LYException("Parameter obj is null");
+		String str = null;
+		try {
+			StringWriter sw = new StringWriter();
+			JsonGenerator generator = jsonFactory.createGenerator(sw);
+			mapper.writeValue(generator, obj);
+			str = sw.toString();
+			generator.close();
+		} catch (Exception e) {
+			throw new LYException("Serialize failed", e);
+		}
+
+		return str;
+	}
+
+	public static <T> T deserialize(Class<T> instanceClass, String json) {
+		if (json == null)
 			throw new LYException("Parameter json is null");
-		if(instanceClass == null)
+		if (instanceClass == null)
 			throw new LYException("Parameter instanceClass is null");
 		try {
-			return mapper.readValue(json, instanceClass);  
+			return mapper.readValue(json, instanceClass);
 		} catch (Exception e) {
 			throw new LYException("Can not deserialize follow json[" + json + "] into " + instanceClass.getName(), e);
 		}
 	}
-	
-	public static Object deserialize(String className, String json)
-	{
-		if(json == null)
+
+	public static Object deserialize(String className, String json) {
+		if (json == null)
 			throw new LYException("Parameter json is null");
-		if(className == null)
+		if (className == null)
 			throw new LYException("Parameter className is null");
 		try {
-			return mapper.readValue(json, Class.forName(className));  
+			return mapper.readValue(json, Class.forName(className));
 		} catch (Exception e) {
 			throw new LYException("Can not deserialize follow json into " + className + "\n" + json, e);
 		}
@@ -555,7 +542,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	private static int makeInt(byte b3, byte b2, byte b1, byte b0) {
 		return (((b3) << 24) | ((b2 & 0xff) << 16) | ((b1 & 0xff) << 8) | ((b0 & 0xff)));
 	}
-    
+
 	/**
 	 * 数字转byte
 	 * 
@@ -564,13 +551,12 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 */
 	public static byte[] IntToBytes4(int x) {
 		byte[] bytes = new byte[4];
-		if(CoreDef.BIG_ENDIAN) {
+		if (CoreDef.BIG_ENDIAN) {
 			bytes[3] = int3(x);
 			bytes[2] = int2(x);
 			bytes[1] = int1(x);
 			bytes[0] = int0(x);
-		}
-		else {
+		} else {
 			bytes[0] = int3(x);
 			bytes[1] = int2(x);
 			bytes[2] = int1(x);
@@ -600,31 +586,28 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 */
 	public static int Bytes4ToInt(byte[] bytes, int offset) {
 		if (bytes.length - 4 < offset)
-			throw new LYException("Out of bounds, byte length is " + bytes.length
-					+ " while offset is " + offset);
+			throw new LYException("Out of bounds, byte length is " + bytes.length + " while offset is " + offset);
 
 		if (CoreDef.BIG_ENDIAN)
-			return makeInt(bytes[offset + 3], bytes[offset + 2],
-					bytes[offset + 1], bytes[offset + 0]);
+			return makeInt(bytes[offset + 3], bytes[offset + 2], bytes[offset + 1], bytes[offset + 0]);
 		else
-			return makeInt(bytes[offset + 0], bytes[offset + 1],
-					bytes[offset + 2], bytes[offset + 3]);
+			return makeInt(bytes[offset + 0], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]);
 	}
-	
+
 	/**
 	 * Copy bytes from List into byte[]
 	 * @param container
 	 * @return
 	 */
-	public static byte[] copyBytesFromContainer(List<Byte> container)
-	{
-		if(container == null) throw new LYException("Parameter container is null");
+	public static byte[] copyBytesFromContainer(List<Byte> container) {
+		if (container == null)
+			throw new LYException("Parameter container is null");
 		byte[] bytes = new byte[container.size()];
-		for(int i=0;i<container.size();i++)
+		for (int i = 0; i < container.size(); i++)
 			bytes[i] = container.get(i);
 		return bytes;
 	}
-	
+
 	/**
 	 * Move bytes from array into List(original array will be reset)
 	 * @param container
@@ -638,5 +621,5 @@ public abstract class Utils extends NonCloneableBaseObject {
 		}
 		return container;
 	}
-	
+
 }
