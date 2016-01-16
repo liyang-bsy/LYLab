@@ -53,8 +53,8 @@ public abstract class Caster extends NonCloneableBaseObject {
 					if (setter == null)
 						continue;
 					Class<?> paramClass = setter.getParameterTypes()[0];
-					if (Map.class.isAssignableFrom(paramClass))		// && 
-							Utils.setter(owner, setter, node);
+					if (Map.class.isAssignableFrom(paramClass))
+						Utils.setter(owner, setter, node);
 					else if (Map.class.isAssignableFrom(node.getClass())) {
 						Object param = map2Object(paramClass, (Map<String, ?>) node, mapStackTrace);
 						if (param == null)
