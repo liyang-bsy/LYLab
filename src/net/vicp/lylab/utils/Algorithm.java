@@ -1,13 +1,29 @@
 package net.vicp.lylab.utils;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+
+import net.vicp.lylab.core.exceptions.LYException;
 
 public abstract class Algorithm {
 
-    /**
-     * Prevents instantiation.
-     */
-	private Algorithm() {}
+	public static int hash(String key, String algorithm) {
+		MessageDigest md = null;
+		try {
+			md = MessageDigest.getInstance(algorithm);
+		} catch (NoSuchAlgorithmException e) {
+			 throw new LYException("Target encrypt algorithm not found:" + algorithm, e);
+		}
+		md.reset();
+		md.update(key.getBytes());
+		byte[] bytes = md.digest();
+		
+		int hash = 0;
+		for(byte b:bytes)
+			hash += (int)b;
+		return hash;
+	}
 	
 	public static void main(String[] args) {
 //		byte[] source = new byte[]{0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6};
