@@ -131,6 +131,7 @@ public class CoreDef extends NonCloneableBaseObject {
 	public static final int DEFAULT_SOCKET_TTIMEOUT = (int) (MINUTE);
 	public static final int DEFAULT_READ_TTIMEOUT = (int) (TWENTY*SECOND);
 
+	public static final int DEFAULT_LYCACHE_CONTAINER_SIZE = SIXTEEN;
 	public static final long DEFAULT_LYCACHE_EXPIRE_TIME = FIFTEEN*TWO*MINUTE;
 	public static final long DEFAULT_LYCACHE_MEMORY_LIMITATION = ONE * GB;
 	public static final double DEFAULT_LYCACHE_THRESHOLD = DOUBLE * EIGHT / TEN;

@@ -5,10 +5,9 @@ import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.interfaces.DoHash;
 import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.core.model.CacheValue;
-import net.vicp.lylab.utils.hash.MD5Hash;
+import net.vicp.lylab.utils.Algorithm;
 
 /**
  * Local cache system.
@@ -19,15 +18,16 @@ import net.vicp.lylab.utils.hash.MD5Hash;
  */
 public final class LYCache extends NonCloneableBaseObject implements Initializable {
 	private List<CacheContainer> bundles = null;
+	private int containerSize = CoreDef.DEFAULT_LYCACHE_CONTAINER_SIZE;
 	private long expireTime = CoreDef.DEFAULT_LYCACHE_EXPIRE_TIME;
 	private long memoryLimitation = CoreDef.DEFAULT_LYCACHE_MEMORY_LIMITATION;
-	private static DoHash doHash = new MD5Hash();
+	private String hashAlgorithm = "MD5";
 	public double threshold = CoreDef.DEFAULT_LYCACHE_THRESHOLD;
 
 	@Override
 	public synchronized void initialize() {
 		ArrayList<CacheContainer> list = new ArrayList<CacheContainer>();
-		for (int i = 0; i < 16; i++)
+		for (int i = 0; i < containerSize; i++)
 			list.add(new CacheContainer());
 		this.bundles = list;
 		
@@ -42,7 +42,7 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		setMemoryLimitation(memoryLimitation);
 		List<CacheContainer> list = getBundles();
 		for (CacheContainer item : list) {
-			item.setMemoryLimitation(memoryLimitation / 16);
+			item.setMemoryLimitation(memoryLimitation / containerSize);
 			item.setThreshold(threshold);
 		}
 		flush();
@@ -59,8 +59,8 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		return getContainer(seq);
 	}
 
-	public static int keyRule(String key) {
-		return Math.abs(doHash.hash(key))%16;
+	private int keyRule(String key) {
+		return Math.abs(Algorithm.hash(key, hashAlgorithm)) % containerSize;
 	}
 
 	public List<CacheContainer> getBundles() {
@@ -132,10 +132,6 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 			cc.clear();
 	}
 
-	public static String version() {
-		return CacheContainer.version();
-	}
-
 	// getter & setter
 	public long getExpireTime() {
 		return expireTime;
@@ -159,6 +155,22 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 
 	public void setThreshold(double threshold) {
 		this.threshold = threshold;
+	}
+
+	public int getContainerSize() {
+		return containerSize;
+	}
+
+	public void setContainerSize(int containerSize) {
+		this.containerSize = containerSize;
+	}
+
+	public String getHashAlgorithm() {
+		return hashAlgorithm;
+	}
+
+	public void setHashAlgorithm(String hashAlgorithm) {
+		this.hashAlgorithm = hashAlgorithm;
 	}
 
 }

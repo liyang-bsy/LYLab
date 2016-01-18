@@ -18,7 +18,6 @@ import net.vicp.lylab.utils.tq.Task;
  */
 public final class CacheContainer extends NonCloneableBaseObject {
 
-	private static final String version = "1.0.2";
 	private Map<String, CacheValue> container = new ConcurrentHashMap<String, CacheValue>();
 	public long memoryLimitation;
 	public double threshold;
@@ -160,10 +159,6 @@ public final class CacheContainer extends NonCloneableBaseObject {
 		return result;
 	}
 
-	public static String version() {
-		return version;
-	}
-
 	public boolean containsKey(Object key) {
 		return container.containsKey(key);
 	}
@@ -188,10 +183,6 @@ public final class CacheContainer extends NonCloneableBaseObject {
 
 	public void setThreshold(double threshold) {
 		this.threshold = threshold;
-	}
-
-	public static String getVersion() {
-		return version;
 	}
 
 }
