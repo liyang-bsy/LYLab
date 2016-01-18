@@ -27,12 +27,12 @@ import net.vicp.lylab.utils.tq.Task;
  */
 public class SyncServer extends Task implements LifeCycle {
 	private static final long serialVersionUID = 883892527805494627L;
-	protected AtomicBoolean isClosed = new AtomicBoolean(true);
+	protected AtomicBoolean closed = new AtomicBoolean(true);
 	protected ServerSocket serverSocket;
 	protected LYTaskQueue lyTaskQueue = null;
 	protected Aop aop;
 	protected Integer port = null;
-	protected boolean isLongServer = false;
+	protected boolean longServer = false;
 
 	public SyncServer() {
 		aop = null;
@@ -44,14 +44,14 @@ public class SyncServer extends Task implements LifeCycle {
 	
 	@Override
 	public void initialize() {
-		if(!isClosed.compareAndSet(true, false))
+		if(!closed.compareAndSet(true, false))
 			return;
 		this.begin("Sync Server - Main Thread");
 	}
 	
 	@Override
 	public void close() throws Exception {
-		if(!isClosed.compareAndSet(false, true))
+		if(!closed.compareAndSet(false, true))
 			return;
 		serverSocket.close();
 		this.callStop();
@@ -65,10 +65,10 @@ public class SyncServer extends Task implements LifeCycle {
 		} catch (Exception e) {
 			throw new LYException("Server start failed", e);
 		}
-		while (!isClosed.get()) {
+		while (!isClosed()) {
 			try {
 				BaseSocket bs = null;
-				if(isLongServer)
+				if(isLongServer())
 					bs = new ToClientLongSocket(serverSocket, new SimpleHeartBeat()).setAopLogic(aop);
 				else
 					bs = new ToClientSocket(serverSocket).setAopLogic(aop);
@@ -89,7 +89,7 @@ public class SyncServer extends Task implements LifeCycle {
 	}
 
 	public boolean isClosed() {
-		return isClosed.get();
+		return closed.get();
 	}
 
 	public int getPort() {
@@ -101,11 +101,11 @@ public class SyncServer extends Task implements LifeCycle {
 	}
 
 	public boolean isLongServer() {
-		return isLongServer;
+		return longServer;
 	}
 
-	public void setIsLongServer(boolean isLongServer) {
-		this.isLongServer = isLongServer;
+	public void setLongServer(boolean longServer) {
+		this.longServer = longServer;
 	}
 
 }

@@ -18,14 +18,12 @@ public abstract class BaseAction extends CloneableBaseObject implements Executor
 
 	public BaseAction() { }
 	
-	public BaseAction(Message request, Message response)
-	{
+	public BaseAction(Message request, Message response) {
 		this.request = request;
 		this.response = response;
 	}
-	
-	public BaseAction(BaseAction batonPass)
-	{
+
+	public BaseAction(BaseAction batonPass) {
 		this(batonPass.getRequest(), batonPass.getResponse());
 	}
 

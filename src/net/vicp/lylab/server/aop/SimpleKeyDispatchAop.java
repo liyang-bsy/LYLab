@@ -72,7 +72,7 @@ public class SimpleKeyDispatchAop extends NonCloneableBaseObject implements Aop 
 				response.setKey(key);
 				// get action related to key
 				try {
-					action = (BaseAction) Class.forName(CoreDef.config.getConfig("Aop").getString(key + "Action")).newInstance();
+					action = (BaseAction) CoreDef.config.getConfig("Aop").getNewInstance(key + "Action");
 				} catch (Exception e) { }
 				if (action == null) {
 					response.setCode(0x00003);
