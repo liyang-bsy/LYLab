@@ -29,7 +29,7 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 	// Long socket keep alive
 	protected HeartBeat heartBeat;
 	protected long lastActivity = 0L;
-	protected long interval = CoreDef.DEFAULT_SOCKET_TTIMEOUT/4;
+	protected long interval = CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT/10;
 
 	public LongSocket(ServerSocket serverSocket, HeartBeat heartBeat) {
 		super(serverSocket);
@@ -64,13 +64,14 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 			} else {
 				initialize();
 				while (true) {
-					byte[] request = dataPool.accessOne().getObject();
-					if (request == null) {
+					ObjectContainer<byte[]> container = dataPool.accessOne();
+					if (container == null) {
 						if (!keepAlive())
 							break;
 						await(CoreDef.WAITING_LONG);
 						continue;
 					}
+					byte[] request = container.getObject();
 					signalAll();
 					byte[] response = doRequest(request);
 					if (response == null)

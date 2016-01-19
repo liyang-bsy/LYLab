@@ -135,6 +135,7 @@ public class TimeoutRecyclePool<T extends BaseObject> extends RecyclePool<T> imp
 
 	@Override
 	public void recycle() {
+		System.out.println("renew sockets");
 		synchronized (lock) {
 			for (Long id : availableKeySet()) {
 				T tmp = getFromContainer(id);

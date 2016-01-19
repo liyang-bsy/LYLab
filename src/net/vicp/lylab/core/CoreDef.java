@@ -82,15 +82,15 @@ public class CoreDef extends NonCloneableBaseObject {
 	public static final int EIGHTEEN = 18;
 	public static final int NINETEEN = 19;
 	public static final int TWENTY = 20;
-	public static final int HUNDRED = TEN*TEN;
-	public static final int THOUSAND = TEN*HUNDRED;
+	public static final int HUNDRED = TEN * TEN;
+	public static final int THOUSAND = TEN * HUNDRED;
 
 	public static final long MILLISECOND = ONE;
-	public static final long SECOND = THOUSAND*MILLISECOND;
-	public static final long MINUTE = SIX*TEN*SECOND;
-	public static final long HOUR = SIX*TEN*MINUTE;
-	public static final long DAY = TWO*TWELVE*HOUR;
-	public static final long WEEK = SEVEN*DAY;
+	public static final long SECOND = THOUSAND * MILLISECOND;
+	public static final long MINUTE = SIX * TEN * SECOND;
+	public static final long HOUR = SIX * TEN * MINUTE;
+	public static final long DAY = TWO * TWELVE * HOUR;
+	public static final long WEEK = SEVEN * DAY;
 
 	public static final int SIZEOF_BOOLEAN = ONE;
 	public static final int SIZEOF_BYTE = ONE;
@@ -100,39 +100,40 @@ public class CoreDef extends NonCloneableBaseObject {
 	public static final int SIZEOF_FLOAT = FOUR;
 	public static final int SIZEOF_LONG = EIGHT;
 	public static final int SIZEOF_DOUBLE = EIGHT;
-	
-	public static final long WAITING = ONE*SECOND;
-	public static final long WAITING_SHORT = HUNDRED*MILLISECOND;
-	public static final long WAITING_LONG = THREE*SECOND;
 
-	public static final long INTERVAL = TWO*SECOND;					// 2 second
-	public static final long INTERVAL_SHORT = SECOND/TWO;				// half second
-	public static final long INTERVAL_LONG = FIVE*SECOND;				// 5 second
+	public static final long WAITING = ONE * SECOND;
+	public static final long WAITING_SHORT = HUNDRED * MILLISECOND;
+	public static final long WAITING_LONG = THREE * SECOND;
 
-	public static final long WAITING_TOLERANCE = TWO*MINUTE;			// 5 min
+	public static final long INTERVAL = TWO * SECOND;					// 2 second
+	public static final long INTERVAL_SHORT = SECOND / TWO;				// half second
+	public static final long INTERVAL_LONG = FIVE * SECOND;				// 5 second
+
+	public static final long WAITING_TOLERANCE = TWO * MINUTE;			// 5 min
 	public static final int REQUEST_TTIMEOUT = (int) MINUTE;			// 60 second
 
 	public static final long ONE_TIME_TASK = ZERO;
 	
-	public static final long DEFAULT_TASK_TTIMEOUT = TEN*MINUTE;		// 10 minutes
+	public static final long DEFAULT_TASK_TTIMEOUT = TEN * MINUTE;		// 10 minutes
 
-	public static final long DEFAULT_CONTAINER_TIMEOUT = 2*MINUTE;		// 2 min
+	public static final long DEFAULT_CONTAINER_TIMEOUT = 2 * MINUTE;		// 2 min
 	public static final int DEFAULT_CONTAINER_MAX_SIZE = HUNDRED;
 	public static final int MASSIVE_CONTAINER_MAX_SIZE = Integer.MAX_VALUE;
 
-	public static final int DEFAULT_PERMANENT_MAX_SIZE = HUNDRED*THOUSAND;
-	public static final int DEFAULT_PERMANENT_TICK = SIX*TEN;
-	public static final long DEFAULT_TERMINATE_TIMEOUT = TWO*MINUTE;
-	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = MINUTE/TWO;
+	public static final int DEFAULT_PERMANENT_MAX_SIZE = HUNDRED * THOUSAND;
+	public static final int DEFAULT_PERMANENT_TICK = SIX * TEN;
+	public static final long DEFAULT_TERMINATE_TIMEOUT = TWO * MINUTE;
+	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = MINUTE / TWO;
 
-	public static final long DEFAULT_PERMANENT_INTERVAL = SIX*TEN*SIX*TEN;		// 60 times
+	public static final long DEFAULT_PERMANENT_INTERVAL = SIX * TEN * SIX * TEN;		// 60 times
 	
 	public static final int SOCKET_MAX_BUFFER = TWO * KB;
-	public static final int DEFAULT_SOCKET_TTIMEOUT = (int) (MINUTE);
-	public static final int DEFAULT_READ_TTIMEOUT = (int) (TWENTY*SECOND);
+	public static final int DEFAULT_SOCKET_CONNECT_TTIMEOUT = (int) (MINUTE);
+	public static final int DEFAULT_SOCKET_READ_TTIMEOUT = (int) (TEN * MINUTE);
+	public static final int DEFAULT_READ_TTIMEOUT = (int) (TWENTY * SECOND);
 
 	public static final int DEFAULT_LYCACHE_CONTAINER_SIZE = SIXTEEN;
-	public static final long DEFAULT_LYCACHE_EXPIRE_TIME = FIFTEEN*TWO*MINUTE;
+	public static final long DEFAULT_LYCACHE_EXPIRE_TIME = FIFTEEN * TWO * MINUTE;
 	public static final long DEFAULT_LYCACHE_MEMORY_LIMITATION = ONE * GB;
 	public static final double DEFAULT_LYCACHE_THRESHOLD = DOUBLE * EIGHT / TEN;
 

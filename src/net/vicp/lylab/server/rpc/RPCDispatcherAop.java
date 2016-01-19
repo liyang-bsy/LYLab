@@ -12,7 +12,7 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.model.CallContent;
+import net.vicp.lylab.core.model.RPCMessage;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
@@ -36,7 +36,7 @@ public class RPCDispatcherAop extends NonCloneableBaseObject implements Aop {
 	
 	@Override
 	public byte[] doAction(Socket client, byte[] requestByte, int offset) {
-		CallContent request = null;
+		RPCMessage request = null;
 
 		String key = null;
 		BaseAction action = null;
@@ -47,7 +47,7 @@ public class RPCDispatcherAop extends NonCloneableBaseObject implements Aop {
 					Object obj = protocol.decode(requestByte, offset);
 					if(obj instanceof HeartBeat)
 						return protocol.encode(obj);
-					request = (CallContent) obj;
+					request = (RPCMessage) obj;
 				} catch (Exception e) {
 					log.debug(Utils.getStringFromException(e));
 				}

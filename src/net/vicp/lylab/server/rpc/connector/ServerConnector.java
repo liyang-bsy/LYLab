@@ -18,7 +18,7 @@ public class ServerConnector extends NonCloneableBaseObject {
 //	public AutoGeneratePool<ClientLongSocket> pool;
 //	private AutoCreator<ClientLongSocket> creator;
 
-	private ServerConnector() {
+	public ServerConnector() {
 		ip2ConnectionPool = new HashMap<>();
 		ip2Creator = new HashMap<>();
 	}
