@@ -10,6 +10,7 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
 public class JsonConverUtil extends NonCloneableBaseObject {
+	
 	private static final JsonFactory jsonFactory = new JsonFactory();
 	private static final ObjectMapper mapper = new ObjectMapper();
 
