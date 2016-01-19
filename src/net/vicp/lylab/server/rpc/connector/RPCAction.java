@@ -12,15 +12,22 @@ import net.vicp.lylab.core.model.CallContent;
  * @author Young
  *
  */
-public class RPCProcedureConnector extends BaseAction {
+public class RPCAction extends BaseAction {
 
 	@Override
 	public void exec() {
+		// TODO
+		ServerDispathcer serverDispathcer = new ServerDispathcer();
 		CallContent cc = (CallContent) getRequest();
 		List<String> ipList = new ArrayList<>();
-//		if(cc.isBroadcast())
-//			ipList = ServerDispathcer
-			
+		if(cc.isBroadcast())
+			ipList = serverDispathcer.getAllAddress(cc.getServer(), cc.getProcedure());
+		else
+			ipList.add(serverDispathcer.getAddress(cc.getServer(), cc.getProcedure()));
+		for(String ip:ipList)
+		{
+			;
+		}
 	}
 
 }

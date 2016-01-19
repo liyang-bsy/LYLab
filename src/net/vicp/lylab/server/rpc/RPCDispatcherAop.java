@@ -15,7 +15,6 @@ import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.CallContent;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.server.filter.Filter;
-import net.vicp.lylab.server.rpc.connector.RPCProcedureConnector;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.HeartBeat;
 
@@ -80,10 +79,7 @@ public class RPCDispatcherAop extends NonCloneableBaseObject implements Aop {
 				response.setKey(key);
 				// get action related to key
 				try {
-					if("RPC".equals(key))
-						action = new RPCProcedureConnector();
-					else
-						action = (BaseAction) CoreDef.config.getConfig("Aop").getNewInstance(key + "Action");
+					action = (BaseAction) CoreDef.config.getConfig("Aop").getNewInstance(key + "Action");
 				} catch (Exception e) { }
 				if (action == null) {
 					response.setCode(0x00003);

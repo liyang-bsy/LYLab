@@ -12,9 +12,6 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
 public class ServerDispathcer extends NonCloneableBaseObject {
-//	//		Server	Procedure	ServerAddress
-//	DualMap<Pair<String, String>, String> servers;
-
 	//					Server	Procedure
 	protected final Map<String, Set<String>> server2procedure;
 	//					Server	Address
