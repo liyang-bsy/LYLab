@@ -112,15 +112,24 @@ public abstract class Utils extends NonCloneableBaseObject {
 		if (owner == null)
 			throw new NullPointerException("Owner is null for getter[" + fieldName + "]");
 		String getter = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+		String isGetter = "is" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
 		// Get getter by java.lang.reflect.*
 		try {
-			Method getMethod = owner.getClass().getDeclaredMethod(getter);
+			Method getMethod = null;
+			try {
+				getMethod = owner.getClass().getDeclaredMethod(getter);
+			} catch (NoSuchMethodException e) { }
+			try {
+				getMethod = owner.getClass().getDeclaredMethod(isGetter);
+			} catch (NoSuchMethodException e) { }
+			if(getMethod == null)
+				throw new LYException("No getter[" + getter + "] was found in " + owner.getClass() + "");
 			// Should I throw exception?
 			if(!getMethod.isAccessible())
 				getMethod.setAccessible(true);
 			return getMethod.invoke(owner);
 		} catch (Exception e) {
-			throw new LYException("Invoke getter[" + getter + "] for " + owner.getClass() + "failed", e);
+			throw new LYException("Invoke getter[" + getter + "] for " + owner.getClass() + " failed", e);
 		}
 	}
 	

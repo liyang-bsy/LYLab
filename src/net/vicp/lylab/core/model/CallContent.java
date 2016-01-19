@@ -9,6 +9,7 @@ package net.vicp.lylab.core.model;
 public class CallContent extends Message {
 	protected String server;
 	protected String procedure;
+	protected boolean broadcast;
 
 	public String getServer() {
 		return server;
@@ -24,6 +25,14 @@ public class CallContent extends Message {
 
 	public void setProcedure(String procedure) {
 		this.procedure = procedure;
+	}
+
+	public boolean isBroadcast() {
+		return broadcast;
+	}
+
+	public void setBroadcast(boolean broadcast) {
+		this.broadcast = broadcast;
 	}
 
 }
