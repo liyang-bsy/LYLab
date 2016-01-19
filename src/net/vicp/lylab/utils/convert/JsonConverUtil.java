@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
-public abstract class JsonConverUtil extends NonCloneableBaseObject {
+public class JsonConverUtil extends NonCloneableBaseObject {
 	private static final JsonFactory jsonFactory = new JsonFactory();
 	private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -43,12 +43,10 @@ public abstract class JsonConverUtil extends NonCloneableBaseObject {
 	}
 
 	public static Object deserialize(String className, String json) {
-		if (json == null)
-			throw new LYException("Parameter json is null");
 		if (className == null)
 			throw new LYException("Parameter className is null");
 		try {
-			return mapper.readValue(json, Class.forName(className));
+			return deserialize(Class.forName(className), json);
 		} catch (Exception e) {
 			throw new LYException("Can not deserialize follow json into " + className + "\n" + json, e);
 		}

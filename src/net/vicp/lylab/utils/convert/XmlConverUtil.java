@@ -16,9 +16,26 @@ import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 
+import com.thoughtworks.xstream.XStream;
+
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.exceptions.LYException;
 
 public abstract class XmlConverUtil extends NonCloneableBaseObject {
+	
+	private static final XStream x = new XStream();
+	/**
+	 * Object to Xml
+	 * 
+	 * @param
+	 * @return
+	 * @throws DocumentException
+	 */
+	public static String object2xml(Object obj) {
+		x.alias(obj.getClass().getSimpleName(), obj.getClass());
+		return x.toXML(obj);
+	}
 	/**
 	 * XML to Object, <b>ONLY</b> support simple format like follow:
 	 * <br>&lt;key&gt;value&lt;/key&gt;
@@ -35,7 +52,7 @@ public abstract class XmlConverUtil extends NonCloneableBaseObject {
 			Element rootElement = document.getRootElement();
 			return dfs(rootElement);
 		} catch (DocumentException e) {
-			throw new RuntimeException("Bad xml format:" + xml);
+			throw new LYException("Bad xml format:" + xml);
 		}
 	}
 
@@ -77,19 +94,15 @@ public abstract class XmlConverUtil extends NonCloneableBaseObject {
 	 * @return
 	 */
 	public static String doc2String(Document document) {
-		String s = "";
 		try {
-			// 使用输出流来进行转化
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			// 使用UTF-8编码
-			OutputFormat format = new OutputFormat("   ", true, "UTF-8");
+			OutputFormat format = new OutputFormat("\t", true, CoreDef.CHARSET());
 			XMLWriter writer = new XMLWriter(out, format);
 			writer.write(document);
-			s = out.toString("UTF-8");
-		} catch (Exception ex) {
-			ex.printStackTrace();
+			return out.toString(CoreDef.CHARSET());
+		} catch (Exception e) {
+			throw new LYException("Can not export Document to XML", e);
 		}
-		return s;
 	}
 
 }
