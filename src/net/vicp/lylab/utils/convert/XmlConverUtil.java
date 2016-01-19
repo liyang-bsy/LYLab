@@ -23,7 +23,7 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
 public abstract class XmlConverUtil extends NonCloneableBaseObject {
-	
+
 	private static final XStream x = new XStream();
 	/**
 	 * Object to Xml
@@ -33,7 +33,8 @@ public abstract class XmlConverUtil extends NonCloneableBaseObject {
 	 * @throws DocumentException
 	 */
 	public static String object2xml(Object obj) {
-		x.alias(obj.getClass().getSimpleName(), obj.getClass());
+//		x.alias(obj.getClass().getSimpleName(), obj.getClass());
+		x.alias("xml", obj.getClass());
 		return x.toXML(obj);
 	}
 	/**
