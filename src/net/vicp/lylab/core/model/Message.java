@@ -21,7 +21,7 @@ public class Message extends SimpleMessage {
 	}
 	
 	public void copyBasicInfo(Message other) {
-		setKey(other.getKey());
+		super.copyBasicInfo(other);
 		setToken(other.getToken());
 		setUuid(other.getUuid());
 		setTime(other.getTime());

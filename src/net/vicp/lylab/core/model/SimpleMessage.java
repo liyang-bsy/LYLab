@@ -20,6 +20,10 @@ public class SimpleMessage extends SimpleConfirm {
 		message = "Unknow";
 		body = new HashMap<String, Object>();
 	}
+	
+	public void copyBasicInfo(SimpleMessage other) {
+		setKey(other.getKey());
+	}
 
 	public String getMessage() {
 		return message;

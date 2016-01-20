@@ -10,7 +10,7 @@ public class RPCMessage extends Message {
 	protected String server;
 //	protected String procedure;
 	protected boolean broadcast;
-	protected Message nextReq;
+	protected Message rpcReq;
 
 	public String getServer() {
 		return server;
@@ -36,12 +36,12 @@ public class RPCMessage extends Message {
 		this.broadcast = broadcast;
 	}
 
-	public Message getNextReq() {
-		return nextReq;
+	public Message getRpcReq() {
+		return rpcReq;
 	}
 
-	public void setNextReq(Message nextReq) {
-		this.nextReq = nextReq;
+	public void setRpcReq(Message rpcReq) {
+		this.rpcReq = rpcReq;
 	}
 
 }
