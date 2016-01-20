@@ -8,7 +8,7 @@ package net.vicp.lylab.core.model;
  */
 public class RPCMessage extends Message {
 	protected String server;
-	protected String procedure;
+//	protected String procedure;
 	protected boolean broadcast;
 	protected Message nextReq;
 
@@ -20,13 +20,13 @@ public class RPCMessage extends Message {
 		this.server = server;
 	}
 
-	public String getProcedure() {
-		return procedure;
-	}
-
-	public void setProcedure(String procedure) {
-		this.procedure = procedure;
-	}
+//	public String getProcedure() {
+//		return procedure;
+//	}
+//
+//	public void setProcedure(String procedure) {
+//		this.procedure = procedure;
+//	}
 
 	public boolean isBroadcast() {
 		return broadcast;
