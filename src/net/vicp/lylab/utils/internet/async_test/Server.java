@@ -1,7 +1,5 @@
 package net.vicp.lylab.utils.internet.async_test;
 
-import java.io.File;
-
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
