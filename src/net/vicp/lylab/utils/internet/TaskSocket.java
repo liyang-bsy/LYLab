@@ -300,4 +300,8 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 		return bufferLen;
 	}
 
+	public Protocol getProtocol() {
+		return protocol;
+	}
+
 }
