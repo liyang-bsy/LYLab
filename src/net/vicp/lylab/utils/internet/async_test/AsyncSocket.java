@@ -53,7 +53,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 	// Long socket keep alive
 	protected Map<String, Long> lastActivityMap = new ConcurrentHashMap<String, Long>();
 	protected HeartBeat heartBeat;
-	protected long interval = CoreDef.DEFAULT_SOCKET_TTIMEOUT/4;
+	protected long interval = CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT/10;
 
 	// Buffer
 	private ByteBuffer buffer = ByteBuffer.allocate(CoreDef.SOCKET_MAX_BUFFER);

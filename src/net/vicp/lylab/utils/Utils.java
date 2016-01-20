@@ -9,9 +9,12 @@ import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 
@@ -90,7 +93,10 @@ public abstract class Utils extends NonCloneableBaseObject {
 			throw new NullPointerException("Owner is null for setter[" + setter + "]");
 		// Get setter by java.lang.reflect.*
 		Method setMethod = null;
-		for (Method method : owner.getClass().getDeclaredMethods()) {
+		Set<Method> methods = new HashSet<>();
+		methods.addAll(Arrays.asList(owner.getClass().getDeclaredMethods()));
+		methods.addAll(Arrays.asList(owner.getClass().getMethods()));
+		for (Method method : methods) {
 			if (method.getName().equals(setter)) {
 				Class<?>[] pts = method.getParameterTypes();
 				if (pts.length != 1)
@@ -99,9 +105,10 @@ public abstract class Utils extends NonCloneableBaseObject {
 				break;
 			}
 		}
+
 		return setMethod;
 	}
-	
+
 	/**
 	 * Get value from owner's field(based on fieldName)
 	 * @param owner
@@ -112,15 +119,30 @@ public abstract class Utils extends NonCloneableBaseObject {
 		if (owner == null)
 			throw new NullPointerException("Owner is null for getter[" + fieldName + "]");
 		String getter = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+		String isGetter = "is" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
 		// Get getter by java.lang.reflect.*
 		try {
-			Method getMethod = owner.getClass().getDeclaredMethod(getter);
+			Method getMethod = null;
+			try {
+				getMethod = owner.getClass().getDeclaredMethod(getter);
+			} catch (NoSuchMethodException e) { }
+			try {
+				getMethod = owner.getClass().getMethod(getter);
+			} catch (NoSuchMethodException e) { }
+			try {
+				getMethod = owner.getClass().getDeclaredMethod(isGetter);
+			} catch (NoSuchMethodException e) { }
+			try {
+				getMethod = owner.getClass().getMethod(isGetter);
+			} catch (NoSuchMethodException e) { }
+			if(getMethod == null)
+				throw new LYException("No getter[" + getter + "] was found in " + owner.getClass() + "");
 			// Should I throw exception?
 			if(!getMethod.isAccessible())
 				getMethod.setAccessible(true);
 			return getMethod.invoke(owner);
 		} catch (Exception e) {
-			throw new LYException("Invoke getter[" + getter + "] for " + owner.getClass() + "failed", e);
+			throw new LYException("Invoke getter[" + getter + "] for " + owner.getClass() + " failed", e);
 		}
 	}
 	

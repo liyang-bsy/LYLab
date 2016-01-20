@@ -2,6 +2,7 @@ package net.vicp.lylab.utils.internet;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
@@ -55,7 +56,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 			throw new LYException("Can not open input/output stream from client socket", e);
 		}
 		setIsServer(true);
-		setSoTimeout(CoreDef.DEFAULT_SOCKET_TTIMEOUT);
+		setSoTimeout(CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT);
 	}
 	
 	public TaskSocket(String host, Integer port, Protocol protocol) {
@@ -137,10 +138,11 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 		try {
 			if(beforeConnect != null)
 				beforeConnect.callback();
-			socket = new Socket(host, port);
+			socket = new Socket();
+			socket.connect(new InetSocketAddress(host, port), CoreDef.DEFAULT_SOCKET_CONNECT_TTIMEOUT);
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
-			setSoTimeout(CoreDef.DEFAULT_SOCKET_TTIMEOUT);
+			setSoTimeout(CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT);
 		} catch (Exception e) {
 			throw new LYException("Can not establish connection to server", e);
 		}
@@ -244,8 +246,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 	}
 
 	public boolean isClosed() {
-		return socket == null || socket.isClosed()
-				|| in == null || out == null;
+		return socket == null || socket.isClosed() || in == null || out == null;
 	}
 
 	@Override
@@ -297,6 +298,10 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 
 	public int getBufferLen() {
 		return bufferLen;
+	}
+
+	public Protocol getProtocol() {
+		return protocol;
 	}
 
 }

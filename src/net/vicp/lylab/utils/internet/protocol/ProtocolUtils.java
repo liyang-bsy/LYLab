@@ -91,7 +91,7 @@ public final class ProtocolUtils extends BaseObject {
 		return configSize != 1;
 	}
 
-	public static void setRawProtocols(Protocol[] rawProtocols) {
+	public static void setRawProtocols(Protocol... rawProtocols) {
 		ProtocolUtils.rawProtocols = rawProtocols;
 	}
 

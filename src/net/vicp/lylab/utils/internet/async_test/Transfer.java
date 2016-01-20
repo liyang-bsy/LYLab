@@ -20,7 +20,7 @@ import net.vicp.lylab.utils.controller.TimeoutController;
 public class Transfer extends NonCloneableBaseObject implements Recyclable {
 	protected Map<String, Message> responseMap = new ConcurrentHashMap<String, Message>();
 	protected AtomicBoolean isClosed = new AtomicBoolean(false);
-	protected long timeout = CoreDef.DEFAULT_SOCKET_TTIMEOUT;
+	protected long timeout = CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT;
 	protected long readTimeout = CoreDef.DEFAULT_READ_TTIMEOUT;
 	
 	public Transfer() {
