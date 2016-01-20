@@ -414,12 +414,15 @@ public final class Config extends NonCloneableBaseObject {
 			}
 			for(Object obj:lazyInitialize)
 				if(obj instanceof Initializable)
-					try {
+				{
+//					try {
+					log.info(obj.getClass().getSimpleName() + " - Initializing");
 						((Initializable) obj).initialize();
 						log.info(obj.getClass().getSimpleName() + " - Initialized");
-					} catch (Throwable t) {
-						log.error(Utils.getStringFromThrowable(t));
-					}
+//					} catch (Throwable t) {
+//						log.error(Utils.getStringFromThrowable(t));
+//					}
+				}
 		} catch (Exception e) {
 			throw new LYException("Failed on lazy load config file[" + fileName
 					+ "] at line [" + getLine(property) + "]", e);
