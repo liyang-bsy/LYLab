@@ -1,6 +1,7 @@
 package net.vicp.lylab.utils.internet;
 
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.HeartBeat;
 
 /**
  * A client specific long socket.

@@ -1,7 +1,5 @@
 package net.vicp.lylab.core.model;
 
-import net.vicp.lylab.utils.internet.HeartBeat;
-
 /**
  * A very simple heart beat structure.
  * <br><br>

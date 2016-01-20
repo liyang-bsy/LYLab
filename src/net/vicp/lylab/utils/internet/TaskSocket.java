@@ -11,7 +11,6 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
@@ -25,7 +24,7 @@ import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Transmission {
+public class TaskSocket extends BaseSocket implements LifeCycle, Transmission {
 	private static final long serialVersionUID = 883892527805494627L;
 	
 	// Raw data source
@@ -36,7 +35,6 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 
 	// Buffer
 	private byte[] buffer = new byte[CoreDef.SOCKET_MAX_BUFFER];
-	private int bufferLen = 0;
 	protected Protocol protocol = null;
 
 	public TaskSocket(ServerSocket serverSocket) {
@@ -165,7 +163,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 	protected byte[] receive() {
 		if(isClosed()) throw new LYException("Connection closed");
 		if (in != null) {
-			bufferLen = 0;
+			int bufferLen = 0;
 			Arrays.fill(buffer, (byte) 0);
 			int getLen = 0;
 			while (true) {
@@ -235,29 +233,6 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 		return socket == null || socket.isClosed() || in == null || out == null;
 	}
 
-	@Override
-	public boolean isRecyclable() {
-		return (socketRetry.get() < socketMaxRetry) && !isServer() && isClosed();
-	}
-
-	@Override
-	public void recycle() {
-		if (socketRetry.incrementAndGet() > socketMaxRetry)
-			throw new LYException("Socket recycled for too many times");
-		recycle(host, port);
-	}
-
-	protected void recycle(String host, int port) {
-		if(isServer()) return;
-		try {
-			socket = new Socket(host, port);
-			in = socket.getInputStream();
-			out = socket.getOutputStream();
-		} catch (Exception e) {
-			throw new LYException("Recycle connection failed");
-		}
-	}
-
 	public void setSoTimeout(int timeout)
 	{
 		try {
@@ -277,14 +252,6 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 	}
 
 	// getters & setters below
-
-	public byte[] getBuffer() {
-		return buffer;
-	}
-
-	public int getBufferLen() {
-		return bufferLen;
-	}
 
 	public Protocol getProtocol() {
 		return protocol;

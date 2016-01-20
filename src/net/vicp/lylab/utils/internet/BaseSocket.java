@@ -20,7 +20,6 @@ public abstract class BaseSocket extends Task {
 	// Some thing about this socket
 	private boolean server;
 	protected AtomicInteger socketRetry = new AtomicInteger();
-	protected int socketMaxRetry = Integer.MAX_VALUE;
 	protected String host;
 	protected int port;
 	protected Aop aopLogic;
@@ -34,15 +33,6 @@ public abstract class BaseSocket extends Task {
 
 	protected BaseSocket setServer(boolean server) {
 		this.server = server;
-		return this;
-	}
-
-	public int getSocketMaxRetry() {
-		return socketMaxRetry;
-	}
-
-	public BaseSocket setSocketMaxRetry(int socketMaxRetry) {
-		this.socketMaxRetry = socketMaxRetry;
 		return this;
 	}
 

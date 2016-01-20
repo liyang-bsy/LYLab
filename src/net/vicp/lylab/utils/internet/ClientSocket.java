@@ -1,7 +1,6 @@
 package net.vicp.lylab.utils.internet;
 
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transmission;
 
 /**
@@ -14,7 +13,7 @@ import net.vicp.lylab.core.interfaces.Transmission;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class ClientSocket extends TaskSocket implements Recyclable, AutoCloseable, Transmission {
+public class ClientSocket extends TaskSocket implements AutoCloseable, Transmission {
 	private static final long serialVersionUID = 7043024251356229037L;
 
 	public ClientSocket(String host, Integer port, Protocol protocol) {

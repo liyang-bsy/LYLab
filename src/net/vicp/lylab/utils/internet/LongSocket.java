@@ -7,6 +7,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.core.model.ObjectContainer;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.core.pool.TimeoutSequenceTemporaryPool;

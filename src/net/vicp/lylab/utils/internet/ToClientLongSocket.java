@@ -2,6 +2,8 @@ package net.vicp.lylab.utils.internet;
 
 import java.net.ServerSocket;
 
+import net.vicp.lylab.core.model.HeartBeat;
+
 /**
  * A server specific long socket.
  * You can use this to response foreigner client with long socket.

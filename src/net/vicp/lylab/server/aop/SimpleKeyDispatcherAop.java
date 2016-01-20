@@ -10,10 +10,10 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.internet.HeartBeat;
 
 import org.apache.commons.lang3.StringUtils;
 

@@ -9,10 +9,10 @@ import java.nio.channels.SocketChannel;
 
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
 import net.vicp.lylab.utils.tq.Task;
 

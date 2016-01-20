@@ -130,7 +130,7 @@ public class CoreDef extends NonCloneableBaseObject {
 	public static final int SOCKET_MAX_BUFFER = TWO * KB;
 	public static final int DEFAULT_SOCKET_CONNECT_TTIMEOUT = (int) (MINUTE);
 	public static final int DEFAULT_SOCKET_READ_TTIMEOUT = (int) (TEN * MINUTE);
-	public static final int DEFAULT_READ_TTIMEOUT = (int) (TWENTY * SECOND);
+	public static final int DEFAULT_SOCKET_WRITE_TTIMEOUT = (int) (TWO * MINUTE);
 
 	public static final int DEFAULT_LYCACHE_CONTAINER_SIZE = SIXTEEN;
 	public static final long DEFAULT_LYCACHE_EXPIRE_TIME = FIFTEEN * TWO * MINUTE;

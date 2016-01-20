@@ -1,4 +1,4 @@
-package net.vicp.lylab.utils.internet;
+package net.vicp.lylab.core.model;
 
 import net.vicp.lylab.core.BaseObject;
 
