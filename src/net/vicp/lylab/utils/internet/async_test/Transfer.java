@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
@@ -22,9 +23,11 @@ public class Transfer extends NonCloneableBaseObject implements Recyclable {
 	protected AtomicBoolean isClosed = new AtomicBoolean(false);
 	protected long timeout = CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT;
 	protected long readTimeout = CoreDef.DEFAULT_READ_TTIMEOUT;
+	protected Aop aopLogic;
 	
-	public Transfer() {
+	public Transfer(Aop aopLogic) {
 		TimeoutController.addToWatch(this);
+		this.aopLogic = aopLogic;
 	}
 
 	public void sendRequest(Message request) {

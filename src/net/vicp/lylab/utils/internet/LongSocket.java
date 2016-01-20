@@ -126,15 +126,11 @@ public class LongSocket extends TaskSocket implements KeepAlive {
 	public byte[] doRequest(byte[] request) {
 		if (isServer())
 			throw new LYException("Do request is forbidden to a server socket");
-		if(beforeTransmission != null)
-			beforeTransmission.callback(request);
 		byte[] result = null;
 		try {
 			result = request(request);
 			if (result == null)
 				dataPool.add(0, ObjectContainer.fromObject(request));
-			if(afterTransmission != null)
-				afterTransmission.callback(result);
 		} catch (Exception e) {
 			throw new LYException(e);
 		}

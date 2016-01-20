@@ -1,7 +1,6 @@
 package net.vicp.lylab.utils.internet;
 
 import net.vicp.lylab.core.interfaces.Aop;
-import net.vicp.lylab.core.interfaces.Callback;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.tq.Task;
@@ -19,7 +18,7 @@ public abstract class BaseSocket extends Task {
 	private static final long serialVersionUID = 4493557570063372132L;
 	
 	// Some thing about this socket
-	private boolean isServer;
+	private boolean server;
 	protected AtomicInteger socketRetry = new AtomicInteger();
 	protected int socketMaxRetry = Integer.MAX_VALUE;
 	protected String host;
@@ -29,20 +28,15 @@ public abstract class BaseSocket extends Task {
 	// Protocol
 	protected Protocol protocol = null;
 
-	// Callback below
-	protected Callback beforeConnect = null;
-	protected Callback afterClose = null;
-	protected Callback beforeTransmission = null;
-	protected Callback afterTransmission = null;
-	
 	public boolean isServer() {
-		return isServer;
+		return server;
 	}
 
-	protected BaseSocket setIsServer(boolean isServer) {
-		this.isServer = isServer;
+	protected BaseSocket setServer(boolean server) {
+		this.server = server;
 		return this;
 	}
+
 	public int getSocketMaxRetry() {
 		return socketMaxRetry;
 	}
@@ -62,42 +56,6 @@ public abstract class BaseSocket extends Task {
 
 	public int getSocketRetry() {
 		return socketRetry.get();
-	}
-
-	public Callback getBeforeConnect() {
-		return beforeConnect;
-	}
-
-	public BaseSocket setBeforeConnect(Callback beforeConnect) {
-		this.beforeConnect = beforeConnect;
-		return this;
-	}
-
-	public Callback getAfterClose() {
-		return afterClose;
-	}
-
-	public BaseSocket setAfterClose(Callback afterClose) {
-		this.afterClose = afterClose;
-		return this;
-	}
-
-	public Callback getBeforeTransmission() {
-		return beforeTransmission;
-	}
-
-	public BaseSocket setBeforeTransmission(Callback beforeTransmission) {
-		this.beforeTransmission = beforeTransmission;
-		return this;
-	}
-
-	public Callback getAfterTransmission() {
-		return afterTransmission;
-	}
-
-	public BaseSocket setAfterTransmission(Callback afterTransmission) {
-		this.afterTransmission = afterTransmission;
-		return this;
 	}
 
 	public Aop getAopLogic() {

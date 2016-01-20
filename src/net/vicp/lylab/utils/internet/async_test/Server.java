@@ -14,7 +14,7 @@ public class Server {
 	static AsyncSocket as;
 	
 	public static void main(String[] args) throws Exception {
-		CoreDef.config = new Config(CoreDef.rootPath + File.separator + "config" + File.separator + "config.txt");
+		CoreDef.config = new Config("c:/config.txt");
 		as = new AsyncSocket(8888, new SimpleHeartBeat());
 		as.initialize();
 

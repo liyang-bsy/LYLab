@@ -21,7 +21,7 @@ public class InfoSocket extends BaseSocket {
 		this.socket = socket;
 		this.host = socket.getInetAddress().getHostAddress();
 		this.port = socket.getPort();
-		this.setIsServer(true);
+		this.setServer(true);
 	}
 
 	@Override

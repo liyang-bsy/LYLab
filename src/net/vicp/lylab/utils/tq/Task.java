@@ -54,9 +54,12 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	static public final int BEGAN = 0;
 	static public final int STARTED = 1;
 	static public final int COMPLETED = 2;
-	
+
+	private boolean lonewolf = false;
 	@Override
 	public BaseObject clone() {
+		if(lonewolf)
+			throw new LYException("Clone is not supported for a lone wolf");
 		Task tk = (Task) super.clone();
 		tk.reset();
 		return tk;
@@ -288,6 +291,13 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 
 	public Task setController(LYTaskQueue controller) {
 		this.controller = controller;
+		return this;
+	}
+
+	public Task setLonewolf(boolean lonewolf) {
+		this.lonewolf = lonewolf;
+		// avoid WatchDog
+		timeout = 0L;
 		return this;
 	}
 

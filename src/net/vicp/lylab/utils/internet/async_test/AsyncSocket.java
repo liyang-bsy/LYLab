@@ -21,14 +21,17 @@ import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Transmission;
 import net.vicp.lylab.core.model.ObjectContainer;
+import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.core.pool.RecyclePool;
 import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.creator.SelectorCreator;
 import net.vicp.lylab.utils.internet.BaseSocket;
 import net.vicp.lylab.utils.internet.HeartBeat;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
 
 /**
  * A async socket can be used for communicating with paired client.
+ * This task socket should be used on LYTaskQueue
  * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
@@ -46,9 +49,11 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 	protected SocketChannel socketChannel = null;
 	
 	// IP mapping
+	//				ip			Socket
 	protected Map<String, SocketChannel> ipMap = new ConcurrentHashMap<String, SocketChannel>();
 	protected RecyclePool<ObjectContainer<Selector>> selectorPool;
-	protected Transfer transport;
+	protected Transfer transfer;
+	// = new Transfer(aopLogic);
 
 	// Long socket keep alive
 	protected Map<String, Long> lastActivityMap = new ConcurrentHashMap<String, Long>();
@@ -57,14 +62,16 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 
 	// Buffer
 	private ByteBuffer buffer = ByteBuffer.allocate(CoreDef.SOCKET_MAX_BUFFER);
-	private byte[] readTail = new byte[CoreDef.SOCKET_MAX_BUFFER];
-	private int readTailLen = 0;
-
+	
 	/**
-	 * Server mode
+	 * <b>[Server mode]</b><br>
+	 * Async is only useful on Long Socket
+	 * 
 	 * @param port
+	 * @param heartBeat
 	 */
 	public AsyncSocket(int port, HeartBeat heartBeat) {
+		super.setLonewolf(true);
 		try {
 			selector = Selector.open();
 			ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
@@ -73,7 +80,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 			serverSocket.bind(new InetSocketAddress(port));
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 			this.heartBeat = heartBeat;
-			setIsServer(true);
+			setServer(true);
 		} catch (Exception e) {
 			throw new LYException("Establish server failed", e);
 		}
@@ -84,16 +91,17 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 	 * @param port
 	 */
 	public AsyncSocket(String host, int port, HeartBeat heartBeat) {
-		try {
-			selector = Selector.open();
-			socketChannel = SocketChannel.open(new InetSocketAddress(host, port));
-			socketChannel.configureBlocking(false);
-			socketChannel.register(selector, SelectionKey.OP_READ);
-			this.heartBeat = heartBeat;
-			setIsServer(false);
-		} catch (Exception e) {
-			throw new LYException("Connect to server failed", e);
-		}
+		throw new LYException("Async Socket is only available for Server");
+//		try {
+//			selector = Selector.open();
+//			socketChannel = SocketChannel.open(new InetSocketAddress(host, port));
+//			socketChannel.configureBlocking(false);
+//			socketChannel.register(selector, SelectionKey.OP_READ);
+//			this.heartBeat = heartBeat;
+//			setServer(false);
+//		} catch (Exception e) {
+//			throw new LYException("Connect to server failed", e);
+//		}
 	}
 
 	public void selectionKeyHandler()
@@ -132,14 +140,14 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 		} else {
 			System.out.println("TODO: else");
 		}
-		
+
 	}
-	
+
 	@Override
 	public void exec() {
 		try {
 			// Will be block here
-			while (selector.select() > 0) {
+			while (!isStopped() && selector.select() > 0) {
 				Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
 				while (iterator.hasNext()) {
 					selectionKey = iterator.next();
@@ -164,12 +172,12 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 	}
 	
 	private byte[] doResponse(Socket client, byte[] request, int offset) {
-		if(beforeTransmission != null)
-			beforeTransmission.callback(request);
+//		if(beforeTransmission != null)
+//			beforeTransmission.callback(request);
 //		byte[] response = 
 		response(client, request, 0);
-		if(afterTransmission != null)
-			afterTransmission.callback();//response);
+//		if(afterTransmission != null)
+//			afterTransmission.callback();//response);
 		return null;//response;
 	}
 
@@ -186,11 +194,7 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 
 	// Reply will be found async
 	public void doRequest(byte[] request) {
-		if(beforeTransmission != null)
-			beforeTransmission.callback(request);
 		request(request);
-		if(afterTransmission != null)
-			afterTransmission.callback();
 	}
 
 	private byte[] bytecat(byte[] pre, int preOffset, int preCopyLenth, byte[] suf, int sufOffset, int sufCopyLenth) {
@@ -232,27 +236,54 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 //		}
 //		return buffer;
 //	}
+
+//	protected byte[] receive(SocketChannel socketChannel) {
+//		if (isClosed())
+//			throw new LYException("Connection closed");
+//		if (socketChannel != null) {
+//			bufferLen = 0;
+//			Arrays.fill(buffer, (byte) 0);
+//			int getLen = 0;
+//			while (true) {
+//				getLen = 0;
+//				try {
+//					if(bufferLen == buffer.length)
+//						buffer = Arrays.copyOf(buffer, buffer.length*10);
+//					getLen = in.read(buffer, bufferLen, buffer.length - bufferLen);
+//					if (getLen == -1) return null;
+//				} catch (Exception e) {
+//					throw new LYException(e);
+//				}
+//				if (getLen == 0)
+//					throw new LYException("Impossible");
+//				// Create a raw protocol after first receiving
+//				if(bufferLen == 0 && (protocol == null || ProtocolUtils.isMultiProtocol()))
+//					protocol = ProtocolUtils.pairWithProtocol(buffer);
+//				bufferLen += getLen;
+//				if (protocol.validate(buffer, bufferLen) > 0)
+//					break;
+//			}
+//		}
+//		return buffer;
+//	}
 	
 	private void receiveBasedAopDrive(SocketChannel socketChannel) throws Exception {
 		if (isClosed())
 			throw new LYException("Connection closed");
+		byte[] readTail = new byte[CoreDef.SOCKET_MAX_BUFFER];
+		int readTailLen = 0;
 		if (socketChannel != null) {
 			int bufferLen = 0;
 			int getLen = 0;
-			int attempts = 0;
+			int torelent = 0;
 			while (true) {
 				buffer.clear();
 				getLen = socketChannel.read(buffer);
 				if (getLen == 0) {
-					if (attempts > 3) {
-						try {
-							socketChannel.close();
-						} catch (Exception e) {
-							throw new LYException("Lost connection to client, and close socket channel failed", e);
-						}
+					if (torelent > 3) {
 						throw new LYException("Lost connection to client");
 					}
-					attempts++;
+					torelent++;
 					continue;
 				}
 				if (getLen == -1)
@@ -263,8 +294,12 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 				}
 				getLen += readTailLen;
 
-				if(bufferLen == buffer.array().length) {
-					byte[] newBytes = Arrays.copyOf(buffer.array(), buffer.array().length*10);
+				if(buffer.remaining() == 0) {
+
+					byte[] newBytes = new byte[buffer.capacity() * 10];
+					// transfer bytes from this buffer into the given destination array
+					buffer.get(newBytes, 0, buffer.capacity());
+//					byte[] newBytes = Arrays.copyOf(buffer.array(), buffer.array().length*10);
 					buffer = ByteBuffer.wrap(newBytes);
 					readTail = Arrays.copyOf(readTail, readTail.length*10);
 				}
@@ -372,20 +407,20 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 	@Override
 	public void initialize() {
 		// TODO
-		if(!CoreDef.config.containsKey("AsyncSocket")) {
-//			AutoGenerate<Selector> creator = new SelectorCreator();
-//			selectorPool = new AutoGeneratePool<ObjectContainer<Selector>>(creator, null, CoreDef.DEFAULT_CONTAINER_TIMEOUT, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
-		}
-		else {
-			selectorPool = new RecyclePool<ObjectContainer<Selector>>(CoreDef.config.getConfig("AsyncSocket").getInteger("maxSelectorPool"));
-			for (int i = 0; i < CoreDef.config.getConfig("AsyncSocket").getInteger("maxSelectorPool"); i++) {
-				try {
-					selectorPool.add(ObjectContainer.fromObject(Selector.open()));
-				} catch (Exception e) {
-					log.error(Utils.getStringFromException(e));
-				}
-			}
-		}
+//		if(!CoreDef.config.containsKey("AsyncSocket")) {
+			SelectorCreator creator = new SelectorCreator();
+			selectorPool = new AutoGeneratePool<ObjectContainer<Selector>>(creator, null, CoreDef.DEFAULT_CONTAINER_TIMEOUT, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
+//		}
+//		else {
+//			selectorPool = new RecyclePool<ObjectContainer<Selector>>(CoreDef.config.getConfig("AsyncSocket").getInteger("maxSelectorPool"));
+//			for (int i = 0; i < CoreDef.config.getConfig("AsyncSocket").getInteger("maxSelectorPool"); i++) {
+//				try {
+//					selectorPool.add(ObjectContainer.fromObject(Selector.open()));
+//				} catch (Exception e) {
+//					log.error(Utils.getStringFromException(e));
+//				}
+//			}
+//		}
 		begin("AsyncServer");
 	}
 	
@@ -407,8 +442,6 @@ public class AsyncSocket extends BaseSocket implements KeepAlive, LifeCycle, Tra
 			}
 			if (thread != null)
 				callStop();
-			if (afterClose != null)
-				afterClose.callback();
 		} catch (Exception e) {
 			throw new LYException("Close failed", e);
 		}

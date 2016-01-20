@@ -55,7 +55,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 		} catch (Exception e) {
 			throw new LYException("Can not open input/output stream from client socket", e);
 		}
-		setIsServer(true);
+		setServer(true);
 		setSoTimeout(CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT);
 	}
 	
@@ -63,7 +63,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 		this.host = host;
 		this.port = port;
 		this.protocol = protocol;
-		setIsServer(false);
+		setServer(false);
 	}
 
 	@Override
@@ -108,23 +108,13 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 	}
 	
 	public byte[] doRequest(byte[] request) {
-		if(beforeTransmission != null)
-			beforeTransmission.callback(request);
 		if(isServer()) throw new LYException("Do request is forbidden to a server socket");
-		byte[] ret = request(request);
-		if(afterTransmission != null)
-			afterTransmission.callback(ret);
-		return ret;
+		return request(request);
 	}
 
 	public byte[] doResponse(byte[] request) {
-		if(beforeTransmission != null)
-			beforeTransmission.callback(request);
 		if(!isServer()) throw new LYException("Do response is forbidden to a client socket");
-		byte[] ret = response(socket, request, 0);
-		if(afterTransmission != null)
-			afterTransmission.callback(ret);
-		return ret;
+		return response(socket, request, 0);
 	}
 	
 	@Override
@@ -136,8 +126,6 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 	{
 		if(isServer()) return;
 		try {
-			if(beforeConnect != null)
-				beforeConnect.callback();
 			socket = new Socket();
 			socket.connect(new InetSocketAddress(host, port), CoreDef.DEFAULT_SOCKET_CONNECT_TTIMEOUT);
 			in = socket.getInputStream();
@@ -238,8 +226,6 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Recyclable, Tra
 				in = null;
 				out = null;
 			}
-			if(afterClose != null)
-				afterClose.callback();
 		} catch (Exception e) {
 			throw new LYException("Close failed", e);
 		}
