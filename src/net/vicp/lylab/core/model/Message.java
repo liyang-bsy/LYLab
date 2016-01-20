@@ -19,6 +19,13 @@ public class Message extends SimpleMessage {
 		uuid = UUID.randomUUID().toString();
 		time = System.currentTimeMillis();
 	}
+	
+	public void copyBasicInfo(Message other) {
+		setKey(other.getKey());
+		setToken(other.getToken());
+		setUuid(other.getUuid());
+		setTime(other.getTime());
+	}
 
 	public String getToken() {
 		return token;

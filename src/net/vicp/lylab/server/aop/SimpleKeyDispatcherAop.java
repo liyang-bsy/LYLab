@@ -51,7 +51,7 @@ public class SimpleKeyDispatcherAop extends NonCloneableBaseObject implements Ao
 					log.debug(Utils.getStringFromException(e));
 				}
 				if(request == null) {
-					response.setCode(0x00001);
+					response.setCode(0x00000001);
 					response.setMessage("Message not found");
 					break;
 				}
@@ -62,20 +62,20 @@ public class SimpleKeyDispatcherAop extends NonCloneableBaseObject implements Ao
 						if ((ret = filter.doFilter(client, request)) != null)
 							return protocol.encode(ret);
 					}
+				response.copyBasicInfo(request);
 				// gain key from request
 				key = request.getKey();
 				if (StringUtils.isBlank(key)) {
-					response.setCode(0x00002);
+					response.setCode(0x00000002);
 					response.setMessage("Key not found");
 					break;
 				}
-				response.setKey(key);
 				// get action related to key
 				try {
 					action = (BaseAction) CoreDef.config.getConfig("Aop").getNewInstance(key + "Action");
 				} catch (Exception e) { }
 				if (action == null) {
-					response.setCode(0x00003);
+					response.setCode(0x00000003);
 					response.setMessage("Action not found");
 					break;
 				}
@@ -87,7 +87,11 @@ public class SimpleKeyDispatcherAop extends NonCloneableBaseObject implements Ao
 				try {
 					action.exec();
 				} catch (Throwable t) {
-					log.error(Utils.getStringFromThrowable(t));
+					String reason = Utils.getStringFromThrowable(t);
+					log.error(reason);
+					response.setCode(0x00000004);
+					response.setMessage("Action exec failed:" + reason);
+					break;
 				}
 			} while (false);
 		} catch (Exception e) {

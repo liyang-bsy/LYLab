@@ -54,6 +54,11 @@ public class SimpleMessage extends SimpleConfirm {
 		this.setCode(1);
 		this.setMessage(msg);
 	}
+	
+	public void fail(int code, String msg) {
+		this.setCode(1);
+		this.setMessage(msg);
+	}
 
 	@Override
 	public String toString() {
