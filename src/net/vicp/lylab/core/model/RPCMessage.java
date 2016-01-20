@@ -8,9 +8,15 @@ package net.vicp.lylab.core.model;
  */
 public class RPCMessage extends Message {
 	protected String server;
-//	protected String procedure;
+	protected String rpcKey;
 	protected boolean broadcast;
-	protected Message rpcReq;
+	
+	public void copyBasicInfo(RPCMessage other) {
+		super.copyBasicInfo(other);
+		setServer(other.getServer());
+		setRpcKey(other.getRpcKey());
+		setBroadcast(other.isBroadcast());
+	}
 
 	public String getServer() {
 		return server;
@@ -20,13 +26,13 @@ public class RPCMessage extends Message {
 		this.server = server;
 	}
 
-//	public String getProcedure() {
-//		return procedure;
-//	}
-//
-//	public void setProcedure(String procedure) {
-//		this.procedure = procedure;
-//	}
+	public String getRpcKey() {
+		return rpcKey;
+	}
+
+	public void setRpcKey(String rpcKey) {
+		this.rpcKey = rpcKey;
+	}
 
 	public boolean isBroadcast() {
 		return broadcast;
@@ -36,12 +42,11 @@ public class RPCMessage extends Message {
 		this.broadcast = broadcast;
 	}
 
-	public Message getRpcReq() {
-		return rpcReq;
-	}
-
-	public void setRpcReq(Message rpcReq) {
-		this.rpcReq = rpcReq;
+	@Override
+	public String toString() {
+		return "RPCMessage [server=" + server + ", broadcast=" + broadcast + ", rpcKey=" + rpcKey + ", token=" + token
+				+ ", uuid=" + uuid + ", time=" + time + ", message=" + message + ", key=" + key + ", body=" + body
+				+ ", code=" + code + "]";
 	}
 
 }
