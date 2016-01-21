@@ -22,6 +22,7 @@ public class Client {
 		as.initialize();
 		
 		try {
+			@SuppressWarnings("unused")
 			SimpleHeartBeat msg = new SimpleHeartBeat();
 //			as.request(protocol.encode(msg));
 //			as.request(protocol.encode(msg));

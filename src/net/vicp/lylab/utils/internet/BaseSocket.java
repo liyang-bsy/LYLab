@@ -1,6 +1,9 @@
 package net.vicp.lylab.utils.internet;
 
+import java.net.Socket;
+
 import net.vicp.lylab.core.interfaces.Aop;
+import net.vicp.lylab.core.model.Pair;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.tq.Task;
 
@@ -23,6 +26,10 @@ public abstract class BaseSocket extends Task {
 	protected int port;
 	protected Aop aopLogic;
 
+	protected static Pair<String, Integer> getClientSession(Socket socket) {
+		return new Pair<>(socket.getInetAddress().getHostAddress(), socket.getLocalPort());
+	}
+	
 	public boolean isServer() {
 		return server;
 	}

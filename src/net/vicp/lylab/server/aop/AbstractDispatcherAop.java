@@ -6,47 +6,74 @@ import java.util.List;
 
 import net.vicp.lylab.core.AbstractAction;
 import net.vicp.lylab.core.BaseAction;
-import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.HeartBeat;
-import net.vicp.lylab.core.model.Message;
+import net.vicp.lylab.core.model.SimpleMessage;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 
-import org.apache.commons.lang3.StringUtils;
+public abstract class AbstractDispatcherAop<I extends O, O extends SimpleMessage> extends NonCloneableBaseObject implements Aop {
+	protected List<Filter<I, O>> filterChain = new ArrayList<Filter<I, O>>();
+	protected Protocol protocol = null;
 
-public abstract class AbstractDispatcherAop extends NonCloneableBaseObject implements Aop {
-	protected List<Filter> filterChain = new ArrayList<Filter>();
-	protected Protocol protocol= null;
-	
+	protected abstract void dispatcher(AbstractAction action, Socket client, I request, O response);
+
+	// Java language defect
+	protected abstract O newResponse();
+
+	/**
+	 * 
+	 * @param request
+	 * @return null means no action was mapped to current request
+	 */
+	protected abstract AbstractAction mapAction(I request);
+
+	protected void logger(I request, O response) {
+	}
+
 	@Override
 	public void initialize() {
-		if(protocol == null)
+		if (protocol == null)
 			throw new LYException("No available protocol");
 	}
 
 	@Override
 	public void close() throws Exception {
-		for (Filter filter : filterChain)
+		for (Filter<I, O> filter : filterChain)
 			filter.close();
 	}
 
+	protected O filterChain(Socket client, I request) {
+		// do start filter
+		if (filterChain != null && filterChain.size() != 0)
+			for (Filter<I, O> filter : filterChain) {
+				O ret = null;
+				if ((ret = filter.doFilter(client, request)) != null)
+					return ret;
+			}
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
 	@Override
 	public byte[] doAction(Socket client, byte[] requestByte, int offset) {
-		Message request = null;
+		I request = null;
 
-		String key = null;
 		BaseAction action = null;
-		Message response = new Message();
+		O response = newResponse();
 		try {
 			do {
 				// decode
 				try {
-					request = (Message) decode(requestByte, offset);
+					Object obj = protocol.decode(requestByte, offset);
+					if(obj instanceof HeartBeat)
+						return protocol.encode(obj);
+					request = (I) obj;
 				} catch (Exception e) {
+					log.debug(Utils.getStringFromException(e));
 					response.setCode(0x00000001);
 					response.setMessage("Bad formation, decode failed");
 					break;
@@ -59,85 +86,40 @@ public abstract class AbstractDispatcherAop extends NonCloneableBaseObject imple
 				}
 				// filter chain
 				try {
-					Message tmp = filterChain(client, request);
+					O tmp = filterChain(client, request);
 					if (tmp != null) {
 						response = tmp;
 						break;
 					}
 				} catch (Exception e) {
-					response.setCode(0x00000001);
+					response.setCode(0x00000003);
 					response.setMessage("Filter chain runtime error");
 					break;
 				}
 				// sync response and request
 				response.copyBasicInfo(request);
-				// gain key from request
-				key = request.getKey();
-				if (StringUtils.isBlank(key)) {
-					response.setCode(0x00000003);
-					response.setMessage("Key not found");
-					break;
-				}
-				// get action related to key
+
 				try {
-					action = (BaseAction) CoreDef.config.getConfig("Aop").getNewInstance(key + "Action");
-				} catch (Exception e) { }
-				if (action == null) {
+					dispatcher(action, client, request, response);
+				} catch (Throwable t) {
+					String reason = Utils.getStringFromThrowable(t);
+					log.error(reason);
 					response.setCode(0x00000004);
-					response.setMessage("Action not found");
-					break;
+					response.setMessage("Action dispatch/execute failed:" + reason);
 				}
-				// Initialize action
-				action.setSocket(client);
-				action.setRequest(request);
-				action.setResponse(response);
-				
-				dispatcher(action, client, request, response);
-				
 			} while (false);
 		} catch (Exception e) {
 			log.error(Utils.getStringFromException(e));
 		}
-		// to logger
-		log.debug("Access key:" + key + "\nBefore:" + request + "\nAfter:" + response);
+		try {
+			// save access log
+			logger(request, response);
+		} catch (Exception e) {
+			log.error("Logger failed:" + Utils.getStringFromException(e));
+		}
 		return protocol.encode(response);
 	}
 
-	protected Message filterChain(Socket client, Object request) {
-		// do start filter
-		if (filterChain != null && filterChain.size() != 0)
-			for (Filter filter : filterChain) {
-				Message ret = null;
-				if ((ret = filter.doFilter(client, (Message) request)) != null)
-					return ret;
-			}
-		return null;
-	}
-	
-	public void dispatcher(AbstractAction action, Socket client, Message request, Message response) {
-		// execute action
-		try {
-			action.exec();
-		} catch (Throwable t) {
-			String reason = Utils.getStringFromThrowable(t);
-			log.error(reason);
-			response.setCode(0x00000005);
-			response.setMessage("Action exec failed:" + reason);
-		}
-	}
-	
-	private Object decode(byte[] requestByte, int offset) {
-		try {
-			Object obj = protocol.decode(requestByte, offset);
-			if (obj instanceof HeartBeat)
-				return protocol.encode(obj);
-			return (Message) obj;
-		} catch (Exception e) {
-			log.debug(Utils.getStringFromException(e));
-		}
-		return null;
-	}
-	
 	public Protocol getProtocol() {
 		return protocol;
 	}
@@ -147,11 +129,11 @@ public abstract class AbstractDispatcherAop extends NonCloneableBaseObject imple
 		return this;
 	}
 
-	public List<Filter> getFilterChain() {
+	public List<Filter<I, O>> getFilterChain() {
 		return filterChain;
 	}
 
-	public void setFilterChain(List<Filter> filterChain) {
+	public void setFilterChain(List<Filter<I, O>> filterChain) {
 		this.filterChain = filterChain;
 	}
 

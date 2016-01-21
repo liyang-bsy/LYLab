@@ -1,10 +1,15 @@
 package net.vicp.lylab.utils.internet.async_test;
 
+import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
+import net.vicp.lylab.server.aop.SimpleKeyDispatcherAop;
 import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
+import net.vicp.lylab.utils.tq.LYTaskQueue;
 
 public class Server {
 	static Protocol p = new LYLabProtocol();
@@ -14,8 +19,23 @@ public class Server {
 		CoreDef.config = new Config("c:/config.txt");
 		as = new AsyncSocket(8888, new SimpleHeartBeat());
 		Transfer t =new Transfer();
-		as.setTransfer(t);
+		t.setTaskQueue((LYTaskQueue) CoreDef.config.getObject("LYTaskQueue"));
 		t.initialize();
+		
+		Aop aop = new SimpleKeyDispatcherAop<Message>() {
+			@Override
+			protected BaseAction mapAction(Message request) {
+				return new BaseAction() {
+					@Override
+					public void exec() {
+						System.out.println("Action activated:\nreq:" + request + "\nres:" + response);
+					}
+				};
+			}
+		};
+		aop.setProtocol((Protocol) CoreDef.config.getObject("protocol"));
+		as.setAopLogic(aop);
+		as.setTransfer(t);
 		as.initialize();
 
 //		Message msg = new Message();

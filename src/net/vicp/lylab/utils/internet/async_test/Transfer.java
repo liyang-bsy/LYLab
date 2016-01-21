@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
-import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Recyclable;
@@ -20,6 +19,7 @@ import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.controller.TimeoutController;
 import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
+import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.LoneWolf;
 
 /**
@@ -44,6 +44,7 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 	protected AtomicBoolean closed = new AtomicBoolean(true);
 	protected AsyncSocket asyncSocket;
 	protected Protocol protocol;
+	protected LYTaskQueue taskQueue;
 
 	@Override
 	public void initialize() {
@@ -79,94 +80,70 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 		asyncSocket.send(socketChannel, response);
 	}
 
+	private void validateRequest() {
+		if (!addr2validate.isEmpty()) {
+			Iterator<Entry<Pair<String, Integer>, Boolean>> addrContainerIterator = addr2validate.entrySet().iterator();
+			while (addrContainerIterator.hasNext()) {
+				Entry<Pair<String, Integer>, Boolean> addrContainer = addrContainerIterator.next();
+				addrContainerIterator.remove();
+				if (!addrContainer.getValue())
+					continue;
+
+				Pair<SocketChannel, Pair<byte[], Integer>> clientContainer = addr2byte.get(addrContainer.getKey());
+
+				synchronized (clientContainer) {
+					Pair<byte[], Integer> byteContainer = clientContainer.getRight();
+					// Create a raw protocol after first receiving
+					if (protocol == null || ProtocolUtils.isMultiProtocol())
+						protocol = ProtocolUtils.pairWithProtocol(byteContainer.getLeft());
+
+					int start = 0, next = 0;
+					boolean newReuqest = false;
+					while (true) {
+						start = next;
+						if ((next = protocol.validate(byteContainer.getLeft(), start, byteContainer.getRight())) == 0)
+							break;
+						if (next <= byteContainer.getRight()) {
+							byte[] fullReq = new byte[next - start];
+							Utils.bytecat(fullReq, 0, byteContainer.getLeft(), start, next - start);
+							requestPool.add(new Pair<>(clientContainer.getLeft(), fullReq));
+							newReuqest = true;
+						}
+					}
+					if (newReuqest) {
+						Utils.bytecat(byteContainer.getLeft(), 0, byteContainer.getLeft(), start,
+								byteContainer.getRight() - start);
+						byteContainer.setRight(byteContainer.getRight() - start);
+						Arrays.fill(byteContainer.getLeft(), byteContainer.getRight(), byteContainer.getLeft().length,
+								(byte) 0);
+					}
+				}
+			}
+		}
+	}
+	
 	@Override
 	public void exec() {
 		while (true) {
-			if (!addr2validate.isEmpty()) {
-				Iterator<Entry<Pair<String, Integer>, Boolean>> addrContainerIterator = addr2validate.entrySet()
-						.iterator();
-				while (addrContainerIterator.hasNext()) {
-					Entry<Pair<String, Integer>, Boolean> addrContainer = addrContainerIterator.next();
-					addrContainerIterator.remove();
-					if (!addrContainer.getValue())
-						continue;
-
-					Pair<SocketChannel, Pair<byte[], Integer>> clientContainer = addr2byte.get(addrContainer.getKey());
-
-					synchronized (clientContainer) {
-						Pair<byte[], Integer> byteContainer = clientContainer.getRight();
-						// Create a raw protocol after first receiving
-						if (protocol == null || ProtocolUtils.isMultiProtocol())
-							protocol = ProtocolUtils.pairWithProtocol(byteContainer.getLeft());
-
-						int start = 0, next = 0;
-						boolean newReuqest = false;
-						while (true) {
-							start = next;
-							if ((next = protocol.validate(byteContainer.getLeft(), byteContainer.getRight())) == 0)
-								break;
-							if (next < byteContainer.getRight()) {
-								byte[] fullReq = new byte[next - start];
-								Utils.bytecat(fullReq, 0, byteContainer.getLeft(), next, next - start);
-								requestPool.add(new Pair<>(clientContainer.getLeft(), fullReq));
-								newReuqest = true;
-							}
-						}
-						if (newReuqest) {
-							Utils.bytecat(byteContainer.getLeft(), 0, byteContainer.getLeft(), start,
-									byteContainer.getRight() - start);
-							byteContainer.setRight(byteContainer.getRight() - start);
-							Arrays.fill(byteContainer.getLeft(), byteContainer.getRight(),
-									byteContainer.getLeft().length, (byte) 0);
-						}
-					}
-				}
-				await(1000);
-			}
 			if (requestPool.isEmpty()) {
+				validateRequest();
 				await(1000);
-				continue;
 			}
-			Pair<SocketChannel, byte[]> pair = requestPool.accessOne();
-			SocketChannel socketChannel = pair.getLeft();
-			byte[] request = pair.getRight();
-			byte[] response = null;
-			Aop aop = asyncSocket.getAopLogic();
-			if (aop != null)
-				response = aop.doAction(socketChannel.socket(), request, 0);
 			else
-				response = request;
-			asyncSocket.send(socketChannel, response);
+				taskQueue.addTask(new AopHandler(asyncSocket, requestPool.accessOne()));
+//			Pair<SocketChannel, byte[]> pair = requestPool.accessOne();
+//			SocketChannel socketChannel = pair.getLeft();
+//			byte[] request = pair.getRight();
+//			byte[] response = null;
+//			Aop aop = asyncSocket.getAopLogic();
+//			if (aop != null)
+//				response = aop.doAction(socketChannel.socket(), request, 0);
+//			else
+//				response = request;
+//			asyncSocket.send(socketChannel, response);
 		}
 	}
 
-	public AsyncSocket getAsyncSocket() {
-		return asyncSocket;
-	}
-
-	public void setAsyncSocket(AsyncSocket asyncSocket) {
-		this.asyncSocket = asyncSocket;
-	}
-
-//	public Message recvResponse(String msgId, long millis) throws InterruptedException {
-//		if(isClosed()) throw new LYException("This transport pool is closed");
-//		Message response = null;
-//		int attempts = 0;
-//		while((response = responseMap.remove(msgId)) == null)
-//		{
-//			if(attempts*millis > CoreDef.REQUEST_TTIMEOUT)
-//				return null;
-//			attempts ++;
-//			Thread.sleep(millis);
-//		}
-//		return response;
-//	}
-
-//	public void received(Message request) {
-//		if(isClosed()) throw new LYException("This transport pool is closed");
-//		responseMap.put(request.getUuid(), request);
-//	}
-	
 	@Override
 	public void close() {
 		if(closed.getAndSet(true)) return;
@@ -198,37 +175,37 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 		}
 	}
 
-//	public int size() {
-//		return responseMap.size();
-//	}
-//
-//	public boolean isEmpty() {
-//		return responseMap.isEmpty();
-//	}
-//
-//	public void clear() {
-//		if(isClosed()) return;
-//		responseMap.clear();
-//	}
-//
-//	public boolean isClosed() {
-//		return isClosed.get();
-//	}
-//
-//	public long getTimeout() {
-//		return timeout;
-//	}
-//
-//	public void setTimeout(long timeout) {
-//		this.timeout = timeout;
-//	}
-//
-//	public long getReadTimeout() {
-//		return readTimeout;
-//	}
-//
-//	public void setReadTimeout(long readTimeout) {
-//		this.readTimeout = readTimeout;
-//	}
+	// getters & setters
+	public AsyncSocket getAsyncSocket() {
+		return asyncSocket;
+	}
+
+	public void setAsyncSocket(AsyncSocket asyncSocket) {
+		this.asyncSocket = asyncSocket;
+	}
+
+	public long getTimeout() {
+		return timeout;
+	}
+
+	public void setTimeout(long timeout) {
+		this.timeout = timeout;
+	}
+
+	public Protocol getProtocol() {
+		return protocol;
+	}
+
+	public void setProtocol(Protocol protocol) {
+		this.protocol = protocol;
+	}
+
+	public LYTaskQueue getTaskQueue() {
+		return taskQueue;
+	}
+
+	public void setTaskQueue(LYTaskQueue taskQueue) {
+		this.taskQueue = taskQueue;
+	}
 
 }

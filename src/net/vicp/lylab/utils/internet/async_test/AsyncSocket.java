@@ -45,11 +45,10 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 	protected SocketChannel socketChannel = null;
 	
 	// TODO will be useful on push data to client
-	// Clients		ip			Socket
-	protected Map<String, SocketChannel> ip2client = new HashMap<>();
+	// Clients			ip	 local port		Socket
+	protected Map<Pair<String, Integer>, SocketChannel> ip2client = new HashMap<>();
 	protected AutoGeneratePool<ObjectContainer<Selector>> selectorPool;
 	protected Transfer transfer;
-	// = new Transfer(aopLogic);
 
 	// Long socket keep alive
 	protected Map<String, Long> lastActivityMap = new ConcurrentHashMap<String, Long>();
@@ -110,7 +109,7 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 				SocketChannel socketChannel = serverSocketChannel.accept();
 				socketChannel.configureBlocking(false);
 				Socket socket = socketChannel.socket();
-				ip2client.put(socket.getInetAddress().getHostAddress(), socketChannel);
+				ip2client.put(getClientSession(socket), socketChannel);
 				socketChannel.register(selector, SelectionKey.OP_READ);
 			} catch (Exception e) {
 				throw new LYException("Close failed", e);
@@ -280,9 +279,9 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 	public void close() {
 		try {
 			if (isClosed()) return;
-			for (String ip : ip2client.keySet()) {
+			for (Pair<String, Integer> addr : ip2client.keySet()) {
 				try {
-					SocketChannel socketChannel = ip2client.get(ip);
+					SocketChannel socketChannel = ip2client.get(addr);
 					socketChannel.socket().close();
 				} catch (Exception e) {
 					log.debug("Close failed, maybe client already lost connection" + Utils.getStringFromException(e));
@@ -301,6 +300,15 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 
 	public boolean isClosed() {
 		return !selector.isOpen();
+	}
+
+	public Transfer getTransfer() {
+		return transfer;
+	}
+
+	public void setTransfer(Transfer transfer) {
+		transfer.setAsyncSocket(this);
+		this.transfer = transfer;
 	}
 
 	// TODO will be useful in client mode
@@ -368,13 +376,5 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 //		if(!keepAlive()) return false;
 //		return true;
 //	}
-
-	public Transfer getTransfer() {
-		return transfer;
-	}
-
-	public void setTransfer(Transfer transfer) {
-		this.transfer = transfer;
-	}
 
 }
