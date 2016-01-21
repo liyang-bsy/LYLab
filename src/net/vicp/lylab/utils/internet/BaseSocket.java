@@ -1,7 +1,6 @@
 package net.vicp.lylab.utils.internet;
 
 import net.vicp.lylab.core.interfaces.Aop;
-import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.atomic.AtomicInteger;
 import net.vicp.lylab.utils.tq.Task;
 
@@ -23,9 +22,6 @@ public abstract class BaseSocket extends Task {
 	protected String host;
 	protected int port;
 	protected Aop aopLogic;
-
-	// Protocol
-	protected Protocol protocol = null;
 
 	public boolean isServer() {
 		return server;

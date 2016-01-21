@@ -2,7 +2,6 @@ package net.vicp.lylab.utils.internet.async_test;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
@@ -14,6 +13,9 @@ public class Server {
 	public static void main(String[] args) throws Exception {
 		CoreDef.config = new Config("c:/config.txt");
 		as = new AsyncSocket(8888, new SimpleHeartBeat());
+		Transfer t =new Transfer();
+		as.setTransfer(t);
+		t.initialize();
 		as.initialize();
 
 //		Message msg = new Message();

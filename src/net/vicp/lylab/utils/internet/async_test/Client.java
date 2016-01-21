@@ -23,10 +23,10 @@ public class Client {
 		
 		try {
 			SimpleHeartBeat msg = new SimpleHeartBeat();
-			as.request(protocol.encode(msg));
-			as.request(protocol.encode(msg));
-			as.request(protocol.encode(msg));
-			as.request(protocol.encode(msg));
+//			as.request(protocol.encode(msg));
+//			as.request(protocol.encode(msg));
+//			as.request(protocol.encode(msg));
+//			as.request(protocol.encode(msg));
 			as.close();
 		} catch (Exception e) {
 			e.printStackTrace();

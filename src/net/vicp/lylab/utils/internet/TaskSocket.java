@@ -35,6 +35,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Transmission {
 
 	// Buffer
 	private byte[] buffer = new byte[CoreDef.SOCKET_MAX_BUFFER];
+	
 	protected Protocol protocol = null;
 
 	public TaskSocket(ServerSocket serverSocket) {
