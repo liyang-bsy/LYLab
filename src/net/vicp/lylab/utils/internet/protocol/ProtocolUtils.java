@@ -17,8 +17,6 @@ import net.vicp.lylab.core.interfaces.Protocol;
  * @version 1.0.0
  */
 public final class ProtocolUtils extends BaseObject {
-	private static int configSize;
-
 	private static Protocol[] rawProtocols = new Protocol[0];
 
 	/**
@@ -88,7 +86,7 @@ public final class ProtocolUtils extends BaseObject {
 	}
 	
 	public static boolean isMultiProtocol() {
-		return configSize != 1;
+		return rawProtocols.length > 1;
 	}
 
 	public static void setRawProtocols(Protocol... rawProtocols) {
