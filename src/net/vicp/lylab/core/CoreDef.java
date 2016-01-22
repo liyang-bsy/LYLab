@@ -126,8 +126,9 @@ public class CoreDef extends NonCloneableBaseObject {
 	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = MINUTE / TWO;
 
 	public static final long DEFAULT_PERMANENT_INTERVAL = SIX * TEN * SIX * TEN;		// 60 times
-	
+
 	public static final int SOCKET_MAX_BUFFER = TWO * KB;
+	public static final int SOCKET_MAX_BUFFER_EXTEND_RATE = TEN;
 	public static final int DEFAULT_SOCKET_CONNECT_TTIMEOUT = (int) (MINUTE);
 	public static final int DEFAULT_SOCKET_READ_TTIMEOUT = (int) (TEN * MINUTE);
 	public static final int DEFAULT_SOCKET_WRITE_TTIMEOUT = (int) (TWO * MINUTE);

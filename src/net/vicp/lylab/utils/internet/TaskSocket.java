@@ -171,7 +171,7 @@ public class TaskSocket extends BaseSocket implements LifeCycle, Transmission {
 				getLen = 0;
 				try {
 					if(bufferLen == buffer.length)
-						buffer = Arrays.copyOf(buffer, buffer.length*10);
+						buffer = Arrays.copyOf(buffer, buffer.length*CoreDef.SOCKET_MAX_BUFFER_EXTEND_RATE);
 					getLen = in.read(buffer, bufferLen, buffer.length - bufferLen);
 					if (getLen == -1) return null;
 				} catch (Exception e) {

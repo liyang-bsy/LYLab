@@ -559,7 +559,8 @@ public abstract class Utils extends NonCloneableBaseObject {
 
 	public static byte[] bytecat(byte[] dst, int dstOffset, byte[] src, int srcOffset, int srcCopyLength) {
 		if (!bytecat_isCapable(dst, dstOffset, srcCopyLength))
-			throw new IndexOutOfBoundsException("Destination byte[] hasn't enough ");
+			dst = Arrays.copyOf(dst, dst.length*CoreDef.SOCKET_MAX_BUFFER_EXTEND_RATE);
+//			throw new IndexOutOfBoundsException("Destination byte[] hasn't enough ");
 		for (int i = 0; i < srcCopyLength; i++)
 			dst[dstOffset + i] = src[srcOffset + i];
 		return dst;

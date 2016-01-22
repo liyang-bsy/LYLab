@@ -1,4 +1,4 @@
-package net.vicp.lylab.utils.internet.async_test;
+package net.vicp.lylab.utils.internet;
 
 import java.nio.channels.SocketChannel;
 

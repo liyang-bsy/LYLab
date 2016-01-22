@@ -1,4 +1,4 @@
-package net.vicp.lylab.utils.internet.async_test;
+package net.vicp.lylab.utils.internet.transfer;
 
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
@@ -18,7 +18,8 @@ import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.controller.TimeoutController;
-import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
+import net.vicp.lylab.utils.internet.AopHandler;
+import net.vicp.lylab.utils.internet.AsyncSocket;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.LoneWolf;
 
@@ -48,6 +49,12 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 
 	@Override
 	public void initialize() {
+		if(protocol == null)
+			throw new LYException("No protocol is assigned");
+		if(taskQueue == null)
+			throw new LYException("No taskQueue is assigned");
+		if(asyncSocket == null)
+			throw new LYException("No asyncSocket is assigned");
 		if (!closed.compareAndSet(true, false))
 			return;
 		TimeoutController.addToWatch(this);
@@ -63,8 +70,8 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 			Pair<SocketChannel, Pair<byte[], Integer>> container = addr2byte.get(addr);
 			synchronized (container) {
 				if (container.getLeft().equals(socketChannel)) {
-					Utils.bytecat(container.getRight().getLeft(), container.getRight().getRight(),
-							receivedData.getLeft(), 0, receivedData.getRight());
+					container.getRight().setLeft(Utils.bytecat(container.getRight().getLeft(), container.getRight().getRight(),
+							receivedData.getLeft(), 0, receivedData.getRight()));
 					container.getRight().setRight(container.getRight().getRight() + receivedData.getRight());
 				} else
 					throw new LYException("Socket Chennel no matches");
@@ -80,7 +87,8 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 		asyncSocket.send(socketChannel, response);
 	}
 
-	private void validateRequest() {
+	private boolean validateRequest() {
+		boolean noMoreRequest = true;
 		if (!addr2validate.isEmpty()) {
 			Iterator<Entry<Pair<String, Integer>, Boolean>> addrContainerIterator = addr2validate.entrySet().iterator();
 			while (addrContainerIterator.hasNext()) {
@@ -93,9 +101,6 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 
 				synchronized (clientContainer) {
 					Pair<byte[], Integer> byteContainer = clientContainer.getRight();
-					// Create a raw protocol after first receiving
-					if (protocol == null || ProtocolUtils.isMultiProtocol())
-						protocol = ProtocolUtils.pairWithProtocol(byteContainer.getLeft());
 
 					int start = 0, next = 0;
 					boolean newReuqest = false;
@@ -116,19 +121,19 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 						byteContainer.setRight(byteContainer.getRight() - start);
 						Arrays.fill(byteContainer.getLeft(), byteContainer.getRight(), byteContainer.getLeft().length,
 								(byte) 0);
+						noMoreRequest = false;
 					}
 				}
 			}
 		}
+		return noMoreRequest;
 	}
 	
 	@Override
 	public void exec() {
 		while (true) {
-			if (requestPool.isEmpty()) {
-				validateRequest();
+			if (requestPool.isEmpty() && validateRequest())
 				await(1000);
-			}
 			else
 				taskQueue.addTask(new AopHandler(asyncSocket, requestPool.accessOne()));
 //			Pair<SocketChannel, byte[]> pair = requestPool.accessOne();
@@ -146,7 +151,8 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 
 	@Override
 	public void close() {
-		if(closed.getAndSet(true)) return;
+		if (closed.getAndSet(true))
+			return;
 		TimeoutController.removeFromWatch(this);
 		addr2validate.clear();
 		addr2timeout.clear();
@@ -169,8 +175,11 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 			Iterator<Entry<Pair<String, Integer>, Long>> addrIterator = addr2timeout.entrySet().iterator();
 			while (addrIterator.hasNext()) {
 				Entry<Pair<String, Integer>, Long> entry = addrIterator.next();
-				if (System.currentTimeMillis() - entry.getValue() > timeout * rate)
+				if (System.currentTimeMillis() - entry.getValue() > timeout * rate) {
+					addr2validate.remove(entry.getKey());
+					addr2byte.remove(entry.getKey());
 					addrIterator.remove();
+				}
 			}
 		}
 	}

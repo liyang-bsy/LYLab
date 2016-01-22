@@ -29,7 +29,7 @@ public class SyncServer extends Task implements LifeCycle {
 	
 	protected AtomicBoolean closed = new AtomicBoolean(true);
 	protected ServerSocket serverSocket;
-	protected LYTaskQueue lyTaskQueue = null;
+	protected LYTaskQueue lyTaskQueue;
 	protected Aop aop;
 	protected Integer port = null;
 	protected boolean longServer = false;

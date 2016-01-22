@@ -1,4 +1,4 @@
-package net.vicp.lylab.utils.internet.async_test;
+package net.vicp.lylab.utils.internet;
 
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -23,7 +23,7 @@ import net.vicp.lylab.core.model.Pair;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.creator.SelectorCreator;
-import net.vicp.lylab.utils.internet.BaseSocket;
+import net.vicp.lylab.utils.internet.transfer.Transfer;
 
 /**
  * A async socket can be used for communicating with paired client.
@@ -192,7 +192,7 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 				}
 				if (niobuf.remaining() == 0) {
 					// extend current max size
-					maxBufferSize *= 10;
+					maxBufferSize *= CoreDef.SOCKET_MAX_BUFFER_EXTEND_RATE;
 					buffer = Arrays.copyOf(buffer, maxBufferSize);
 					// move niobuf to buffer
 					Utils.bytecat(buffer, bufferLen, niobuf.array(), 0, niobuf.position());
@@ -206,7 +206,7 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 		return new Pair<>(buffer, bufferLen);
 	}
 	
-	protected boolean send(SocketChannel socketChannel, byte[] request) {
+	public boolean send(SocketChannel socketChannel, byte[] request) {
 		try {
 			if (isClosed())
 				return false;
@@ -275,6 +275,7 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 					CoreDef.DEFAULT_CONTAINER_TIMEOUT, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 			begin("AsyncServer");
 		}
+		transfer.initialize();
 	}
 	
 	@Override
@@ -288,6 +289,10 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 				} catch (Exception e) {
 					log.debug("Close failed, maybe client already lost connection" + Utils.getStringFromException(e));
 				}
+			}
+			if (transfer != null) {
+				transfer.close();
+				transfer = null;
 			}
 			if (selector != null) {
 				selector.close();

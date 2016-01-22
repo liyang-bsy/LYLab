@@ -1,12 +1,13 @@
 package net.vicp.lylab.server.runtime;
 
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
-import net.vicp.lylab.utils.internet.async_test.AsyncSocket;
-import net.vicp.lylab.utils.internet.async_test.Transfer;
+import net.vicp.lylab.utils.internet.AsyncSocket;
+import net.vicp.lylab.utils.internet.transfer.Transfer;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.LoneWolf;
 
@@ -24,8 +25,7 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 	
 	protected AtomicBoolean closed = new AtomicBoolean(true);
 	protected AsyncSocket asyncSocket;
-	protected Transfer transfer;
-	protected LYTaskQueue taskQueue = null;
+	protected LYTaskQueue taskQueue;
 	protected Aop aop;
 	protected Integer port = null;
 	protected boolean longServer = true;
@@ -43,22 +43,19 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 		if(!closed.compareAndSet(false, true))
 			return;
 		asyncSocket.close();
-		transfer.close();
 		this.callStop();
-	}
-	
-	public static void main(String[] args) throws Exception {
 	}
 
 	@Override
 	public void exec() {
+		Transfer transfer = new Transfer();
 		transfer.setTaskQueue(taskQueue);
+		transfer.setProtocol(protocol);
 		
 		asyncSocket = new AsyncSocket(port, transfer, new SimpleHeartBeat());
 		aop.setProtocol(protocol);
 		asyncSocket.setAopLogic(aop);
 		
-		transfer.initialize();
 		asyncSocket.initialize();
 	}
 
@@ -68,14 +65,6 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 
 	public void setAsyncSocket(AsyncSocket asyncSocket) {
 		this.asyncSocket = asyncSocket;
-	}
-
-	public Transfer getTransfer() {
-		return transfer;
-	}
-
-	public void setTransfer(Transfer transfer) {
-		this.transfer = transfer;
 	}
 
 	public LYTaskQueue getTaskQueue() {
@@ -107,7 +96,8 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 	}
 
 	public void setLongServer(boolean longServer) {
-		this.longServer = longServer;
+		throw new LYException("AsyncServer can only be a long server");
+//		this.longServer = longServer;
 	}
 
 	public Protocol getProtocol() {
