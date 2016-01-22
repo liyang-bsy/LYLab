@@ -16,8 +16,7 @@ import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.Task;
 
 /**
- * A raw socket can be used for communicating with server, you need close socket after using it.
- * Actually, this class is not as useful as I thought
+ * A server runtime based on Sync-Server, TaskSocket.
  * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
@@ -27,6 +26,7 @@ import net.vicp.lylab.utils.tq.Task;
  */
 public class SyncServer extends Task implements LifeCycle {
 	private static final long serialVersionUID = 883892527805494627L;
+	
 	protected AtomicBoolean closed = new AtomicBoolean(true);
 	protected ServerSocket serverSocket;
 	protected LYTaskQueue lyTaskQueue = null;
@@ -34,14 +34,6 @@ public class SyncServer extends Task implements LifeCycle {
 	protected Integer port = null;
 	protected boolean longServer = false;
 
-	public SyncServer() {
-		aop = null;
-	}
-
-	public SyncServer(Aop aop) {
-		this.aop = aop;
-	}
-	
 	@Override
 	public void initialize() {
 		if(!closed.compareAndSet(true, false))

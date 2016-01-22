@@ -2,7 +2,9 @@ package net.vicp.lylab.utils.internet.async_test;
 
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.Aop;
+import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
@@ -11,14 +13,18 @@ import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.internet.impl.LYLabProtocol;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 
-public class Server {
+public class Server extends NonCloneableBaseObject implements LifeCycle {
 	static Protocol p = new LYLabProtocol();
 	static AsyncSocket as;
 	
 	public static void main(String[] args) throws Exception {
+	}
+
+	@Override
+	public void initialize() {
 		CoreDef.config = new Config("c:/config.txt");
-		as = new AsyncSocket(8888, new SimpleHeartBeat());
 		Transfer t =new Transfer();
+		as = new AsyncSocket(8888, t, new SimpleHeartBeat());
 		t.setTaskQueue((LYTaskQueue) CoreDef.config.getObject("LYTaskQueue"));
 		t.initialize();
 		
@@ -35,32 +41,15 @@ public class Server {
 		};
 		aop.setProtocol((Protocol) CoreDef.config.getObject("protocol"));
 		as.setAopLogic(aop);
-		as.setTransfer(t);
 		as.initialize();
+		t.close();
+	}
 
-//		Message msg = new Message();
-//		for (int i = 0; i < 10002; i++) {
-//			msg.setUuid(""+i);
-////			if(i%8000==0)
-//			{
-////				System.out.println(i);
-////				try {
-////					Thread.sleep(1);
-////				} catch (InterruptedException e) {
-////					// TODO Auto-generated catch block
-////					e.printStackTrace();
-////				}
-//			}
-//			msg.setMessage("i=" + i);
-//			as.request("127.0.0.1", p.encode(msg));
-//		}
-//		try {
-//			Thread.sleep(200000);
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-//		as.request("127.0.0.1", p.encode(msg));
-//		as.close();
+	@Override
+	public void close() throws Exception {
+as.close();
+
+		
 	}
 
 }

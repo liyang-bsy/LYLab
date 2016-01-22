@@ -67,7 +67,7 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 	 * @param port
 	 * @param heartBeat
 	 */
-	public AsyncSocket(int port, HeartBeat heartBeat) {
+	public AsyncSocket(int port, Transfer transfer, HeartBeat heartBeat) {
 		super.setLonewolf(true);
 		try {
 			selector = Selector.open();
@@ -76,6 +76,8 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 			ServerSocket serverSocket = serverSocketChannel.socket();
 			serverSocket.bind(new InetSocketAddress(port));
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+			transfer.setAsyncSocket(this);
+			this.transfer = transfer;
 			this.heartBeat = heartBeat;
 			setServer(true);
 		} catch (Exception e) {
@@ -300,15 +302,6 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 
 	public boolean isClosed() {
 		return !selector.isOpen();
-	}
-
-	public Transfer getTransfer() {
-		return transfer;
-	}
-
-	public void setTransfer(Transfer transfer) {
-		transfer.setAsyncSocket(this);
-		this.transfer = transfer;
 	}
 
 	// TODO will be useful in client mode
