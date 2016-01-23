@@ -1,6 +1,6 @@
 package net.vicp.lylab.core.model;
 
-public class ClientConnection extends Pair<String, Integer> {
+public class ClientIdentity extends Pair<String, Integer> {
 	
 	public String getHostName() {
 		return getLeft();

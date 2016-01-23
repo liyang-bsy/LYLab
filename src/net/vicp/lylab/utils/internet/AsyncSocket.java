@@ -168,6 +168,11 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 	}
 
 	public Pair<byte[], Integer> receive(SocketChannel socketChannel) {
+		// TODO
+		System.out.println(socketChannel.socket().getInetAddress());
+		System.out.println(socketChannel.socket().getLocalAddress());
+		System.out.println(socketChannel.socket().getLocalSocketAddress());
+		System.out.println(socketChannel.socket().getRemoteSocketAddress());
 		if (isClosed())
 			throw new LYException("Connection closed");
 		if (socketChannel == null)
