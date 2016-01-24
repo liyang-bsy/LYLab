@@ -10,18 +10,16 @@ import java.util.Map.Entry;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
-import net.vicp.lylab.core.interfaces.Initializable;
+import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.model.Pair;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.controller.TimeoutController;
-import net.vicp.lylab.utils.internet.AopHandler;
-import net.vicp.lylab.utils.internet.AsyncSocket;
+import net.vicp.lylab.utils.creator.AutoCreator;
+import net.vicp.lylab.utils.internet.Session;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
-import net.vicp.lylab.utils.tq.LoneWolf;
 
 /**
  * Transfer could combine data packet chips into a full packet
@@ -29,7 +27,7 @@ import net.vicp.lylab.utils.tq.LoneWolf;
  * @author Young
  *
  */
-public class Transfer extends LoneWolf implements Initializable, Recyclable {
+public class SyncTransfer extends AbstractTransfer {
 	private static final long serialVersionUID = 1706498472211433734L;
 	
 	//					ip		port	validate
@@ -43,9 +41,10 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 	//
 	protected long timeout = CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT;
 	protected AtomicBoolean closed = new AtomicBoolean(true);
-	protected AsyncSocket asyncSocket;
+	protected Session session;
 	protected Protocol protocol;
 	protected LYTaskQueue taskQueue;
+	protected AutoCreator<Dispatcher<?, ?>> dispatcherCreator;
 
 	@Override
 	public void initialize() {
@@ -53,7 +52,7 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 			throw new LYException("No protocol is assigned");
 		if(taskQueue == null)
 			throw new LYException("No taskQueue is assigned");
-		if(asyncSocket == null)
+		if(session == null)
 			throw new LYException("No asyncSocket is assigned");
 		if (!closed.compareAndSet(true, false))
 			return;
@@ -83,8 +82,8 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 		//signalAll();
 	}
 
-	public void putResponse(SocketChannel socketChannel, byte[] response) {
-		asyncSocket.send(socketChannel, response);
+	public void putResponse(Socket socket, byte[] response) {
+		session.send(socket, response);
 	}
 
 	private boolean validateRequest() {
@@ -135,7 +134,11 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 			if (requestPool.isEmpty() && validateRequest())
 				await(1000);
 			else
-				taskQueue.addTask(new AopHandler(asyncSocket, requestPool.accessOne()));
+			{
+				Pair<SocketChannel, byte[]> request = requestPool.accessOne();
+				taskQueue.addTask(new DispatchExecutor<>(
+						request.getLeft().socket(), request.getRight(), session, dispatcherCreator.newInstance(), protocol));
+			}
 //			Pair<SocketChannel, byte[]> pair = requestPool.accessOne();
 //			SocketChannel socketChannel = pair.getLeft();
 //			byte[] request = pair.getRight();
@@ -184,14 +187,15 @@ public class Transfer extends LoneWolf implements Initializable, Recyclable {
 		}
 	}
 
-	// getters & setters
-	public AsyncSocket getAsyncSocket() {
-		return asyncSocket;
+	public int validate(byte[] bytes, int len) {
+		return protocol.validate(bytes, len);
 	}
 
-	public void setAsyncSocket(AsyncSocket asyncSocket) {
-		this.asyncSocket = asyncSocket;
+	public int validate(byte[] bytes, int offset, int len) {
+		return protocol.validate(bytes, offset, len);
 	}
+
+	// getters & setters
 
 	public long getTimeout() {
 		return timeout;

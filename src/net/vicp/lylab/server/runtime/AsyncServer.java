@@ -2,12 +2,13 @@ package net.vicp.lylab.server.runtime;
 
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Aop;
+import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.internet.AsyncSocket;
-import net.vicp.lylab.utils.internet.transfer.Transfer;
+import net.vicp.lylab.utils.internet.transfer.AsyncTransfer;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.LoneWolf;
 
@@ -26,7 +27,7 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 	protected AtomicBoolean closed = new AtomicBoolean(true);
 	protected AsyncSocket asyncSocket;
 	protected LYTaskQueue taskQueue;
-	protected Aop aop;
+	protected Dispatcher<I, O> dispatcher;
 	protected Integer port = null;
 	protected boolean longServer = true;
 	protected Protocol protocol;
@@ -48,7 +49,7 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 
 	@Override
 	public void exec() {
-		Transfer transfer = new Transfer();
+		AsyncTransfer transfer = new AsyncTransfer();
 		transfer.setTaskQueue(taskQueue);
 		transfer.setProtocol(protocol);
 		

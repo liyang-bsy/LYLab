@@ -13,12 +13,12 @@ import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.creator.AutoCreator;
 import net.vicp.lylab.utils.creator.InstanceCreator;
-import net.vicp.lylab.utils.internet.ClientLongSocket;
+import net.vicp.lylab.utils.internet.SyncSession;
 import net.vicp.lylab.utils.operation.KeepAliveValidator;
 
 public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
-	private AutoGeneratePool<ClientLongSocket> pool = null;
-	private AutoCreator<ClientLongSocket> creator = null;
+	private AutoGeneratePool<SyncSession> pool = null;
+	private AutoCreator<SyncSession> creator = null;
 	private boolean backgroundServer = true;
 	private AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -26,21 +26,22 @@ public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
 		if (StringUtils.isBlank(message.getRpcKey()))
 			message.setRpcKey("RPC");
 		Protocol p = (Protocol) CoreDef.config.getObject("protocol");
-		ClientLongSocket cls = pool.accessOne();
+		SyncSession session = pool.accessOne();
 		byte[] req, res;
 		req = p.encode(message);
-		res = cls.request(req);
-		pool.recycle(cls);
+		session.send(req);
+		res = session.receive().getLeft();
+		pool.recycle(session);
 		return (Message) p.decode(res);
 	}
 
 	@Override
 	public void initialize() {
 		if (closed.compareAndSet(false, true)) {
-			creator = new InstanceCreator<ClientLongSocket>(ClientLongSocket.class, CoreDef.config.getString("rpcHost"),
+			creator = new InstanceCreator<SyncSession>(SyncSession.class, CoreDef.config.getString("rpcHost"),
 					CoreDef.config.getInteger("rpcPort"), CoreDef.config.getObject("protocol"),
 					CoreDef.config.getObject("heartBeat"));
-			pool = new AutoGeneratePool<ClientLongSocket>(creator, new KeepAliveValidator<ClientLongSocket>(), 20000,
+			pool = new AutoGeneratePool<SyncSession>(creator, new KeepAliveValidator<SyncSession>(), 20000,
 					Integer.MAX_VALUE);
 
 			if (isBackgroundServer()) {

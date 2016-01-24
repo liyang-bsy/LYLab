@@ -17,13 +17,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.LifeCycle;
+import net.vicp.lylab.core.interfaces.Transfer;
 import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.core.model.ObjectContainer;
 import net.vicp.lylab.core.model.Pair;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.creator.SelectorCreator;
-import net.vicp.lylab.utils.internet.transfer.Transfer;
 
 /**
  * A async socket can be used for communicating with paired client.
@@ -35,18 +35,15 @@ import net.vicp.lylab.utils.internet.transfer.Transfer;
  * @since 2015.07.21
  * @version 0.0.5
  */
-public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmission {
+public class AsyncSession extends AbstractSession implements LifeCycle {//, Transmission {
 	private static final long serialVersionUID = -3262692917974231303L;
 	
 	// Raw data source
 	protected Selector selector = null;
 	protected SelectionKey selectionKey = null;
-	// Not null unless isServer() == false
-	protected SocketChannel socketChannel = null;
 	
-	// TODO will be useful on push data to client
-	// Clients			ip	 local port		Socket
-	protected Map<Pair<String, Integer>, SocketChannel> ip2client = new HashMap<>();
+	// Clients			client			Socket
+	protected Map<InetSocketAddress, SocketChannel> addr2client = new HashMap<>();
 	protected AutoGeneratePool<ObjectContainer<Selector>> selectorPool;
 	protected Transfer transfer;
 
@@ -67,7 +64,7 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 	 * @param port
 	 * @param heartBeat
 	 */
-	public AsyncSocket(int port, Transfer transfer, HeartBeat heartBeat) {
+	public AsyncSession(int port, Transfer transfer, HeartBeat heartBeat) {
 		super.setLonewolf(true);
 		try {
 			selector = Selector.open();
@@ -76,8 +73,8 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 			ServerSocket serverSocket = serverSocketChannel.socket();
 			serverSocket.bind(new InetSocketAddress(port));
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-			transfer.setAsyncSocket(this);
 			this.transfer = transfer;
+			transfer.setSession(this);
 			this.heartBeat = heartBeat;
 			setServer(true);
 		} catch (Exception e) {
@@ -89,7 +86,7 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 	 * Client mode
 	 * @param port
 	 */
-	public AsyncSocket(String host, int port, HeartBeat heartBeat) {
+	public AsyncSession(String host, int port, HeartBeat heartBeat) {
 		throw new LYException("Async Socket is only available for Server");
 //		try {
 //			selector = Selector.open();
@@ -111,7 +108,7 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 				SocketChannel socketChannel = serverSocketChannel.accept();
 				socketChannel.configureBlocking(false);
 				Socket socket = socketChannel.socket();
-				ip2client.put(getClientSession(socket), socketChannel);
+				addr2client.put((InetSocketAddress) socket.getRemoteSocketAddress(), socketChannel);
 				socketChannel.register(selector, SelectionKey.OP_READ);
 			} catch (Exception e) {
 				throw new LYException("Close failed", e);
@@ -119,16 +116,14 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 		} else if (selectionKey.isReadable()) {
 			SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
 			try {
-//				receiveBasedAopDrive(socketChannel);
-				Pair<byte[], Integer> receivedData = receive(socketChannel);
-				transfer.putRequest(socketChannel, receivedData);
+				Pair<byte[], Integer> data = receive(socketChannel.socket());
+				transfer.putRequest(socketChannel.socket(), data.getLeft(), data.getRight());
 			} catch (Throwable t) {
 				if (socketChannel != null) {
 					try {
 						socketChannel.close();
 					} catch (Exception ex) {
-						log.error("Close failed"
-								+ Utils.getStringFromException(ex));
+						log.error("Close failed" + Utils.getStringFromException(ex));
 					}
 					socketChannel = null;
 				}
@@ -167,23 +162,19 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 		}
 	}
 
-	public Pair<byte[], Integer> receive(SocketChannel socketChannel) {
-		// TODO
-		System.out.println(socketChannel.socket().getInetAddress());
-		System.out.println(socketChannel.socket().getLocalAddress());
-		System.out.println(socketChannel.socket().getLocalSocketAddress());
-		System.out.println(socketChannel.socket().getRemoteSocketAddress());
+	@Override
+	public Pair<byte[], Integer> receive(Socket socket) {
 		if (isClosed())
 			throw new LYException("Connection closed");
-		if (socketChannel == null)
-			throw new NullPointerException("Parameter socketChannel is null");
+		if (socket == null)
+			throw new NullPointerException("Parameter socket is null");
 		byte[] buffer = new byte[maxBufferSize];
 		int bufferLen = 0;
 		int ret = 0;
 		niobuf.clear();
 		while (true) {
 			try {
-				ret = socketChannel.read(niobuf);
+				ret = addr2client.get(socket.getRemoteSocketAddress()).read(niobuf);
 				if (ret <= 0) {
 					if (ret == 0) {
 						// move niobuf to buffer
@@ -210,37 +201,39 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 		}
 		return new Pair<>(buffer, bufferLen);
 	}
-	
-	public boolean send(SocketChannel socketChannel, byte[] request) {
+
+	public void send(Socket client, byte[] request) {
+		if (isClosed())
+			throw new LYException("Session closed");
 		try {
-			if (isClosed())
-				return false;
-			if (socketChannel != null && flushChannel(socketChannel, ByteBuffer.wrap(request), CoreDef.DEFAULT_SOCKET_WRITE_TTIMEOUT)>0)
-				return true;
-			return false;
+			SocketChannel socketChannel = addr2client.get(client.getRemoteSocketAddress());
+			if (socketChannel != null)
+				flushChannel(socketChannel, ByteBuffer.wrap(request), CoreDef.DEFAULT_SOCKET_WRITE_TTIMEOUT);
+			else
+				throw new LYException("No match client");
 		} catch (Exception e) {
-			throw new LYException("Close failed", e);
+			throw new LYException("Send failed", e);
 		}
 	}
 
-	private int flushChannel(SocketChannel socketChannel, ByteBuffer bb, long writeTimeout) throws Exception {
+	private void flushChannel(SocketChannel socketChannel, ByteBuffer bb, long writeTimeout) throws Exception {
 		SelectionKey key = null;
 		Selector writeSelector = null;
 		int torelent = 0;
-		int bytesProduced = 0;
 		try {
 			while (bb.hasRemaining()) {
 				int len = socketChannel.write(bb);
 				torelent++;
-				bytesProduced += len;
-				if (len == 0) {
-	                if (writeSelector == null){
+				if (len > 0)
+					torelent = 0;
+				else {
+					if (writeSelector == null) {
 						writeSelector = selectorPool.accessOne().getObject();
-	                    if (writeSelector == null){
-	                        // Continue using the main one
-	                        continue;
-	                    }
-	                }
+						if (writeSelector == null) {
+							// Continue using the main one
+							continue;
+						}
+					}
 					key = socketChannel.register(writeSelector, SelectionKey.OP_WRITE);
 					if (writeSelector.select(writeTimeout) == 0) {
 						if (torelent > 5) {
@@ -254,8 +247,6 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 					} else {
 						torelent--;
 					}
-				} else {
-					torelent = 0;
 				}
 			}
 		} finally {
@@ -269,7 +260,6 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 				selectorPool.recycle(ObjectContainer.fromObject(writeSelector));
 			}
 		}
-		return bytesProduced;
 	}
 
 	@Override
@@ -278,7 +268,7 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 			SelectorCreator creator = new SelectorCreator();
 			selectorPool = new AutoGeneratePool<ObjectContainer<Selector>>(creator, null,
 					CoreDef.DEFAULT_CONTAINER_TIMEOUT, CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
-			begin("AsyncServer");
+			begin("Async Session");
 		}
 		transfer.initialize();
 	}
@@ -287,14 +277,15 @@ public class AsyncSocket extends BaseSocket implements LifeCycle {//, Transmissi
 	public void close() {
 		try {
 			if (isClosed()) return;
-			for (Pair<String, Integer> addr : ip2client.keySet()) {
+			for (InetSocketAddress addr : addr2client.keySet()) {
 				try {
-					SocketChannel socketChannel = ip2client.get(addr);
-					socketChannel.socket().close();
+					SocketChannel socketChannel = addr2client.get(addr);
+					socketChannel.close();
 				} catch (Exception e) {
 					log.debug("Close failed, maybe client already lost connection" + Utils.getStringFromException(e));
 				}
 			}
+			addr2client.clear();
 			if (transfer != null) {
 				transfer.close();
 				transfer = null;

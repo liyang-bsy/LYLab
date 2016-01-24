@@ -1,4 +1,4 @@
-package net.vicp.lylab.server.aop;
+package net.vicp.lylab.server.dispatcher;
 
 import java.net.Socket;
 import java.util.ArrayList;
@@ -8,14 +8,13 @@ import net.vicp.lylab.core.AbstractAction;
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
-import net.vicp.lylab.core.interfaces.Aop;
+import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.core.model.SimpleMessage;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 
-public abstract class AbstractDispatcherAop<I extends O, O extends SimpleMessage> extends NonCloneableBaseObject implements Aop {
+public abstract class AbstractDispatcherAop<I extends O, O extends SimpleMessage> extends NonCloneableBaseObject implements Dispatcher<I, O> {
 	protected List<Filter<I, O>> filterChain = new ArrayList<Filter<I, O>>();
 	protected Protocol protocol = null;
 
@@ -57,27 +56,12 @@ public abstract class AbstractDispatcherAop<I extends O, O extends SimpleMessage
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public byte[] doAction(Socket client, byte[] requestByte, int offset) {
-		I request = null;
-
+	public O doAction(Socket client, I request) {
 		BaseAction action = null;
 		O response = newResponse();
 		try {
 			do {
-				// decode
-				try {
-					Object obj = protocol.decode(requestByte, offset);
-					if(obj instanceof HeartBeat)
-						return protocol.encode(obj);
-					request = (I) obj;
-				} catch (Exception e) {
-					log.debug(Utils.getStringFromException(e));
-					response.setCode(0x00000001);
-					response.setMessage("Bad formation, decode failed");
-					break;
-				}
 				// decode nothing
 				if (request == null) {
 					response.setCode(0x00000002);
@@ -117,14 +101,14 @@ public abstract class AbstractDispatcherAop<I extends O, O extends SimpleMessage
 		} catch (Exception e) {
 			log.error("Logger failed:" + Utils.getStringFromException(e));
 		}
-		return protocol.encode(response);
+		return response;
 	}
 
 	public Protocol getProtocol() {
 		return protocol;
 	}
 
-	public Aop setProtocol(Protocol protocol) {
+	public Dispatcher<I, O> setProtocol(Protocol protocol) {
 		this.protocol = protocol;
 		return this;
 	}

@@ -1,16 +1,15 @@
-package net.vicp.lylab.utils.internet.impl;
+package net.vicp.lylab.utils.internet.protocol;
 
 import java.io.Serializable;
 import java.util.Arrays;
+
+import org.apache.commons.lang3.SerializationUtils;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
-
-import org.apache.commons.lang3.SerializationUtils;
 
 /**
  * A self-defined protocol easy transfer Objects through socket.<br>
@@ -75,7 +74,7 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 	@Override
 	public Object decode(byte[] bytes, int offset) {
 		if (bytes == null) return null;
-		if (!ProtocolUtils.checkHead(bytes, offset, head))
+		if (!Utils.checkHead(bytes, offset, head))
 			throw new LYException("Bad data package: mismatch head");
 
 		int headEndPosition = offset + head.length;
@@ -101,7 +100,7 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 		if (bytes == null) throw new LYException("Parameter bytes is null");
 		if (len - offset < head.length)
 			return 0;
-		if (!ProtocolUtils.checkHead(bytes, offset, head))
+		if (!Utils.checkHead(bytes, offset, head))
 			throw new LYException("Bad data package: mismatch head");
 		
 		int headEndPosition = offset + head.length;

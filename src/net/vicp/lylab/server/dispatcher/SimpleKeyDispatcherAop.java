@@ -1,4 +1,4 @@
-package net.vicp.lylab.server.aop;
+package net.vicp.lylab.server.dispatcher;
 
 import java.net.Socket;
 
@@ -7,11 +7,10 @@ import org.apache.commons.lang3.StringUtils;
 import net.vicp.lylab.core.AbstractAction;
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.interfaces.Aop;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.utils.Utils;
 
-public class SimpleKeyDispatcherAop<I extends Message> extends AbstractDispatcherAop<I, Message> implements Aop {
+public class SimpleKeyDispatcherAop<I extends Message> extends AbstractDispatcherAop<I, Message> {
 
 	@Override
 	protected Message newResponse() {
