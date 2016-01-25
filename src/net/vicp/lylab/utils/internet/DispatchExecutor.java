@@ -1,11 +1,11 @@
-package net.vicp.lylab.utils.internet.transfer;
+package net.vicp.lylab.utils.internet;
 
 import java.net.Socket;
 
 import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.interfaces.Session;
 import net.vicp.lylab.core.model.HeartBeat;
-import net.vicp.lylab.utils.internet.Session;
 import net.vicp.lylab.utils.tq.Task;
 
 /**
@@ -15,7 +15,7 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2016.01.24
  *
  */
-public class DispatchExecutor<I, O> extends Task {
+public final class DispatchExecutor<I, O> extends Task {
 	private static final long serialVersionUID = -8759689034880271599L;
 
 	Socket client;
@@ -23,7 +23,7 @@ public class DispatchExecutor<I, O> extends Task {
 	Session session;
 	Dispatcher<I, O> dispatcher;
 	Protocol protocol;
-	
+
 	public DispatchExecutor(Socket client, byte[] clientRequest, Session session, Dispatcher<I, O> dispatcher, Protocol protocol) {
 		this.client = client;
 		this.clientRequest = clientRequest;
@@ -32,11 +32,21 @@ public class DispatchExecutor<I, O> extends Task {
 		this.protocol = protocol;
 	}
 
-	@SuppressWarnings("unchecked")
+	/**
+	 * async mode
+	 */
 	@Override
 	public void exec() {
+		send(doResponse());
+	}
+
+	/**
+	 * sync mode
+	 */
+	@SuppressWarnings("unchecked")
+	public byte[] doResponse() {
 		byte[] response = null;
-		if (dispatcher != null || protocol == null)
+		if (dispatcher == null || protocol == null)
 			response = clientRequest;
 		else {
 			Object request = protocol.decode(clientRequest, 0);
@@ -45,6 +55,10 @@ public class DispatchExecutor<I, O> extends Task {
 			else
 				response = protocol.encode(dispatcher.doAction(client, (I) request));
 		}
+		return response;
+	}
+
+	public void send(byte[] response) {
 		session.send(client, response);
 	}
 

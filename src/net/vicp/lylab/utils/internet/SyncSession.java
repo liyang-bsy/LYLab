@@ -9,10 +9,11 @@ import java.util.Arrays;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.interfaces.Transfer;
 import net.vicp.lylab.core.model.HeartBeat;
+import net.vicp.lylab.core.model.InetAddr;
 import net.vicp.lylab.core.model.Pair;
 import net.vicp.lylab.utils.Utils;
 
@@ -32,41 +33,46 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 	protected Socket socket;
 	protected InputStream in;
 	protected OutputStream out;
-	
-	protected Transfer transfer;
+
+//	protected Transfer transfer;
 
 	// Buffer
 	protected byte[] buffer = new byte[CoreDef.SOCKET_MAX_BUFFER];
 
 	// Long socket needs keep alive
-	protected HeartBeat heartBeat;
 	protected long lastActivity = 0L;
 	protected long interval = CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT / 10;
 
-
-	public SyncSession(ServerSocket serverSocket, HeartBeat heartBeat, Transfer transfer) {
-		this(serverSocket, transfer);
-		this.heartBeat = heartBeat;
+	public SyncSession(ServerSocket serverSocket, Protocol protocol,
+			Dispatcher<? super Object, ? super Object> dispatcher) {
+		this(serverSocket, protocol, dispatcher, null);
 	}
 
-	public SyncSession(String host, Integer port, HeartBeat heartBeat) {
-		this(host, port);
-		this.heartBeat = heartBeat;
+	public SyncSession(String host, Integer port, Protocol protocol) {
+		this(host, port, protocol, null);
 	}
 	
-	public SyncSession(ServerSocket serverSocket, Transfer transfer) {
+	/**
+	 * Server mode
+	 * 
+	 * @param serverSocket
+	 * @param protocol
+	 * @param dispatcher
+	 * @param heartBeat
+	 */
+	public SyncSession(ServerSocket serverSocket, Protocol protocol, Dispatcher<? super Object, ? super Object> dispatcher,
+			HeartBeat heartBeat) {
+		super(protocol, dispatcher, heartBeat);
 		if (serverSocket == null)
 			throw new LYException("Parameter serverSocket is null");
-		if (transfer == null)
-			throw new LYException("Parameter transfer is null");
+		if (dispatcher == null)
+			throw new LYException("Parameter dispatcher is null");
 		try {
 			this.socket = serverSocket.accept();
 			setSoTimeout(CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT);
 		} catch (Exception e) {
 			throw new LYException("ServerSocket accept from client socket failed", e);
 		}
-		this.transfer = transfer;
-		transfer.setSession(this);
 		try {
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
@@ -81,7 +87,8 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 	 * @param host
 	 * @param port
 	 */
-	public SyncSession(String host, Integer port) {
+	public SyncSession(String host, Integer port, Protocol protocol, HeartBeat heartBeat) {
+		super(protocol, null, heartBeat);
 		try {
 			socket = new Socket();
 			socket.connect(new InetSocketAddress(host, port), CoreDef.DEFAULT_SOCKET_CONNECT_TTIMEOUT);
@@ -94,19 +101,53 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 		setServer(false);
 	}
 
-	protected InetSocketAddress getPeer() {
-		// If not, I can't control current remote information
-		return (InetSocketAddress) socket.getRemoteSocketAddress();
+	public InetAddr getPeer() {
+		if(isServer())
+			// client ip + local port(a random port assigned by operation system)
+			return InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getLocalPort());
+		else
+			// server ip + server port
+			return InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getPort());
+	}
+
+	@Override
+	public Socket getClient(InetAddr clientAddr) {
+		if(socket.getRemoteSocketAddress().equals(clientAddr))
+			return socket;
+		throw new LYException("No match client");
 	}
 
 	@Override
 	public void exec() {
-		throw new LYException("Method forbidden");
+		if (!isServer())
+			throw new LYException("Method forbidden");
+		try {
+			do {
+				Pair<byte[], Integer> bytesContainer = receive(socket);
+				if (bytesContainer == null)
+					return;
+//				transfer.putRequest(socket, buffer, bytesContainer.getRight());
+				DispatchExecutor<?, ?> de = new DispatchExecutor<>(socket, bytesContainer.getLeft(), this, dispatcher,
+						protocol);
+				byte[] bytes = de.doResponse();
+				if (bytes == null)
+					throw new LYException("Server attempt respond null to client");
+				send(bytes);
+			} while (heartBeat != null);
+		} catch (Throwable t) {
+			throw new LYException("Connect break", t);
+		} finally {
+			try {
+				close();
+			} catch (Exception e) {
+				log.info(Utils.getStringFromException(e));
+			}
+		}
 	}
-	
+
 	@Override
 	public void initialize() {
-		transfer.initialize();
+		// do nothing
 	}
 
 	public void send(byte[] request) {
@@ -141,8 +182,6 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 	
 	@Override
 	public Pair<byte[], Integer> receive(Socket client) {
-		if (client == null)
-			throw new NullPointerException("Parameter client is null");
 		if (isClosed())
 			throw new LYException("Session closed");
 		if (!client.equals(socket))
@@ -157,6 +196,7 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 					if(bufferLen == buffer.length)
 						buffer = Arrays.copyOf(buffer, buffer.length*CoreDef.SOCKET_MAX_BUFFER_EXTEND_RATE);
 					getLen = in.read(buffer, bufferLen, buffer.length - bufferLen);
+					bufferLen += getLen;
 					if (getLen == -1) return null;
 				} catch (Exception e) {
 					throw new LYException(e);
@@ -164,7 +204,7 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 				if (getLen == 0)
 					throw new LYException("Impossible");
 				// validate if receive finished
-				if (transfer.getProtocol().validate(buffer, bufferLen) > 0)
+				if (protocol.validate(buffer, bufferLen) > 0)
 					break;
 			}
 		}
@@ -232,9 +272,6 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 			if (!isOutdated())
 				return true;
 			try {
-				Protocol protocol = transfer.getProtocol();
-				if (protocol == null)
-					return true;
 				send(socket, protocol.encode(heartBeat));
 				Pair<byte[], Integer> data = receive(socket);
 				byte[] bytes = data.getLeft();

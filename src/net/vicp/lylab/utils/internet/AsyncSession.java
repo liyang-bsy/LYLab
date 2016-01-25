@@ -16,14 +16,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.LifeCycle;
+import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Transfer;
 import net.vicp.lylab.core.model.HeartBeat;
+import net.vicp.lylab.core.model.InetAddr;
 import net.vicp.lylab.core.model.ObjectContainer;
 import net.vicp.lylab.core.model.Pair;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.creator.SelectorCreator;
+import net.vicp.lylab.utils.internet.transfer.AsyncTransfer;
+import net.vicp.lylab.utils.tq.LYTaskQueue;
 
 /**
  * A async socket can be used for communicating with paired client.
@@ -43,7 +48,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 	protected SelectionKey selectionKey = null;
 	
 	// Clients			client			Socket
-	protected Map<InetSocketAddress, SocketChannel> addr2client = new HashMap<>();
+	protected Map<InetAddr, SocketChannel> addr2client = new HashMap<>();
 	protected AutoGeneratePool<ObjectContainer<Selector>> selectorPool;
 	protected Transfer transfer;
 
@@ -64,7 +69,9 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 	 * @param port
 	 * @param heartBeat
 	 */
-	public AsyncSession(int port, Transfer transfer, HeartBeat heartBeat) {
+	public AsyncSession(int port, Protocol protocol, Dispatcher<? super Object, ? super Object> dispatcher,
+			HeartBeat heartBeat, LYTaskQueue taskqueue) {
+		super(protocol, dispatcher, heartBeat);
 		super.setLonewolf(true);
 		try {
 			selector = Selector.open();
@@ -73,8 +80,8 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 			ServerSocket serverSocket = serverSocketChannel.socket();
 			serverSocket.bind(new InetSocketAddress(port));
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-			this.transfer = transfer;
-			transfer.setSession(this);
+			
+			transfer = new AsyncTransfer(this, protocol, taskqueue, dispatcher);
 			this.heartBeat = heartBeat;
 			setServer(true);
 		} catch (Exception e) {
@@ -86,7 +93,8 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 	 * Client mode
 	 * @param port
 	 */
-	public AsyncSession(String host, int port, HeartBeat heartBeat) {
+	public AsyncSession(String host, Integer port, Protocol protocol, HeartBeat heartBeat) {
+		super(protocol, null, heartBeat);
 		throw new LYException("Async Socket is only available for Server");
 //		try {
 //			selector = Selector.open();
@@ -108,7 +116,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 				SocketChannel socketChannel = serverSocketChannel.accept();
 				socketChannel.configureBlocking(false);
 				Socket socket = socketChannel.socket();
-				addr2client.put((InetSocketAddress) socket.getRemoteSocketAddress(), socketChannel);
+				addr2client.put(InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getLocalPort()), socketChannel);
 				socketChannel.register(selector, SelectionKey.OP_READ);
 			} catch (Exception e) {
 				throw new LYException("Close failed", e);
@@ -160,6 +168,11 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 				log.info(Utils.getStringFromException(ex));
 			}
 		}
+	}
+
+	@Override
+	public Socket getClient(InetAddr clientAddr) {
+		return addr2client.get(clientAddr).socket();
 	}
 
 	@Override
@@ -277,7 +290,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 	public void close() {
 		try {
 			if (isClosed()) return;
-			for (InetSocketAddress addr : addr2client.keySet()) {
+			for (InetAddr addr : addr2client.keySet()) {
 				try {
 					SocketChannel socketChannel = addr2client.get(addr);
 					socketChannel.close();

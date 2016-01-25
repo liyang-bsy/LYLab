@@ -11,9 +11,8 @@ import net.vicp.lylab.utils.Algorithm;
 import net.vicp.lylab.utils.Utils;
 
 /**
- * A self-defined protocol easy transfer Objects through socket.<br>
+ * A custom protocol easy transfer Objects through socket.<br>
  * Data will be transfered as JSON string.<br>
- * [!] Attention, protocol object is <tt>NOT</tt> thread-safe.
  * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
@@ -23,8 +22,7 @@ import net.vicp.lylab.utils.Utils;
  */
 public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 
-	public static void main(String[] arg)
-	{
+	public static void main(String[] arg) {
 		Protocol protocol = new JavaObjProtocol();
 		{
 			byte[] bytes = protocol.encode(new SimpleMessage());
@@ -40,7 +38,7 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 			System.out.println(protocol.decode(bytes, 20));
 		}
 	}
-	
+
 	protected final byte[] head = "LYLab".getBytes();
 	protected final byte[] splitSignal = new byte[] { -15 };
 
@@ -48,7 +46,7 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 	public byte[] getHead() {
 		return head;
 	}
-	
+
 	@Override
 	public byte[] encode(Object obj) {
 		byte[] info = obj.getClass().getName().getBytes();
@@ -65,11 +63,9 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 		int infoLength = info.length;
 		int dataLength = data.length;
 		int splitSignalLength = splitSignal.length;
-		
-		int size = headLength + lengthLength
-				+ infoLength + dataLength
-				+ splitSignalLength * 3;
-		
+
+		int size = headLength + lengthLength + infoLength + dataLength + splitSignalLength * 3;
+
 		byte[] bytes = new byte[size];
 		int i = 0;
 		for (int j = 0; j < headLength; j++)
@@ -96,7 +92,8 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 
 	@Override
 	public Object decode(byte[] bytes, int offset) {
-		if (bytes == null) return null;
+		if (bytes == null)
+			return null;
 		if (!Utils.checkHead(bytes, offset, head))
 			throw new LYException("Bad data package: mismatch head");
 		String sInfo = null, sData = null;
@@ -104,14 +101,14 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 		try {
 			headEndPosition = offset + head.length;
 
-			if(bytes.length - 4 < headEndPosition + splitSignal.length)
+			if (bytes.length - 4 < headEndPosition + splitSignal.length)
 				return 0;
 			int dataLength = Utils.Bytes4ToInt(bytes, headEndPosition + splitSignal.length);
 			lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
 			int infoLength = Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
-			infoLength = (infoLength==-1 ? 0:infoLength);
+			infoLength = (infoLength == -1 ? 0 : infoLength);
 			infoEndPosition = lengthEndPosition + splitSignal.length + infoLength;
-	
+
 			sInfo = new String(bytes, lengthEndPosition + splitSignal.length, infoLength);
 			sData = new String(bytes, infoEndPosition + splitSignal.length, dataLength, CoreDef.CHARSET());
 			return Utils.deserialize(Class.forName(sInfo), sData);
@@ -125,7 +122,7 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 			throw new LYException("Failed to convert data[" + originData + "] into specific class:" + sInfo, e);
 		}
 	}
-	
+
 	@Override
 	public int validate(byte[] bytes, int len) {
 		return validate(bytes, 0, len);
@@ -133,30 +130,29 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 
 	@Override
 	public int validate(byte[] bytes, int offset, int len) {
-		if (bytes == null) throw new LYException("Parameter bytes is null");
+		if (bytes == null)
+			throw new LYException("Parameter bytes is null");
 		if (len - offset < head.length)
 			return 0;
-		if (!Utils.checkHead(bytes, offset, head))
-			throw new LYException("Bad data package: mismatch head\n"
-					+ new String(bytes, offset, len-offset).trim()
-					+ "\nOriginal(start from " + offset + "):\n"
-					+ new String(bytes).trim());
-		
+		if (!Utils.checkHead(bytes, offset, len, head))
+			throw new LYException("Bad data package: mismatch head\n" + new String(bytes, offset, len - offset).trim()
+					+ "\nOriginal(start from " + offset + "):\n" + new String(bytes).trim());
+
 		int headEndPosition = head.length + offset;
-		
-		if(bytes.length - 4 < headEndPosition + splitSignal.length)
+
+		if (bytes.length - 4 < headEndPosition + splitSignal.length)
 			return 0;
 		int length = Utils.Bytes4ToInt(bytes, headEndPosition + splitSignal.length);
 		int lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
 
 		int infoLength = Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
-		infoLength = (infoLength==-1 ? 0:infoLength);
+		infoLength = (infoLength == -1 ? 0 : infoLength);
 		int infoEndPosition = lengthEndPosition + splitSignal.length + infoLength;
-		
+
 		int dataEndPosition = length + infoEndPosition + splitSignal.length;
-		if(len < dataEndPosition)
+		if (len < dataEndPosition)
 			return 0;
 		return dataEndPosition;
 	}
-	
+
 }

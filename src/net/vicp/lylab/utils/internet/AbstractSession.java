@@ -1,6 +1,10 @@
 package net.vicp.lylab.utils.internet;
 
-import net.vicp.lylab.core.interfaces.LifeCycle;
+import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Dispatcher;
+import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.interfaces.Session;
+import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.utils.tq.Task;
 
 /**
@@ -13,10 +17,26 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2016.01.24
  * @version 1.0.0
  */
-public abstract class AbstractSession extends Task implements Session, LifeCycle {
+public abstract class AbstractSession extends Task implements Session {
 	private static final long serialVersionUID = -8789772874306147807L;
 
 	private boolean server;
+	protected Protocol protocol;
+
+	// for server mode
+	protected Dispatcher<? super Object, ? super Object> dispatcher;
+	// for long connection
+	protected HeartBeat heartBeat;
+
+	public AbstractSession(Protocol protocol, Dispatcher<? super Object, ? super Object> dispatcher,
+			HeartBeat heartBeat) {
+		super();
+		if (protocol == null)
+			throw new LYException("Parameter protocol is null");
+		this.protocol = protocol;
+		this.dispatcher = dispatcher;
+		this.heartBeat = heartBeat;
+	}
 
 	public boolean isServer() {
 		return server;

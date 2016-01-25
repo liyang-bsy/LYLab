@@ -594,14 +594,14 @@ public abstract class Utils extends NonCloneableBaseObject {
 		return true;
 	}
 
-	public static boolean checkHead(byte[] bytes, byte[] head) {
-		return checkHead(bytes, 0, head);
+	public static boolean checkHead(byte[] bytes, int offset, byte[] head) {
+		return checkHead(bytes, offset, bytes.length - offset, head);
 	}
 
-	public static boolean checkHead(byte[] bytes, int offset, byte[] head) {
-		if (!bytesContinueWith(bytes, offset, head, 0, head.length))
-			return false;
-		return true;
+	public static boolean checkHead(byte[] bytes, int offset, int length, byte[] head) {
+		if (length < head.length)
+			return true;
+		return bytesContinueWith(bytes, offset, head, 0, head.length);
 	}
 
 }

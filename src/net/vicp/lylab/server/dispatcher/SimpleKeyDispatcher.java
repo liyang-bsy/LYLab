@@ -10,7 +10,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.utils.Utils;
 
-public class SimpleKeyDispatcherAop<I extends Message> extends AbstractDispatcherAop<I, Message> {
+public class SimpleKeyDispatcher<I extends Message> extends AbstractDispatcher<I, Message> {
 
 	@Override
 	protected Message newResponse() {

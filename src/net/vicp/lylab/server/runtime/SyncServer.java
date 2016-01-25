@@ -4,19 +4,18 @@ import java.net.ServerSocket;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
-import net.vicp.lylab.core.interfaces.Aop;
+import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.LifeCycle;
-import net.vicp.lylab.core.model.SimpleHeartBeat;
+import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
-import net.vicp.lylab.utils.internet.BaseSocket;
-import net.vicp.lylab.utils.internet.ToClientLongSocket;
-import net.vicp.lylab.utils.internet.ToClientSocket;
+import net.vicp.lylab.utils.internet.SyncSession;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
-import net.vicp.lylab.utils.tq.Task;
+import net.vicp.lylab.utils.tq.LoneWolf;
 
 /**
- * A server runtime based on Sync-Server, TaskSocket.
+ * A server runtime based on Sync-Server.
  * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
@@ -24,15 +23,16 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class SyncServer extends Task implements LifeCycle {
+public class SyncServer extends LoneWolf implements LifeCycle {
 	private static final long serialVersionUID = 883892527805494627L;
 	
 	protected AtomicBoolean closed = new AtomicBoolean(true);
 	protected ServerSocket serverSocket;
-	protected LYTaskQueue lyTaskQueue;
-	protected Aop aop;
+	protected LYTaskQueue taskQueue;
+	protected Dispatcher<? super Object, ? super Object> dispatcher;
 	protected Integer port = null;
-	protected boolean longServer = false;
+	protected Protocol protocol;
+	protected HeartBeat heartBeat;
 
 	@Override
 	public void initialize() {
@@ -59,12 +59,8 @@ public class SyncServer extends Task implements LifeCycle {
 		}
 		while (!isClosed()) {
 			try {
-				BaseSocket bs = null;
-				if(isLongServer())
-					bs = new ToClientLongSocket(serverSocket, new SimpleHeartBeat()).setAopLogic(aop);
-				else
-					bs = new ToClientSocket(serverSocket).setAopLogic(aop);
-				if(lyTaskQueue.addTask(bs) == null)
+				SyncSession session = new SyncSession(serverSocket, protocol, dispatcher, heartBeat);
+				if(taskQueue.addTask(session) == null)
 					await(CoreDef.WAITING_SHORT);
 			} catch (Exception e) {
 				log.error(Utils.getStringFromException(e));
@@ -72,32 +68,52 @@ public class SyncServer extends Task implements LifeCycle {
 		}
 	}
 
-	public void setLyTaskQueue(LYTaskQueue lyTaskQueue) {
-		this.lyTaskQueue = lyTaskQueue;
-	}
-
-	public void setAop(Aop aop) {
-		this.aop = aop;
-	}
-
 	public boolean isClosed() {
 		return closed.get();
 	}
 
-	public int getPort() {
+	public LYTaskQueue getTaskQueue() {
+		return taskQueue;
+	}
+
+	public void setTaskQueue(LYTaskQueue taskQueue) {
+		this.taskQueue = taskQueue;
+	}
+
+	public Dispatcher<? super Object, ? super Object> getDispatcher() {
+		return dispatcher;
+	}
+
+	public void setDispatcher(Dispatcher<? super Object, ? super Object> dispatcher) {
+		this.dispatcher = dispatcher;
+	}
+
+	public Integer getPort() {
 		return port;
 	}
 
-	public void setPort(int port) {
+	public void setPort(Integer port) {
 		this.port = port;
 	}
 
 	public boolean isLongServer() {
-		return longServer;
+		return heartBeat != null;
 	}
 
-	public void setLongServer(boolean longServer) {
-		this.longServer = longServer;
+	public Protocol getProtocol() {
+		return protocol;
+	}
+
+	public void setProtocol(Protocol protocol) {
+		this.protocol = protocol;
+	}
+
+	public HeartBeat getHeartBeat() {
+		return heartBeat;
+	}
+
+	public void setHeartBeat(HeartBeat heartBeat) {
+		this.heartBeat = heartBeat;
 	}
 
 }

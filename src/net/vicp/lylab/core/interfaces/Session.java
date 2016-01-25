@@ -1,7 +1,10 @@
-package net.vicp.lylab.utils.internet;
+package net.vicp.lylab.core.interfaces;
+
+import java.net.Socket;
 
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Transmission;
+import net.vicp.lylab.core.model.InetAddr;
 
 /**
  * A session to be used for communicating with server.
@@ -16,5 +19,7 @@ import net.vicp.lylab.core.interfaces.Transmission;
 public interface Session extends LifeCycle, Transmission {
 
 	public boolean isServer();
+
+	public Socket getClient(InetAddr clientAddr);
 
 }

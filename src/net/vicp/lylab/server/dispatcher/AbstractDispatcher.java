@@ -7,16 +7,13 @@ import java.util.List;
 import net.vicp.lylab.core.AbstractAction;
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Dispatcher;
-import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.SimpleMessage;
 import net.vicp.lylab.server.filter.Filter;
 import net.vicp.lylab.utils.Utils;
 
-public abstract class AbstractDispatcherAop<I extends O, O extends SimpleMessage> extends NonCloneableBaseObject implements Dispatcher<I, O> {
+public abstract class AbstractDispatcher<I extends O, O extends SimpleMessage> extends NonCloneableBaseObject implements Dispatcher<I, O> {
 	protected List<Filter<I, O>> filterChain = new ArrayList<Filter<I, O>>();
-	protected Protocol protocol = null;
 
 	protected abstract void dispatcher(AbstractAction action, Socket client, I request, O response);
 
@@ -35,8 +32,6 @@ public abstract class AbstractDispatcherAop<I extends O, O extends SimpleMessage
 
 	@Override
 	public void initialize() {
-		if (protocol == null)
-			throw new LYException("No available protocol");
 	}
 
 	@Override
@@ -102,15 +97,6 @@ public abstract class AbstractDispatcherAop<I extends O, O extends SimpleMessage
 			log.error("Logger failed:" + Utils.getStringFromException(e));
 		}
 		return response;
-	}
-
-	public Protocol getProtocol() {
-		return protocol;
-	}
-
-	public Dispatcher<I, O> setProtocol(Protocol protocol) {
-		this.protocol = protocol;
-		return this;
 	}
 
 	public List<Filter<I, O>> getFilterChain() {

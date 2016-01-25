@@ -1,6 +1,5 @@
 package net.vicp.lylab.utils.internet.transfer;
 
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -8,15 +7,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import net.vicp.lylab.core.CoreDef;
-import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.interfaces.Session;
 import net.vicp.lylab.core.interfaces.Transfer;
+import net.vicp.lylab.core.model.InetAddr;
 import net.vicp.lylab.core.model.Pair;
 import net.vicp.lylab.core.pool.SequenceTemporaryPool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.controller.TimeoutController;
-import net.vicp.lylab.utils.internet.Session;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.LoneWolf;
 
@@ -29,38 +29,39 @@ import net.vicp.lylab.utils.tq.LoneWolf;
 public abstract class AbstractTransfer extends LoneWolf implements Transfer {
 	private static final long serialVersionUID = 1706498472211433734L;
 	
-	//					client		validate
-	protected Map<InetSocketAddress, Boolean> addr2validate = new HashMap<>();
-	//					client		startTime
-	protected Map<InetSocketAddress, Long> addr2timeout = new HashMap<>();
-	//					client				byte buffer
-	protected Map<InetSocketAddress, Pair<byte[], Integer>> addr2byte = new HashMap<>();
+	//				client		validate
+	protected Map<InetAddr, Boolean> addr2validate = new HashMap<>();
+	//				client		startTime
+	protected Map<InetAddr, Long> addr2timeout = new HashMap<>();
+	//				client				byte buffer
+	protected Map<InetAddr, Pair<byte[], Integer>> addr2byte = new HashMap<>();
 	//										client			Data
-	protected SequenceTemporaryPool<Pair<InetSocketAddress, byte[]>> requestPool = new SequenceTemporaryPool<>();
+	protected SequenceTemporaryPool<Pair<InetAddr, byte[]>> requestPool = new SequenceTemporaryPool<>();
 	//
 	protected long timeout = CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT;
 	protected AtomicBoolean closed = new AtomicBoolean(true);
 	protected Session session;
 	protected Protocol protocol;
 	protected LYTaskQueue taskQueue;
+	protected Dispatcher<? super Object, ? super Object> dispatcher;
+
+	public AbstractTransfer(Session session, Protocol protocol, LYTaskQueue taskQueue,
+			Dispatcher<? super Object, ? super Object> dispatcher) {
+		super();
+		this.session = session;
+		this.protocol = protocol;
+		this.taskQueue = taskQueue;
+		this.dispatcher = dispatcher;
+	}
 
 	@Override
 	public void initialize() {
-		if(protocol == null)
-			throw new LYException("No protocol is assigned");
-		if(taskQueue == null)
-			throw new LYException("No taskQueue is assigned");
-		if(session == null)
-			throw new LYException("No session is assigned");
-		if (!closed.compareAndSet(true, false))
-			return;
 		TimeoutController.addToWatch(this);
-		this.begin("transfer");
 	}
 
 	@Override
 	public void putRequest(Socket client, byte[] buffer, int bufferLen) {
-		InetSocketAddress clientAddr = (InetSocketAddress) client.getRemoteSocketAddress();
+		InetAddr clientAddr = InetAddr.fromInetAddr(client.getInetAddress().getHostAddress(), client.getLocalPort());
 		if (!addr2byte.containsKey(clientAddr))
 			addr2byte.put(clientAddr, new Pair<>(buffer, bufferLen));
 		else {
@@ -76,17 +77,16 @@ public abstract class AbstractTransfer extends LoneWolf implements Transfer {
 		//requestPool.add(new Pair<>(socketChannel, request));
 		signalAll();
 	}
-
-	public Pair<byte[], Integer> getRequest(Socket client) {
-		synchronized (lock) {
-			InetSocketAddress clientAddr = (InetSocketAddress) client.getRemoteSocketAddress();
-			if (!addr2byte.containsKey(clientAddr)) {
-				addr2timeout.remove(clientAddr);
-				addr2validate.remove(clientAddr);
-				return addr2byte.remove(clientAddr);
-			}
-			throw new LYException("No match request was found");
-		}
+	
+	@Override
+	public void close() {
+		if (closed.getAndSet(true))
+			return;
+		TimeoutController.removeFromWatch(this);
+		addr2validate.clear();
+		addr2timeout.clear();
+		addr2byte.clear();
+		requestPool.clear();
 	}
 
 	@Override
@@ -101,9 +101,9 @@ public abstract class AbstractTransfer extends LoneWolf implements Transfer {
 	
 	public void recycle(double rate) {
 		synchronized (lock) {
-			Iterator<Entry<InetSocketAddress, Long>> addrIterator = addr2timeout.entrySet().iterator();
+			Iterator<Entry<InetAddr, Long>> addrIterator = addr2timeout.entrySet().iterator();
 			while (addrIterator.hasNext()) {
-				Entry<InetSocketAddress, Long> entry = addrIterator.next();
+				Entry<InetAddr, Long> entry = addrIterator.next();
 				if (System.currentTimeMillis() - entry.getValue() > timeout * rate) {
 					addr2validate.remove(entry.getKey());
 					addr2byte.remove(entry.getKey());
@@ -145,6 +145,14 @@ public abstract class AbstractTransfer extends LoneWolf implements Transfer {
 
 	public void setTaskQueue(LYTaskQueue taskQueue) {
 		this.taskQueue = taskQueue;
+	}
+
+	public Dispatcher<? super Object, ? super Object> getDispatcher() {
+		return dispatcher;
+	}
+
+	public void setDispatcher(Dispatcher<? super Object, ? super Object> dispatcher) {
+		this.dispatcher = dispatcher;
 	}
 
 }
