@@ -98,4 +98,12 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 		this.protocol = protocol;
 	}
 
+	public HeartBeat getHeartBeat() {
+		return heartBeat;
+	}
+
+	public void setHeartBeat(HeartBeat heartBeat) {
+		this.heartBeat = heartBeat;
+	}
+
 }

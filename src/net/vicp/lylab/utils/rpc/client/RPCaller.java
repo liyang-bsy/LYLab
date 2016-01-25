@@ -29,9 +29,8 @@ public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
 	public List<Message> call(RPCMessage message, boolean broadcast) {
 		boolean isRpc = false;
 		List<Message> callResult = new ArrayList<>();
-		if (StringUtils.isBlank(message.getRpcKey())) {
+		if (StringUtils.isBlank(message.getRpcKey()))
 			message.setRpcKey("RPC");
-		}
 		if (message.getRpcKey().equals("RPC"))
 			isRpc = true;
 		Protocol p = (Protocol) CoreDef.config.getObject("protocol");
@@ -66,7 +65,10 @@ public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
 		pool.recycle(session);
 		Message retM = (Message) p.decode(res);
 		if(isRpc)
-			retM = ((List<Message>) retM.getBody().get("CallResult")).get(0);
+		{
+			List<Message> list = ((List<Message>) retM.getBody().get("CallResult"));
+			retM = list.get(0);
+		}
 		return retM;
 	}
 
