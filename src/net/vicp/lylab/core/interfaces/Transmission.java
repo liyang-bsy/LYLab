@@ -11,4 +11,5 @@ package net.vicp.lylab.core.interfaces;
  * 
  */
 
-public interface Transmission extends DoRequest, DoResponse { }
+public interface Transmission extends Request, Response {
+}

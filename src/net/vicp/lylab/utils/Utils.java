@@ -565,5 +565,43 @@ public abstract class Utils extends NonCloneableBaseObject {
 			dst[dstOffset + i] = src[srcOffset + i];
 		return dst;
 	}
+	
+	/**
+	 * Compare bytes start from a specific position for a specific limit
+	 * 
+	 * @param e1
+	 *            source to compare
+	 * @param e1Offset
+	 *            offset from e1
+	 * @param e2
+	 *            destination to compare
+	 * @param e2Offset
+	 *            offset from e2
+	 * @param cmpLength
+	 *            compare for specific length
+	 * @return true if e1 and e2 is the same from e1Offset and e2Offset for
+	 *         comLength
+	 */
+	public static boolean bytesContinueWith(byte[] e1, int e1Offset, byte[] e2,
+			int e2Offset, int cmpLength) {
+		if (e1.length - e1Offset < e2.length - e2Offset
+				|| e1.length - e1Offset < cmpLength
+				|| e2.length - e2Offset < cmpLength)
+			return false;
+		for (int i = 0; i < cmpLength; i++)
+			if (e1[e1Offset + i] != e2[e2Offset + i])
+				return false;
+		return true;
+	}
+
+	public static boolean checkHead(byte[] bytes, int offset, byte[] head) {
+		return checkHead(bytes, offset, bytes.length - offset, head);
+	}
+
+	public static boolean checkHead(byte[] bytes, int offset, int length, byte[] head) {
+		if (length < head.length)
+			return true;
+		return bytesContinueWith(bytes, offset, head, 0, head.length);
+	}
 
 }

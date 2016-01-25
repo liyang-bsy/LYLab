@@ -2,16 +2,16 @@ package net.vicp.lylab.core.interfaces;
 
 import java.net.Socket;
 
-public interface Aop extends LifeCycle {
+public interface Dispatcher<I, O> extends LifeCycle {
 	
 	/**
 	 * do action
 	 * @param client
 	 * @param request
 	 * @return
-	 * byte you want to reply to client
+	 * Object you want to reply to client
 	 */
-	public byte[] doAction(Socket client, byte[] request, int offset);
+	public O doAction(Socket client, I request);
 	/**
 	 * You should set filters when initialize
 	 * @param client
@@ -19,7 +19,5 @@ public interface Aop extends LifeCycle {
 	 * @return
 	 */
 	public void initialize();
-	
-	public Aop setProtocol(Protocol protocol);
 	
 }

@@ -2,6 +2,8 @@ package net.vicp.lylab.core.interfaces;
 
 import java.net.Socket;
 
+import net.vicp.lylab.core.model.Pair;
+
 /**
  * General Transmission interface for all classes.<br>
  * Implements this means it could be used to communication with clients on Internet<br>
@@ -13,7 +15,7 @@ import java.net.Socket;
  * 
  */
 
-public interface DoResponse {
+public interface Response {
 	/**
 	 * Receive a request and send a response
 	 * @param 
@@ -21,6 +23,6 @@ public interface DoResponse {
 	 * @return
 	 * 		if success response to client
 	 */
-	public byte[] response(Socket client, byte[] request, int offset);
+	Pair<byte[], Integer> receive(Socket client);
 
 }

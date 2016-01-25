@@ -1,13 +1,13 @@
 package net.vicp.lylab.server.runtime;
 
 import net.vicp.lylab.core.exceptions.LYException;
-import net.vicp.lylab.core.interfaces.Aop;
+import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.model.SimpleHeartBeat;
+import net.vicp.lylab.core.interfaces.Session;
+import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
-import net.vicp.lylab.utils.internet.AsyncSocket;
-import net.vicp.lylab.utils.internet.transfer.Transfer;
+import net.vicp.lylab.utils.internet.AsyncSession;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 import net.vicp.lylab.utils.tq.LoneWolf;
 
@@ -24,47 +24,50 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 	private static final long serialVersionUID = -6058980641184489541L;
 	
 	protected AtomicBoolean closed = new AtomicBoolean(true);
-	protected AsyncSocket asyncSocket;
+	protected Session session;
 	protected LYTaskQueue taskQueue;
-	protected Aop aop;
+	protected Dispatcher<? super Object, ? super Object> dispatcher;
 	protected Integer port = null;
-	protected boolean longServer = true;
 	protected Protocol protocol;
+	protected HeartBeat heartBeat;
 
 	@Override
 	public void initialize() {
 		if(!closed.compareAndSet(true, false))
 			return;
-		this.begin("Sync Server - Main Thread");
+		this.begin("Async Server - Main Thread");
 	}
 	
 	@Override
 	public void close() throws Exception {
 		if(!closed.compareAndSet(false, true))
 			return;
-		asyncSocket.close();
+		session.close();
 		this.callStop();
 	}
 
 	@Override
 	public void exec() {
-		Transfer transfer = new Transfer();
-		transfer.setTaskQueue(taskQueue);
-		transfer.setProtocol(protocol);
-		
-		asyncSocket = new AsyncSocket(port, transfer, new SimpleHeartBeat());
-		aop.setProtocol(protocol);
-		asyncSocket.setAopLogic(aop);
-		
-		asyncSocket.initialize();
+		session = new AsyncSession(port, protocol, dispatcher, heartBeat, taskQueue);
+		session.initialize();
 	}
 
-	public AsyncSocket getAsyncSocket() {
-		return asyncSocket;
+	public void setLongServer(boolean longServer) {
+//		this.longServer = longServer;
+		if(longServer == false)
+			throw new LYException("AsyncServer can only be a long server");
 	}
 
-	public void setAsyncSocket(AsyncSocket asyncSocket) {
-		this.asyncSocket = asyncSocket;
+	public boolean isClosed() {
+		return closed.get();
+	}
+
+	public Dispatcher<? super Object, ? super Object> getDispatcher() {
+		return dispatcher;
+	}
+
+	public void setDispatcher(Dispatcher<? super Object, ? super Object> dispatcher) {
+		this.dispatcher = dispatcher;
 	}
 
 	public LYTaskQueue getTaskQueue() {
@@ -73,14 +76,6 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 
 	public void setTaskQueue(LYTaskQueue taskQueue) {
 		this.taskQueue = taskQueue;
-	}
-
-	public Aop getAop() {
-		return aop;
-	}
-
-	public void setAop(Aop aop) {
-		this.aop = aop;
 	}
 
 	public Integer getPort() {
@@ -92,12 +87,7 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 	}
 
 	public boolean isLongServer() {
-		return longServer;
-	}
-
-	public void setLongServer(boolean longServer) {
-		throw new LYException("AsyncServer can only be a long server");
-//		this.longServer = longServer;
+		return heartBeat != null;
 	}
 
 	public Protocol getProtocol() {
@@ -106,10 +96,6 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 
 	public void setProtocol(Protocol protocol) {
 		this.protocol = protocol;
-	}
-
-	public boolean isClosed() {
-		return closed.get();
 	}
 
 }

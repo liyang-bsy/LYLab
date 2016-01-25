@@ -1,21 +1,19 @@
-package net.vicp.lylab.utils.internet.impl;
+package net.vicp.lylab.utils.internet.protocol;
 
 import java.io.Serializable;
 import java.util.Arrays;
+
+import org.apache.commons.lang3.SerializationUtils;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.internet.protocol.ProtocolUtils;
-
-import org.apache.commons.lang3.SerializationUtils;
 
 /**
- * A self-defined protocol easy transfer Objects through socket.<br>
- * Data will be transfered as JSON string.<br>
- * [!] Attention, protocol object is <tt>NOT</tt> thread-safe.
+ * A custom protocol easy transfer Objects through socket.<br>
+ * Data will be transfered as byte array, encoded by java.lang.Serializable.<br>
  * <br><br>
  * Release Under GNU Lesser General Public License (LGPL).
  * 
@@ -47,11 +45,9 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 		int lengthLength = length.length;
 		int dataLength = data.length;
 		int splitSignalLength = splitSignal.length;
-		
-		int size = headLength + lengthLength
-				+ dataLength
-				+ splitSignalLength * 2;
-		
+
+		int size = headLength + lengthLength + dataLength + splitSignalLength * 2;
+
 		byte[] bytes = new byte[size];
 		int i = 0;
 		for (int j = 0; j < headLength; j++)
@@ -74,16 +70,18 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 
 	@Override
 	public Object decode(byte[] bytes, int offset) {
-		if (bytes == null) return null;
-		if (!ProtocolUtils.checkHead(bytes, offset, head))
+		if (bytes == null)
+			return null;
+		if (!Utils.checkHead(bytes, offset, head))
 			throw new LYException("Bad data package: mismatch head");
 
 		int headEndPosition = offset + head.length;
-		
+
 		int lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
 		int length = Utils.Bytes4ToInt(bytes, head.length + splitSignal.length);
-		
-		byte[] data = Arrays.copyOfRange(bytes, lengthEndPosition + splitSignal.length, lengthEndPosition + splitSignal.length + length);
+
+		byte[] data = Arrays.copyOfRange(bytes, lengthEndPosition + splitSignal.length,
+				lengthEndPosition + splitSignal.length + length);
 		try {
 			return SerializationUtils.deserialize(data);
 		} catch (Exception e) {
@@ -98,19 +96,20 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 
 	@Override
 	public int validate(byte[] bytes, int offset, int len) {
-		if (bytes == null) throw new LYException("Parameter bytes is null");
+		if (bytes == null)
+			throw new LYException("Parameter bytes is null");
 		if (len - offset < head.length)
 			return 0;
-		if (!ProtocolUtils.checkHead(bytes, offset, head))
+		if (!Utils.checkHead(bytes, offset, len, head))
 			throw new LYException("Bad data package: mismatch head");
-		
+
 		int headEndPosition = offset + head.length;
 		int lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
 		int length = Utils.Bytes4ToInt(bytes, headEndPosition + splitSignal.length);
 
 		int dataEnd = length + lengthEndPosition + splitSignal.length;
-		
-		if(len < dataEnd)
+
+		if (len < dataEnd)
 			return 0;
 		return dataEnd;
 	}
