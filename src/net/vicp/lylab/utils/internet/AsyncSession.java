@@ -115,8 +115,8 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 				ServerSocketChannel serverSocketChannel = (ServerSocketChannel) selectionKey.channel();
 				SocketChannel socketChannel = serverSocketChannel.accept();
 				socketChannel.configureBlocking(false);
-				Socket socket = socketChannel.socket();
-				addr2client.put(InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getLocalPort()), socketChannel);
+//				Socket socket = socketChannel.socket();
+				addr2client.put(getPeer(socketChannel), socketChannel);
 				socketChannel.register(selector, SelectionKey.OP_READ);
 			} catch (Exception e) {
 				throw new LYException("Close failed", e);
@@ -125,7 +125,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 			SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
 			try {
 				Pair<byte[], Integer> data = receive(socketChannel.socket());
-				transfer.putRequest(socketChannel.socket(), data.getLeft(), data.getRight());
+				transfer.putRequest(getPeer(socketChannel), data.getLeft(), data.getRight());
 			} catch (Throwable t) {
 				if (socketChannel != null) {
 					try {
@@ -170,6 +170,20 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 		}
 	}
 
+	public InetAddr getPeer(SocketChannel socketChannel) {
+		Socket socket = socketChannel.socket();
+		return getPeer(socket);
+	}
+
+	public InetAddr getPeer(Socket socket) {
+		if(isServer())
+			// client ip + local port(a random port assigned by operation system)
+			return InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getPort());
+		else
+			// server ip + server port
+			return InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getPort());
+	}
+
 	@Override
 	public Socket getClient(InetAddr clientAddr) {
 		return addr2client.get(clientAddr).socket();
@@ -187,7 +201,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 		niobuf.clear();
 		while (true) {
 			try {
-				ret = addr2client.get(InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getLocalPort())).read(niobuf);
+				ret = addr2client.get(getPeer(socket)).read(niobuf);
 				if (ret <= 0) {
 					if (ret == 0) {
 						// move niobuf to buffer
@@ -219,7 +233,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 		if (isClosed())
 			throw new LYException("Session closed");
 		try {
-			SocketChannel socketChannel = addr2client.get(InetAddr.fromInetAddr(client.getInetAddress().getHostAddress(), client.getLocalPort()));
+			SocketChannel socketChannel = addr2client.get(getPeer(client));
 			if (socketChannel != null)
 				flushChannel(socketChannel, ByteBuffer.wrap(request), CoreDef.DEFAULT_SOCKET_WRITE_TTIMEOUT);
 			else

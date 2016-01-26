@@ -1,6 +1,5 @@
 package net.vicp.lylab.utils.internet.transfer;
 
-import java.net.Socket;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -46,35 +45,41 @@ public class AsyncTransfer extends AbstractTransfer {
 	private boolean validateRequest() {
 		boolean noMoreRequest = true;
 		if (!addr2validate.isEmpty()) {
-			Iterator<Entry<InetAddr, Boolean>> addrContainerIterator = addr2validate.entrySet().iterator();
-			while (addrContainerIterator.hasNext()) {
-				Entry<InetAddr, Boolean> addrContainer = addrContainerIterator.next();
-				addrContainerIterator.remove();
-				if (!addrContainer.getValue())
-					continue;
-
-				Pair<byte[], Integer> byteContainer = addr2byte.get(addrContainer.getKey());
-				synchronized (byteContainer) {
-					int start = 0, next = 0;
-					boolean newReuqest = false;
-					while (true) {
-						start = next;
-						if ((next = protocol.validate(byteContainer.getLeft(), start, byteContainer.getRight())) == 0)
-							break;
-						if (next <= byteContainer.getRight()) {
-							byte[] fullReq = new byte[next - start];
-							Utils.bytecat(fullReq, 0, byteContainer.getLeft(), start, next - start);
-							requestPool.add(new Pair<>(addrContainer.getKey(), fullReq));
-							newReuqest = true;
+			synchronized (lock) {
+				Iterator<Entry<InetAddr, Boolean>> addrContainerIterator = addr2validate.entrySet().iterator();
+				while (addrContainerIterator.hasNext()) {
+					Entry<InetAddr, Boolean> addrContainer = addrContainerIterator.next();
+					addrContainerIterator.remove();
+					if (!addrContainer.getValue())
+						continue;
+					try {
+						Pair<byte[], Integer> byteContainer = addr2byte.get(addrContainer.getKey());
+						synchronized (byteContainer) {
+							int start = 0, next = 0;
+							boolean newReuqest = false;
+							while (true) {
+								start = next;
+								if ((next = protocol.validate(byteContainer.getLeft(), start,
+										byteContainer.getRight())) == 0)
+									break;
+								if (next <= byteContainer.getRight()) {
+									byte[] fullReq = new byte[next - start];
+									Utils.bytecat(fullReq, 0, byteContainer.getLeft(), start, next - start);
+									requestPool.add(new Pair<>(addrContainer.getKey(), fullReq));
+									newReuqest = true;
+								}
+							}
+							if (newReuqest) {
+								Utils.bytecat(byteContainer.getLeft(), 0, byteContainer.getLeft(), start,
+										byteContainer.getRight() - start);
+								byteContainer.setRight(byteContainer.getRight() - start);
+								Arrays.fill(byteContainer.getLeft(), byteContainer.getRight(),
+										byteContainer.getLeft().length, (byte) 0);
+								noMoreRequest = false;
+							}
 						}
-					}
-					if (newReuqest) {
-						Utils.bytecat(byteContainer.getLeft(), 0, byteContainer.getLeft(), start,
-								byteContainer.getRight() - start);
-						byteContainer.setRight(byteContainer.getRight() - start);
-						Arrays.fill(byteContainer.getLeft(), byteContainer.getRight(), byteContainer.getLeft().length,
-								(byte) 0);
-						noMoreRequest = false;
+					} catch (Exception e) {
+						log.error("Decoding requests failed:" + Utils.getStringFromException(e));
 					}
 				}
 			}
@@ -93,10 +98,6 @@ public class AsyncTransfer extends AbstractTransfer {
 						session, dispatcher, protocol));
 			}
 		}
-	}
-
-	public byte[] getResponse(Socket client) {
-		throw new LYException("Unable to get response from AsyncTransfer");
 	}
 
 }

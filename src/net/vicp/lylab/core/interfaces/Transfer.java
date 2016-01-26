@@ -1,6 +1,6 @@
 package net.vicp.lylab.core.interfaces;
 
-import java.net.Socket;
+import net.vicp.lylab.core.model.InetAddr;
 
 /**
  * Transfer could combine data packet chips into a full packet
@@ -10,10 +10,8 @@ import java.net.Socket;
  */
 public interface Transfer extends Initializable, Recyclable {
 
-	public void putRequest(Socket client, byte[] buffer, int bufferLen);
+	public void putRequest(InetAddr clientAddr, byte[] buffer, int bufferLen);
 
-	public byte[] getResponse(Socket client);
-	
 	public void setSession(Session session);
 
 	// getters & setters

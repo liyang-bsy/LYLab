@@ -1,6 +1,5 @@
 package net.vicp.lylab.utils.internet.transfer;
 
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -60,22 +59,21 @@ public abstract class AbstractTransfer extends LoneWolf implements Transfer {
 	}
 
 	@Override
-	public void putRequest(Socket client, byte[] buffer, int bufferLen) {
-		InetAddr clientAddr = InetAddr.fromInetAddr(client.getInetAddress().getHostAddress(), client.getLocalPort());
-		if (!addr2byte.containsKey(clientAddr))
-			addr2byte.put(clientAddr, new Pair<>(buffer, bufferLen));
-		else {
-			Pair<byte[], Integer> container = addr2byte.get(clientAddr);
-			synchronized (lock) {
-				container.setLeft(Utils.bytecat(container.getLeft(), container.getRight(),
-						buffer, 0, bufferLen));
-				container.setRight(container.getRight() + bufferLen);
+	public void putRequest(InetAddr clientAddr, byte[] buffer, int bufferLen) {
+		synchronized (lock) {
+			if (!addr2byte.containsKey(clientAddr))
+				addr2byte.put(clientAddr, new Pair<>(buffer, bufferLen));
+			else {
+				Pair<byte[], Integer> container = addr2byte.get(clientAddr);
+				synchronized (lock) {
+					container.setLeft(Utils.bytecat(container.getLeft(), container.getRight(), buffer, 0, bufferLen));
+					container.setRight(container.getRight() + bufferLen);
+				}
 			}
+			addr2validate.put(clientAddr, true);
+			addr2timeout.put(clientAddr, System.currentTimeMillis());
+			signalAll();
 		}
-		addr2validate.put(clientAddr, true);
-		addr2timeout.put(clientAddr, System.currentTimeMillis());
-		//requestPool.add(new Pair<>(socketChannel, request));
-		signalAll();
 	}
 	
 	@Override
