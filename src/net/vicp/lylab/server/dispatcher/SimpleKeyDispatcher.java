@@ -6,11 +6,13 @@ import org.apache.commons.lang3.StringUtils;
 
 import net.vicp.lylab.core.AbstractAction;
 import net.vicp.lylab.core.BaseAction;
-import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.model.Message;
+import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.Utils;
 
 public class SimpleKeyDispatcher<I extends Message> extends AbstractDispatcher<I, Message> {
+	
+	protected Config actions = null;
 
 	@Override
 	protected Message newResponse() {
@@ -25,7 +27,7 @@ public class SimpleKeyDispatcher<I extends Message> extends AbstractDispatcher<I
 	@Override
 	protected BaseAction mapAction(I request) {
 		try {
-			return (BaseAction) CoreDef.config.getConfig("Aop").getNewInstance(request.getKey() + "Action");
+			return (BaseAction) actions.getNewInstance(request.getKey() + "Action");
 		} catch (Exception e) {
 			return null;
 		}
@@ -66,6 +68,14 @@ public class SimpleKeyDispatcher<I extends Message> extends AbstractDispatcher<I
 			response.setCode(0x00000006);
 			response.setMessage("Action exec failed:" + reason);
 		}
+	}
+
+	public Config getActions() {
+		return actions;
+	}
+
+	public void setActions(Config actions) {
+		this.actions = actions;
 	}
 
 }

@@ -1,11 +1,9 @@
 package net.vicp.lylab.utils.timer;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.AutoInitialize;
@@ -26,26 +24,13 @@ import net.vicp.lylab.utils.atomic.AtomicStrongReference;
 public final class LYTimer extends NonCloneableBaseObject implements LifeCycle {
 	private List<TimerJob> jobs = null;
 	private AutoInitialize<Timer> timer = new AtomicStrongReference<Timer>();
-	private AtomicBoolean init = new AtomicBoolean(false);
+	private AtomicBoolean closed = new AtomicBoolean(true);
 	
 	@Override
 	public void initialize() {
 		synchronized (lock) {
-			if(init.getAndSet(true)) return;
-			if (jobs == null) {
-				jobs = new ArrayList<TimerJob>();
-				for (String key : CoreDef.config.getConfig("LYTimer").keyList()) {
-					try {
-						Object tmp = CoreDef.config.getConfig("LYTimer").getObject(key);
-						if (tmp instanceof String)
-							jobs.add((TimerJob) CoreDef.config.getConfig("LYTimer").getNewInstance(key));
-						if (tmp instanceof TimerJob)
-							jobs.add((TimerJob) tmp);
-					} catch (Exception e) {
-						log.error("Failed to create timejob for key[" + key + "]" + Utils.getStringFromException(e));
-					}
-				}
-			}
+			if (closed.getAndSet(false))
+				return;
 			for (TimerJob bj : getJobs()) {
 				if (bj.getInterval() != 0)
 					timer.get(Timer.class).schedule(bj, bj.getStartTime(), bj.getInterval());
@@ -59,7 +44,8 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle {
 	@Override
 	public void close() {
 		synchronized (lock) {
-			if(!init.compareAndSet(true, false)) throw new LYException("This timer hadn't initialized yet!");
+			if (closed.getAndSet(true))
+				return;
 			for (TimerJob tj : getJobs()) {
 				tj.cancel();
 				log.info("LYTimer - Cancel scheduled job: " + tj.getClass().getName());
@@ -73,9 +59,10 @@ public final class LYTimer extends NonCloneableBaseObject implements LifeCycle {
 	 * @param bj	TimeJob you want to start
 	 * @return
 	 */
-	public boolean NewTimeJob(TimerJob bj) {
+	public boolean addTimeJob(TimerJob bj) {
 		synchronized (lock) {
-			if(!init.get()) throw new LYException("This timer hadn't initialized yet!");
+			if (!closed.get())
+				throw new LYException("This timer hadn't initialized yet!");
 			try {
 				bj.cancel();
 				jobs.add(bj);
