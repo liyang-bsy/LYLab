@@ -187,7 +187,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 		niobuf.clear();
 		while (true) {
 			try {
-				ret = addr2client.get(socket.getRemoteSocketAddress()).read(niobuf);
+				ret = addr2client.get(InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getLocalPort())).read(niobuf);
 				if (ret <= 0) {
 					if (ret == 0) {
 						// move niobuf to buffer
@@ -219,7 +219,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 		if (isClosed())
 			throw new LYException("Session closed");
 		try {
-			SocketChannel socketChannel = addr2client.get(client.getRemoteSocketAddress());
+			SocketChannel socketChannel = addr2client.get(InetAddr.fromInetAddr(client.getInetAddress().getHostAddress(), client.getLocalPort()));
 			if (socketChannel != null)
 				flushChannel(socketChannel, ByteBuffer.wrap(request), CoreDef.DEFAULT_SOCKET_WRITE_TTIMEOUT);
 			else

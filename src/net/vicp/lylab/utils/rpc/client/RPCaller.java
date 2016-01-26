@@ -1,9 +1,8 @@
 package net.vicp.lylab.utils.rpc.client;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
@@ -13,6 +12,7 @@ import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.model.RPCMessage;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
+import net.vicp.lylab.utils.Caster;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.creator.AutoCreator;
 import net.vicp.lylab.utils.creator.InstanceCreator;
@@ -23,56 +23,42 @@ public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
 	private AutoGeneratePool<SyncSession> pool = null;
 	private AutoCreator<SyncSession> creator = null;
 	private boolean backgroundServer = false;
-	private AtomicBoolean closed = new AtomicBoolean(false);
+	private AtomicBoolean closed = new AtomicBoolean(true);
+	Protocol protocol;
 
 	@SuppressWarnings("unchecked")
 	public List<Message> call(RPCMessage message, boolean broadcast) {
-		boolean isRpc = false;
+		message.setRpcKey("RPC");
+		message.setBroadcast(broadcast);
+		
 		List<Message> callResult = new ArrayList<>();
-		if (StringUtils.isBlank(message.getRpcKey())) {
-			message.setRpcKey("RPC");
-		}
-		if (message.getRpcKey().equals("RPC"))
-			isRpc = true;
-		Protocol p = (Protocol) CoreDef.config.getObject("protocol");
-		SyncSession session = pool.accessOne();
-		byte[] req, res;
-		req = p.encode(message);
-		session.send(req);
-		res = session.receive().getLeft();
-		pool.recycle(session);
-		Message retM = (Message) p.decode(res);
-		if (isRpc)
-			callResult = (List<Message>) retM.getBody().get("CallResult");
-		else
-			callResult.add(retM);
+		Message retM = callRpcServer(message);
+//		callResult = (List<Message>) retM.getBody().get("CallResult");
+		List<HashMap<String, Object>> list = ((List<HashMap<String, Object>>) retM.getBody().get("CallResult"));
+		for (HashMap<String, Object> temp : list)
+			callResult.add(Caster.map2Object(Message.class, (HashMap<String, Object>) temp.get("right")));
 		return callResult;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public Message call(RPCMessage message) {
-		boolean isRpc = false;
-		if (StringUtils.isBlank(message.getRpcKey())) {
-			message.setRpcKey("RPC");
-		}
-		if(message.getRpcKey().equals("RPC"))
-			isRpc = true;
-		Protocol p = (Protocol) CoreDef.config.getObject("protocol");
+		return call(message, false).get(0);
+	}
+	
+	public Message callRpcServer(RPCMessage message) {
+		if(closed.get())
+			throw new LYException("Client closed, did you initialize() Caller?");
 		SyncSession session = pool.accessOne();
 		byte[] req, res;
-		req = p.encode(message);
+		req = protocol.encode(message);
 		session.send(req);
 		res = session.receive().getLeft();
 		pool.recycle(session);
-		Message retM = (Message) p.decode(res);
-		if(isRpc)
-			retM = ((List<Message>) retM.getBody().get("CallResult")).get(0);
-		return retM;
+		return (Message) protocol.decode(res);
 	}
 
 	@Override
 	public void initialize() {
-		if (closed.compareAndSet(false, true)) {
+		if (closed.compareAndSet(true, false)) {
 			creator = new InstanceCreator<SyncSession>(SyncSession.class, CoreDef.config.getString("rpcHost"),
 					CoreDef.config.getInteger("rpcPort"), CoreDef.config.getObject("protocol"), CoreDef.config.getObject("heartBeat"));
 			pool = new AutoGeneratePool<SyncSession>(creator, new KeepAliveValidator<SyncSession>(), 20000,
@@ -84,7 +70,7 @@ public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
 				message.getBody().put("server", CoreDef.config.getString("server"));
 				message.getBody().put("port", CoreDef.config.getInteger("port"));
 				message.getBody().put("procedures", CoreDef.config.getConfig("Aop").keyList());
-				Message m = call(message);
+				Message m = callRpcServer(message);
 				if (m.getCode() != 0)
 					throw new LYException("RPC Server register failed:\n" + m.toString());
 			}
@@ -93,7 +79,7 @@ public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
 
 	@Override
 	public void close() {
-		if (closed.compareAndSet(true, false)) {
+		if (closed.compareAndSet(false, true)) {
 			if (isBackgroundServer()) {
 				RPCMessage message = new RPCMessage();
 				message.setRpcKey("RemoveServer");
@@ -112,6 +98,14 @@ public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
 
 	public void setBackgroundServer(boolean backgroundServer) {
 		this.backgroundServer = backgroundServer;
+	}
+
+	public Protocol getProtocol() {
+		return protocol;
+	}
+
+	public void setProtocol(Protocol protocol) {
+		this.protocol = protocol;
 	}
 
 }

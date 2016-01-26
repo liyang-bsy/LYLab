@@ -39,7 +39,7 @@ public class AsyncTransfer extends AbstractTransfer {
 			throw new LYException("No session is assigned");
 		if (!closed.compareAndSet(true, false))
 			return;
-		this.begin("transfer");
+		this.begin("Async Transfer");
 		super.initialize();
 	}
 
