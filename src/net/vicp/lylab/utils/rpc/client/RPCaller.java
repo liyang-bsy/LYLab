@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.LifeCycle;
@@ -14,7 +13,6 @@ import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.model.RPCMessage;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.utils.Caster;
-import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.creator.AutoCreator;
 import net.vicp.lylab.utils.creator.InstanceCreator;
@@ -33,7 +31,6 @@ public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
 	protected boolean backgroundServer = false;
 	protected String serverName;
 	protected int serverPort;
-	protected Config procedures;
 
 	@SuppressWarnings("unchecked")
 	public List<Message> call(RPCMessage message, boolean broadcast) {
@@ -76,7 +73,6 @@ public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
 				message.setRpcKey("RegisterServer");
 				message.getBody().put("server", serverName);
 				message.getBody().put("port", serverPort);
-				message.getBody().put("procedures", procedures.keyList());
 				Message m = callRpcServer(message);
 				if (m.getCode() != 0)
 					throw new LYException("RPC Server register failed:\n" + m.toString());
@@ -90,8 +86,7 @@ public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
 			if (isBackgroundServer()) {
 				RPCMessage message = new RPCMessage();
 				message.setRpcKey("RemoveServer");
-				message.getBody().put("server", CoreDef.config.getString("server"));
-				message.getBody().put("procedures", CoreDef.config.getConfig("Aop").keyList());
+				message.getBody().put("server", serverName);
 				call(message);
 			}
 
@@ -153,14 +148,6 @@ public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
 
 	public void setServerPort(int serverPort) {
 		this.serverPort = serverPort;
-	}
-
-	public Config getProcedures() {
-		return procedures;
-	}
-
-	public void setProcedures(Config procedures) {
-		this.procedures = procedures;
 	}
 
 }
