@@ -60,7 +60,7 @@ public abstract class AbstractDispatcher<I extends O, O extends SimpleMessage> e
 				// decode nothing
 				if (request == null) {
 					response.setCode(0x00000002);
-					response.setMessage("Message not found");
+					response.setMessage("Request not found");
 					break;
 				}
 				// filter chain

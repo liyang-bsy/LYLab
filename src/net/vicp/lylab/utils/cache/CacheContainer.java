@@ -70,10 +70,6 @@ public final class CacheContainer extends NonCloneableBaseObject {
 		return container.get(key);
 	}
 
-	public byte[] get(String key) {
-		return get(key, false);
-	}
-
 	public byte[] get(String key, boolean renew) {
 		CacheValue cv = container.get(key);
 		if (cv == null)

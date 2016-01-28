@@ -60,13 +60,13 @@ public class SimpleKeyDispatcher<I extends Message> extends AbstractDispatcher<I
 		action.setRequest(request);
 		action.setResponse(response);
 		try {
-			// do executing
-			action.exec();
+			// do action
+			action.doAction();
 		} catch (Throwable t) {
 			String reason = Utils.getStringFromThrowable(t);
 			log.error(reason);
-			response.setCode(0x00000006);
-			response.setMessage("Action exec failed:" + reason);
+			response.setCode(0x00000007);
+			response.setMessage("Action execute failed:" + reason);
 		}
 	}
 

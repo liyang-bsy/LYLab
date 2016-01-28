@@ -10,13 +10,17 @@ import net.vicp.lylab.core.interfaces.Executor;
  *
  */
 public abstract class AbstractAction extends CloneableBaseObject implements Executor {
-	
+
 	protected Socket clientSocket;
 	protected Object request;
 	protected Object response;
 
 	public AbstractAction() { }
-	
+
+	public void doAction() {
+		exec();
+	}
+
 	public AbstractAction(Object request, Object response) {
 		this.request = request;
 		this.response = response;

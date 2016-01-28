@@ -106,8 +106,7 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 	}
 
 	public byte[] get(String key) {
-		CacheContainer cc = getContainer(key);
-		return cc.get(key);
+		return get(key, false);
 	}
 
 	public byte[] get(String key, boolean renew) {
