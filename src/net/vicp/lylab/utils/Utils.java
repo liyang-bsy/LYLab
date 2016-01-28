@@ -29,7 +29,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * Close an object, safe if item is null
 	 * @param target to be closed item
 	 */
-	public static void tryClose(Object target) {
+	public final static void tryClose(Object target) {
 		if (target instanceof AutoCloseable)
 			try {
 				((AutoCloseable) target).close();
@@ -45,7 +45,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param param
 	 * @return
 	 */
-	public static void setter(Object owner, String fieldName, Object param) {
+	public final static void setter(Object owner, String fieldName, Object param) {
 		if (fieldName == null)
 			throw new NullPointerException("Parameter fieldName is null");
 		Method setMethod = getSetterForField(owner, fieldName);
@@ -62,7 +62,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static void setter(Object owner, Method setMethod, Object param) {
+	public final static void setter(Object owner, Method setMethod, Object param) {
 		if (param == null)
 			throw new NullPointerException("Parameter is null for setter[" + setMethod.getName() + "]");
 		String setter = setMethod.getName();
@@ -85,7 +85,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 		}
 	}
 
-	public static Method getSetterForField(Object owner, String fieldName) {
+	public final static Method getSetterForField(Object owner, String fieldName) {
 		if (fieldName == null)
 			throw new NullPointerException("Parameter fieldName is null");
 		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
@@ -115,7 +115,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param fieldName
 	 * @return
 	 */
-	public static Object getter(Object owner, String fieldName) {
+	public final static Object getter(Object owner, String fieldName) {
 		if (owner == null)
 			throw new NullPointerException("Owner is null for getter[" + fieldName + "]");
 		String getter = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
@@ -152,7 +152,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param input
 	 * @return
 	 */
-	public static String deleteCRLF(String input) {
+	public final static String deleteCRLF(String input) {
 		return input.replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1").replaceAll("^((\r\n)|\n)", "");
 	}
 	
@@ -162,7 +162,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param input
 	 * @return
 	 */
-	public static String deleteInvisible(String input) {
+	public final static String deleteInvisible(String input) {
 		return input.replaceAll("([\\s\b\\u0000-\\u0020]*)", "");
 	}
 
@@ -172,7 +172,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param path
 	 * @return
 	 */
-	public static boolean deleteFile(String path) {
+	public final static boolean deleteFile(String path) {
 		boolean flag = false;
 		File file = new File(path);
 		if (file.isFile() && file.exists()) {
@@ -188,7 +188,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param path
 	 * @return
 	 */
-	public static boolean existsFolder(String path) {
+	public final static boolean existsFolder(String path) {
 		try {
 			File file = new File(path);
 			if (file.exists() && file.isDirectory()) {
@@ -207,7 +207,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param strName
 	 * @return
 	 */
-	public static boolean isAllChinese(String strName) {
+	public final static boolean isAllChinese(String strName) {
 		char[] ch = strName.toCharArray();
 		for (int i = 0; i < ch.length; i++)
 			if (!isChinese(ch[i]) && !isAscii(ch[i]))
@@ -221,7 +221,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param c
 	 * @return
 	 */
-	private static boolean isAscii(char c) {
+	private final static boolean isAscii(char c) {
 		if (c < 128 && c > 0)
 			return true;
 		return false;
@@ -233,7 +233,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param c
 	 * @return
 	 */
-	private static boolean isChinese(char c) {
+	private final static boolean isChinese(char c) {
 		Character.UnicodeBlock ub = Character.UnicodeBlock.of(c);
 		if (ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS
 				|| ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS
@@ -253,7 +253,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param pattern
 	 * @return
 	 */
-	public static String format(Double value, String pattern) {
+	public final static String format(Double value, String pattern) {
 		return new DecimalFormat(pattern).format(value);
 	}
 
@@ -264,7 +264,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param pattern
 	 * @return
 	 */
-	public static String format(Date date, String pattern) {
+	public final static String format(Date date, String pattern) {
 		return DateFormatUtils.format(date, pattern);
 	}
 
@@ -274,7 +274,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param fileName
 	 * @return
 	 */
-	public static boolean createDirectoryByFileName(String fileName) {
+	public final static boolean createDirectoryByFileName(String fileName) {
 		try {
 			if (existsFolder(fileName))
 				return true;
@@ -294,7 +294,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param path
 	 * @return
 	 */
-	public static boolean createDirectory(String path) {
+	public final static boolean createDirectory(String path) {
 		try {
 			if (existsFolder(path))
 				return true;
@@ -312,7 +312,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param fileSuffix
 	 * @return
 	 */
-	public static Object[] readJsonObjectFromFile(Class<?> instanceClass, String filePath, String fileSuffix) {
+	public final static Object[] readJsonObjectFromFile(Class<?> instanceClass, String filePath, String fileSuffix) {
 		List<String> fileNames = getFileList(filePath, fileSuffix);
 		List<Object> list = new ArrayList<Object>();
 		for (String fileName : fileNames) {
@@ -331,7 +331,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param fileSuffix e.g. ".txt"
 	 * @return
 	 */
-	public static List<String> getFileList(String filePath, String fileSuffix) {
+	public final static List<String> getFileList(String filePath, String fileSuffix) {
 		List<String> ret = new ArrayList<String>();
 		try {
 			File file = new File(filePath);
@@ -356,14 +356,14 @@ public abstract class Utils extends NonCloneableBaseObject {
 	/**
 	 * 以行为单位读取文件，常用于读面向行的格式化文件
 	 */
-	public static List<String> readFileByLines(String fileName)
+	public final static List<String> readFileByLines(String fileName)
 	{
 		return readFileByLines(fileName, true);
 	}
 	/**
 	 * 以行为单位读取文件，常用于读面向行的格式化文件
 	 */
-	public static List<String> readFileByLines(String fileName, boolean ignoreEmptyLine) {
+	public final static List<String> readFileByLines(String fileName, boolean ignoreEmptyLine) {
 		List<String> ret = new ArrayList<String>();
 		File file = new File(fileName);
 		if (!file.exists())
@@ -394,7 +394,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 		return ret;
 	}
 
-	public static <T> boolean inList(T[] list, Object item) {
+	public final static <T> boolean inList(T[] list, Object item) {
 		if (list == null || item == null || list.length == 0)
 			return false;
 		for (T o : list)
@@ -403,7 +403,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 		return false;
 	}
 
-	public static boolean inList(@SuppressWarnings("rawtypes") List list, Object item) {
+	public final static boolean inList(@SuppressWarnings("rawtypes") List list, Object item) {
 		if (list == null || item == null || list.isEmpty() || !list.contains(item))
 			return false;
 		return true;
@@ -414,7 +414,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param e Exception itself
 	 * @return
 	 */
-	public static String getStringFromException(Exception e) {
+	public final static String getStringFromException(Exception e) {
 		return getStringFromThrowable(e);
 	}
 
@@ -423,7 +423,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param e Error itself
 	 * @return
 	 */
-	public static String getStringFromError(Error e) {
+	public final static String getStringFromError(Error e) {
 		return getStringFromThrowable(e);
 	}
 
@@ -432,7 +432,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param t Any throwable object
 	 * @return
 	 */
-	public static String getStringFromThrowable(Throwable t) {
+	public final static String getStringFromThrowable(Throwable t) {
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 		t.printStackTrace(pw);
@@ -447,28 +447,28 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @return
 	 * 
 	 */
-	public static Map<String, Object> xml2Object(String xml) {
+	public final static Map<String, Object> xml2Object(String xml) {
 		return XmlConverUtil.xml2Object(xml);
 	}
 
-	public static String serialize(Object obj) {
+	public final static String serialize(Object obj) {
 		return JsonConverUtil.serialize(obj);
 	}
 
-	public static <T> T deserialize(Class<T> instanceClass, String json) {
+	public final static <T> T deserialize(Class<T> instanceClass, String json) {
 		return JsonConverUtil.deserialize(instanceClass, json);
 	}
 
-	public static Object deserialize(String className, String json) {
+	public final static Object deserialize(String className, String json) {
 		return JsonConverUtil.deserialize(className, json);
 	}
 
-	private static byte int3(int x) { return (byte) (x >> 24); }
-	private static byte int2(int x) { return (byte) (x >> 16); }
-	private static byte int1(int x) { return (byte) (x >> 8); }
-	private static byte int0(int x) { return (byte) (x); }
+	private final static byte int3(int x) { return (byte) (x >> 24); }
+	private final static byte int2(int x) { return (byte) (x >> 16); }
+	private final static byte int1(int x) { return (byte) (x >> 8); }
+	private final static byte int0(int x) { return (byte) (x); }
 
-	private static int makeInt(byte b3, byte b2, byte b1, byte b0) {
+	private final static int makeInt(byte b3, byte b2, byte b1, byte b0) {
 		return (((b3) << 24) | ((b2 & 0xff) << 16) | ((b1 & 0xff) << 8) | ((b0 & 0xff)));
 	}
 
@@ -478,7 +478,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param num
 	 * @return
 	 */
-	public static byte[] IntToBytes4(int x) {
+	public final static byte[] IntToBytes4(int x) {
 		byte[] bytes = new byte[4];
 		if (CoreDef.BIG_ENDIAN) {
 			bytes[3] = int3(x);
@@ -500,7 +500,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param bytes
 	 * @return
 	 */
-	public static int Bytes4ToInt(byte[] bytes) {
+	public final static int Bytes4ToInt(byte[] bytes) {
 		if (CoreDef.BIG_ENDIAN)
 			return makeInt(bytes[3], bytes[2], bytes[1], bytes[0]);
 		else
@@ -513,7 +513,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param bytes
 	 * @return
 	 */
-	public static int Bytes4ToInt(byte[] bytes, int offset) {
+	public final static int Bytes4ToInt(byte[] bytes, int offset) {
 		if (bytes.length - 4 < offset)
 			throw new LYException("Out of bounds, byte length is " + bytes.length + " while offset is " + offset);
 
@@ -528,7 +528,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param container
 	 * @return
 	 */
-	public static byte[] copyBytesFromContainer(List<Byte> container) {
+	public final static byte[] copyBytesFromContainer(List<Byte> container) {
 		if (container == null)
 			throw new LYException("Parameter container is null");
 		byte[] bytes = new byte[container.size()];
@@ -542,7 +542,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param container
 	 * @return
 	 */
-	public static List<Byte> moveBytesToContainer(byte[] bytes) {
+	public final static List<Byte> moveBytesToContainer(byte[] bytes) {
 		List<Byte> container = new ArrayList<Byte>();
 		for (int i = 0; i < bytes.length; i++) {
 			container.add(bytes[i]);
@@ -551,13 +551,13 @@ public abstract class Utils extends NonCloneableBaseObject {
 		return container;
 	}
 
-	public static boolean bytecat_isCapable(byte[] dst, int dstOffset, int srcCopyLength) {
+	public final static boolean bytecat_isCapable(byte[] dst, int dstOffset, int srcCopyLength) {
 		if (dst.length - dstOffset < srcCopyLength)
 			return false;
 		return true;
 	}
 
-	public static byte[] bytecat(byte[] dst, int dstOffset, byte[] src, int srcOffset, int srcCopyLength) {
+	public final static byte[] bytecat(byte[] dst, int dstOffset, byte[] src, int srcOffset, int srcCopyLength) {
 		if (!bytecat_isCapable(dst, dstOffset, srcCopyLength))
 			dst = Arrays.copyOf(dst, dst.length*CoreDef.SOCKET_MAX_BUFFER_EXTEND_RATE);
 //			throw new IndexOutOfBoundsException("Destination byte[] hasn't enough ");
@@ -582,7 +582,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @return true if e1 and e2 is the same from e1Offset and e2Offset for
 	 *         comLength
 	 */
-	public static boolean bytesContinueWith(byte[] e1, int e1Offset, byte[] e2,
+	public final static boolean bytesContinueWith(byte[] e1, int e1Offset, byte[] e2,
 			int e2Offset, int cmpLength) {
 		if (e1.length - e1Offset < e2.length - e2Offset
 				|| e1.length - e1Offset < cmpLength
@@ -594,11 +594,11 @@ public abstract class Utils extends NonCloneableBaseObject {
 		return true;
 	}
 
-	public static boolean checkHead(byte[] bytes, int offset, byte[] head) {
+	public final static boolean checkHead(byte[] bytes, int offset, byte[] head) {
 		return checkHead(bytes, offset, bytes.length - offset, head);
 	}
 
-	public static boolean checkHead(byte[] bytes, int offset, int length, byte[] head) {
+	public final static boolean checkHead(byte[] bytes, int offset, int length, byte[] head) {
 		if (length < head.length)
 			return true;
 		return bytesContinueWith(bytes, offset, head, 0, head.length);

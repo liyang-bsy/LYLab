@@ -1,20 +1,74 @@
 package net.vicp.lylab.utils;
 
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
 
 public abstract class Algorithm {
 
-	public static int hash(String key, String algorithm) {
+	public final static String md5_32(String plainText) {
+		byte[] data = null;
+		try {
+			data = plainText.getBytes(CoreDef.CHARSET());
+		} catch (UnsupportedEncodingException e) {
+			throw new LYException("Encoding data with [" + CoreDef.CHARSET() + "] failed:\n" + plainText);
+		}
+		return md5_32(data);
+	}
+	
+	public final static String md5_16(String plainText) {
+		byte[] data = null;
+		try {
+			data = plainText.getBytes(CoreDef.CHARSET());
+		} catch (UnsupportedEncodingException e) {
+			throw new LYException("Encoding data with [" + CoreDef.CHARSET() + "] failed:\n" + plainText);
+		}
+		return md5_16(data);
+	}
+	
+	public final static String md5_32(byte[] data) {
+		return md5(data).toString();
+	}
+	
+	public final static String md5_16(byte[] data) {
+		return md5(data).toString().substring(8, 24);
+	}
+	
+	public final static String md5(byte[] data) {
+		MessageDigest md5 = getMessageDigestAlgorithm("MD5");
+		md5.reset();
+		md5.update(data);
+		byte[] b = md5.digest();
+
+		StringBuffer buf = new StringBuffer("");
+		int i;
+		for (int offset = 0; offset < b.length; offset++) {
+			i = b[offset];
+			if (i < 0)
+				i += 256;
+			if (i < 16)
+				buf.append("0");
+			buf.append(Integer.toHexString(i));
+		}
+		return buf.toString();
+	}
+
+	private final static MessageDigest getMessageDigestAlgorithm(String algorithm) {
 		MessageDigest md = null;
 		try {
 			md = MessageDigest.getInstance(algorithm);
+			return md;
 		} catch (NoSuchAlgorithmException e) {
 			 throw new LYException("Target encrypt algorithm not found:" + algorithm, e);
 		}
+	}
+	
+	public final static int hash(String key, String algorithm) {
+		MessageDigest md = getMessageDigestAlgorithm(algorithm);
 		md.reset();
 		md.update(key.getBytes());
 		byte[] bytes = md.digest();
@@ -36,14 +90,14 @@ public abstract class Algorithm {
 		System.out.println(Arrays.toString(strings));
 	}
 
-	private static void swap(Object arr[], int i, int j) {
+	private final static void swap(Object arr[], int i, int j) {
 		Object tmp = arr[i];
 		arr[i] = arr[j];
 		arr[j] = tmp;
 	}
 
 	// Quick Sort below
-	public static <T extends Comparable<T>> void quicksort(T[] arr, int left, int right) {
+	public final static <T extends Comparable<T>> void quicksort(T[] arr, int left, int right) {
 		int i, last;
 		// do nothing if array contains fewer than two elements
 		if (left >= right) {
@@ -61,63 +115,63 @@ public abstract class Algorithm {
 		quicksort(arr, last + 1, right);
 	}
 
-	public static <T extends Comparable<T>> void quicksort(T[] arr) {
+	public final static <T extends Comparable<T>> void quicksort(T[] arr) {
 		quicksort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(byte[] arr) {
+	public final static void quicksort(byte[] arr) {
 		quicksort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(byte[] arr, int left, int right) {
+	public final static void quicksort(byte[] arr, int left, int right) {
 		DualPivotQuicksort.sort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(char[] arr) {
+	public final static void quicksort(char[] arr) {
 		quicksort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(char[] arr, int left, int right) {
+	public final static void quicksort(char[] arr, int left, int right) {
 		DualPivotQuicksort.sort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(double[] arr) {
+	public final static void quicksort(double[] arr) {
 		quicksort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(double[] arr, int left, int right) {
+	public final static void quicksort(double[] arr, int left, int right) {
 		DualPivotQuicksort.sort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(float[] arr) {
+	public final static void quicksort(float[] arr) {
 		quicksort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(float[] arr, int left, int right) {
+	public final static void quicksort(float[] arr, int left, int right) {
 		DualPivotQuicksort.sort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(int[] arr) {
+	public final static void quicksort(int[] arr) {
 		quicksort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(int[] arr, int left, int right) {
+	public final static void quicksort(int[] arr, int left, int right) {
 		DualPivotQuicksort.sort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(long[] arr) {
+	public final static void quicksort(long[] arr) {
 		quicksort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(long[] arr, int left, int right) {
+	public final static void quicksort(long[] arr, int left, int right) {
 		DualPivotQuicksort.sort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(short[] arr) {
+	public final static void quicksort(short[] arr) {
 		quicksort(arr, 0, arr.length - 1);
 	}
 
-	public static void quicksort(short[] arr, int left, int right) {
+	public final static void quicksort(short[] arr, int left, int right) {
 		DualPivotQuicksort.sort(arr, 0, arr.length - 1);
 	}
 
@@ -129,7 +183,7 @@ public abstract class Algorithm {
 	 * @param compare
 	 * @return return index or -1 means not found
 	 */
-	public static int KMPSearch(char[] source, char[] compare) {
+	public final static int KMPSearch(char[] source, char[] compare) {
 		int[] next = _KMPNext(compare);
 		int i = 0;
 		int j = 0;
@@ -154,7 +208,7 @@ public abstract class Algorithm {
 	 * @param offset
 	 * @return return index or -1 means not found
 	 */
-	public static int KMPSearch(byte[] source, byte[] compare, int srcOffset) {
+	public final static int KMPSearch(byte[] source, byte[] compare, int srcOffset) {
 		int[] next = _KMPNext(compare);
 		int i = srcOffset;
 		int j = 0;
@@ -179,7 +233,7 @@ public abstract class Algorithm {
 	 * @param compare
 	 * @return return index or -1 means not found
 	 */
-	public static int KMPSearch(byte[] source, byte[] compare) {
+	public final static int KMPSearch(byte[] source, byte[] compare) {
 		return KMPSearch(source, compare, 0);
 	}
 
@@ -190,7 +244,7 @@ public abstract class Algorithm {
 	 * @param compare
 	 * @return return index or -1 means not found
 	 */
-	public static int KMPSearch(int[] source, int[] compare) {
+	public final static int KMPSearch(int[] source, int[] compare) {
 		int[] next = _KMPNext(compare);
 		int i = 0;
 		int j = 0;
@@ -215,7 +269,7 @@ public abstract class Algorithm {
 	 * @param compare
 	 * @return return index or -1 means not found
 	 */
-	public static int KMPSearch(long[] source, long[] compare) {
+	public final static int KMPSearch(long[] source, long[] compare) {
 		int[] next = _KMPNext(compare);
 		int i = 0;
 		int j = 0;
@@ -240,7 +294,7 @@ public abstract class Algorithm {
 	 * @param compare
 	 * @return return index or -1 means not found
 	 */
-	public static int KMPSearch(boolean[] source, boolean[] compare) {
+	public final static int KMPSearch(boolean[] source, boolean[] compare) {
 		int[] next = _KMPNext(compare);
 		int i = 0;
 		int j = 0;
@@ -258,7 +312,7 @@ public abstract class Algorithm {
 			return i - compare.length; // 返回模式串在主串中的头下标
 	}
 
-	private static int[] _KMPNext(char[] compare) {
+	private final static int[] _KMPNext(char[] compare) {
 		int[] next = new int[compare.length];
 		next[0] = -1;
 		int i = 0;
@@ -279,7 +333,7 @@ public abstract class Algorithm {
 		return next;
 	}
 
-	private static int[] _KMPNext(byte[] compare) {
+	private final static int[] _KMPNext(byte[] compare) {
 		int[] next = new int[compare.length];
 		next[0] = -1;
 		int i = 0;
@@ -300,7 +354,7 @@ public abstract class Algorithm {
 		return next;
 	}
 
-	private static int[] _KMPNext(int[] compare) {
+	private final static int[] _KMPNext(int[] compare) {
 		int[] next = new int[compare.length];
 		next[0] = -1;
 		int i = 0;
@@ -321,7 +375,7 @@ public abstract class Algorithm {
 		return next;
 	}
 
-	private static int[] _KMPNext(long[] compare) {
+	private final static int[] _KMPNext(long[] compare) {
 		int[] next = new int[compare.length];
 		next[0] = -1;
 		int i = 0;
@@ -342,7 +396,7 @@ public abstract class Algorithm {
 		return next;
 	}
 
-	private static int[] _KMPNext(boolean[] compare) {
+	private final static int[] _KMPNext(boolean[] compare) {
 		int[] next = new int[compare.length];
 		next[0] = -1;
 		int i = 0;
@@ -433,7 +487,7 @@ final class DualPivotQuicksort {
      *
      * @param a the array to be sorted
      */
-    public static void sort(int[] a) {
+    public final static void sort(int[] a) {
         sort(a, 0, a.length - 1);
     }
 
@@ -444,7 +498,7 @@ final class DualPivotQuicksort {
      * @param left the index of the first element, inclusive, to be sorted
      * @param right the index of the last element, inclusive, to be sorted
      */
-    public static void sort(int[] a, int left, int right) {
+    public final static void sort(int[] a, int left, int right) {
         // Use Quicksort on small arrays
         if (right - left < QUICKSORT_THRESHOLD) {
             sort(a, left, right, true);
@@ -538,7 +592,7 @@ final class DualPivotQuicksort {
      * @param right the index of the last element, inclusive, to be sorted
      * @param leftmost indicates if this part is the leftmost in the range
      */
-    private static void sort(int[] a, int left, int right, boolean leftmost) {
+    private final static void sort(int[] a, int left, int right, boolean leftmost) {
         int length = right - left + 1;
 
         // Use insertion sort on tiny arrays
@@ -873,7 +927,7 @@ final class DualPivotQuicksort {
      *
      * @param a the array to be sorted
      */
-    public static void sort(long[] a) {
+    public final static void sort(long[] a) {
         sort(a, 0, a.length - 1);
     }
 
@@ -884,7 +938,7 @@ final class DualPivotQuicksort {
      * @param left the index of the first element, inclusive, to be sorted
      * @param right the index of the last element, inclusive, to be sorted
      */
-    public static void sort(long[] a, int left, int right) {
+    public final static void sort(long[] a, int left, int right) {
         // Use Quicksort on small arrays
         if (right - left < QUICKSORT_THRESHOLD) {
             sort(a, left, right, true);
@@ -978,7 +1032,7 @@ final class DualPivotQuicksort {
      * @param right the index of the last element, inclusive, to be sorted
      * @param leftmost indicates if this part is the leftmost in the range
      */
-    private static void sort(long[] a, int left, int right, boolean leftmost) {
+    private final static void sort(long[] a, int left, int right, boolean leftmost) {
         int length = right - left + 1;
 
         // Use insertion sort on tiny arrays
@@ -1313,7 +1367,7 @@ final class DualPivotQuicksort {
      *
      * @param a the array to be sorted
      */
-    public static void sort(short[] a) {
+    public final static void sort(short[] a) {
         sort(a, 0, a.length - 1);
     }
 
@@ -1324,7 +1378,7 @@ final class DualPivotQuicksort {
      * @param left the index of the first element, inclusive, to be sorted
      * @param right the index of the last element, inclusive, to be sorted
      */
-    public static void sort(short[] a, int left, int right) {
+    public final static void sort(short[] a, int left, int right) {
         // Use counting sort on large arrays
         if (right - left > COUNTING_SORT_THRESHOLD_FOR_SHORT_OR_CHAR) {
             int[] count = new int[NUM_SHORT_VALUES];
@@ -1356,7 +1410,7 @@ final class DualPivotQuicksort {
      * @param left the index of the first element, inclusive, to be sorted
      * @param right the index of the last element, inclusive, to be sorted
      */
-    private static void doSort(short[] a, int left, int right) {
+    private final static void doSort(short[] a, int left, int right) {
         // Use Quicksort on small arrays
         if (right - left < QUICKSORT_THRESHOLD) {
             sort(a, left, right, true);
@@ -1450,7 +1504,7 @@ final class DualPivotQuicksort {
      * @param right the index of the last element, inclusive, to be sorted
      * @param leftmost indicates if this part is the leftmost in the range
      */
-    private static void sort(short[] a, int left, int right, boolean leftmost) {
+    private final static void sort(short[] a, int left, int right, boolean leftmost) {
         int length = right - left + 1;
 
         // Use insertion sort on tiny arrays
@@ -1785,7 +1839,7 @@ final class DualPivotQuicksort {
      *
      * @param a the array to be sorted
      */
-    public static void sort(char[] a) {
+    public final static void sort(char[] a) {
         sort(a, 0, a.length - 1);
     }
 
@@ -1796,7 +1850,7 @@ final class DualPivotQuicksort {
      * @param left the index of the first element, inclusive, to be sorted
      * @param right the index of the last element, inclusive, to be sorted
      */
-    public static void sort(char[] a, int left, int right) {
+    public final static void sort(char[] a, int left, int right) {
         // Use counting sort on large arrays
         if (right - left > COUNTING_SORT_THRESHOLD_FOR_SHORT_OR_CHAR) {
             int[] count = new int[NUM_CHAR_VALUES];
@@ -1828,7 +1882,7 @@ final class DualPivotQuicksort {
      * @param left the index of the first element, inclusive, to be sorted
      * @param right the index of the last element, inclusive, to be sorted
      */
-    private static void doSort(char[] a, int left, int right) {
+    private final static void doSort(char[] a, int left, int right) {
         // Use Quicksort on small arrays
         if (right - left < QUICKSORT_THRESHOLD) {
             sort(a, left, right, true);
@@ -1922,7 +1976,7 @@ final class DualPivotQuicksort {
      * @param right the index of the last element, inclusive, to be sorted
      * @param leftmost indicates if this part is the leftmost in the range
      */
-    private static void sort(char[] a, int left, int right, boolean leftmost) {
+    private final static void sort(char[] a, int left, int right, boolean leftmost) {
         int length = right - left + 1;
 
         // Use insertion sort on tiny arrays
@@ -2260,7 +2314,7 @@ final class DualPivotQuicksort {
      *
      * @param a the array to be sorted
      */
-    public static void sort(byte[] a) {
+    public final static void sort(byte[] a) {
         sort(a, 0, a.length - 1);
     }
 
@@ -2271,7 +2325,7 @@ final class DualPivotQuicksort {
      * @param left the index of the first element, inclusive, to be sorted
      * @param right the index of the last element, inclusive, to be sorted
      */
-    public static void sort(byte[] a, int left, int right) {
+    public final static void sort(byte[] a, int left, int right) {
         // Use counting sort on large arrays
         if (right - left > COUNTING_SORT_THRESHOLD_FOR_BYTE) {
             int[] count = new int[NUM_BYTE_VALUES];
@@ -2307,7 +2361,7 @@ final class DualPivotQuicksort {
      *
      * @param a the array to be sorted
      */
-    public static void sort(float[] a) {
+    public final static void sort(float[] a) {
         sort(a, 0, a.length - 1);
     }
 
@@ -2318,7 +2372,7 @@ final class DualPivotQuicksort {
      * @param left the index of the first element, inclusive, to be sorted
      * @param right the index of the last element, inclusive, to be sorted
      */
-    public static void sort(float[] a, int left, int right) {
+    public final static void sort(float[] a, int left, int right) {
         /*
          * Phase 1: Move NaNs to the end of the array.
          */
@@ -2405,7 +2459,7 @@ final class DualPivotQuicksort {
      * @param left the index of the first element, inclusive, to be sorted
      * @param right the index of the last element, inclusive, to be sorted
      */
-    private static void doSort(float[] a, int left, int right) {
+    private final static void doSort(float[] a, int left, int right) {
         // Use Quicksort on small arrays
         if (right - left < QUICKSORT_THRESHOLD) {
             sort(a, left, right, true);
@@ -2499,7 +2553,7 @@ final class DualPivotQuicksort {
      * @param right the index of the last element, inclusive, to be sorted
      * @param leftmost indicates if this part is the leftmost in the range
      */
-    private static void sort(float[] a, int left, int right, boolean leftmost) {
+    private final static void sort(float[] a, int left, int right, boolean leftmost) {
         int length = right - left + 1;
 
         // Use insertion sort on tiny arrays
@@ -2834,7 +2888,7 @@ final class DualPivotQuicksort {
      *
      * @param a the array to be sorted
      */
-    public static void sort(double[] a) {
+    public final static void sort(double[] a) {
         sort(a, 0, a.length - 1);
     }
 
@@ -2845,7 +2899,7 @@ final class DualPivotQuicksort {
      * @param left the index of the first element, inclusive, to be sorted
      * @param right the index of the last element, inclusive, to be sorted
      */
-    public static void sort(double[] a, int left, int right) {
+    public final static void sort(double[] a, int left, int right) {
         /*
          * Phase 1: Move NaNs to the end of the array.
          */
@@ -2932,7 +2986,7 @@ final class DualPivotQuicksort {
      * @param left the index of the first element, inclusive, to be sorted
      * @param right the index of the last element, inclusive, to be sorted
      */
-    private static void doSort(double[] a, int left, int right) {
+    private final static void doSort(double[] a, int left, int right) {
         // Use Quicksort on small arrays
         if (right - left < QUICKSORT_THRESHOLD) {
             sort(a, left, right, true);
@@ -3026,7 +3080,7 @@ final class DualPivotQuicksort {
      * @param right the index of the last element, inclusive, to be sorted
      * @param leftmost indicates if this part is the leftmost in the range
      */
-    private static void sort(double[] a, int left, int right, boolean leftmost) {
+    private final static void sort(double[] a, int left, int right, boolean leftmost) {
         int length = right - left + 1;
 
         // Use insertion sort on tiny arrays

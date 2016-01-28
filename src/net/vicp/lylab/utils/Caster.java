@@ -28,7 +28,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @param xml
 	 * @return
 	 */
-	public static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map) {
+	public final static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map) {
 		return map2Object(instanceClass, map, new Stack<Map<String, ?>>());
 	}
 
@@ -39,7 +39,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map, Stack<Map<String, ?>> mapStackTrace) {
+	private final static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map, Stack<Map<String, ?>> mapStackTrace) {
 		if (mapStackTrace.contains(map))
 			return null;
 		try {
@@ -74,7 +74,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 		}
 	}
 
-	public static boolean isBasicType(Object target) {
+	public final static boolean isBasicType(Object target) {
 		if (target == null)
 			throw new NullPointerException("Parameter target is null");
 		Class<?> targetClass = target.getClass();
@@ -122,7 +122,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @param target
 	 * @return
 	 */
-	public static boolean isGenericArrayType(Object target) {
+	public final static boolean isGenericArrayType(Object target) {
 		if (target == null)
 			throw new NullPointerException("Parameter target is null");
 		Class<?> targetClass = target.getClass();
@@ -141,7 +141,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @throws LYException
 	 *             If convert failed
 	 */
-	public static Object simpleCast(String originalString, Class<?> targetClass) {
+	public final static Object simpleCast(String originalString, Class<?> targetClass) {
 		if (originalString == null)
 			throw new NullPointerException("Parameter originalObject is null");
 		if (targetClass == null)
@@ -203,7 +203,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 *             If convert failed
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static Object arrayCast(List originalArray, Class targetClass) {
+	public final static Object arrayCast(List originalArray, Class targetClass) {
 		if (originalArray == null)
 			throw new NullPointerException("Parameter originalArray is null");
 		if (targetClass == null)
