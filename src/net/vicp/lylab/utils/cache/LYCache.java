@@ -58,12 +58,12 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		}
 	}
 
-	private final CacheContainer getContainer(Integer seq) {
+	private final CacheContainer getContainer(int seq) {
 		return getBundles().get(seq);
 	}
 
 	private final CacheContainer getContainer(String key) {
-		Integer seq = keyRule(key);
+		int seq = keyRule(key);
 		return getContainer(seq);
 	}
 

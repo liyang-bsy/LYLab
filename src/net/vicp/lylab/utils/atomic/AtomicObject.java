@@ -15,7 +15,9 @@ public abstract class AtomicObject<T> extends NonCloneableBaseObject {
      *
      * @return the current value
      */
-	public abstract T get();
+	public T get() {
+		return value;
+	}
 
     /**
      * Atomically sets to the given value and returns the old value.

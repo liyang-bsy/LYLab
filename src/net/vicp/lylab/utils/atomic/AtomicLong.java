@@ -5,20 +5,9 @@ public final class AtomicLong extends AtomicObject<Long> {
 	public AtomicLong() {
 		super(0L);
 	}
-	
+
 	public AtomicLong(long t) {
 		super(t);
-	}
-	
-    /**
-     * Gets the current read-only value.
-     *
-     * @return the current value
-     */
-	@Override
-	public Long get()
-	{
-		return value.longValue();
 	}
 
     /**
@@ -29,7 +18,7 @@ public final class AtomicLong extends AtomicObject<Long> {
      */
 	public Long getAndAdd(long delta) {
 		synchronized (lock) {
-			long current = get();
+			Long current = get();
 			value += delta;
 			return current;
 		}

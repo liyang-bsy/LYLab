@@ -5,20 +5,9 @@ public final class AtomicInteger extends AtomicObject<Integer> {
 	public AtomicInteger() {
 		super(0);
 	}
-	
+
 	public AtomicInteger(int t) {
 		super(t);
-	}
-	
-    /**
-     * Gets the current read-only value.
-     *
-     * @return the current value
-     */
-	@Override
-	public Integer get()
-	{
-		return value.intValue();
 	}
 
     /**
@@ -29,7 +18,7 @@ public final class AtomicInteger extends AtomicObject<Integer> {
      */
 	public Integer getAndAdd(int delta) {
 		synchronized (lock) {
-			int current = get();
+			Integer current = get();
 			value += delta;
 			return current;
 		}

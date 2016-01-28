@@ -19,22 +19,9 @@ public abstract class AtomicReference<T> extends AtomicObject<Reference<T>> impl
 		if(ref.get() == null)
 			throw new LYException("Reference to nothing");
 	}
-	
-    /**
-     * Gets the current value.
-     * A reference is read-only, but its referenced value can be modified.
-     *
-     * @return the current value
-     */
-	@Override
-	public Reference<T> get()
-	{
-		return value;
-	}
 
 	@Override
-	public T get(Class<T> instanceClass, Object... constructorParameters)
-	{
+	public T get(Class<T> instanceClass, Object... constructorParameters) {
 		throw new LYException("refClass is null");
 	}
 	
