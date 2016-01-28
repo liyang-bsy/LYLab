@@ -5,12 +5,14 @@ import java.util.List;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.core.model.CacheValue;
 import net.vicp.lylab.utils.Algorithm;
+import net.vicp.lylab.utils.atomic.AtomicBoolean;
 
 /**
- * Local cache system.
+ * Local cache system with memory size limitation.
  * 
  * @author Young
  * @since 2015.07.01
@@ -23,38 +25,44 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 	private long memoryLimitation = CoreDef.DEFAULT_LYCACHE_MEMORY_LIMITATION;
 	private String hashAlgorithm = "MD5";
 	public double threshold = CoreDef.DEFAULT_LYCACHE_THRESHOLD;
+	
+	private AtomicBoolean closed = new AtomicBoolean(true);
 
 	@Override
-	public synchronized void initialize() {
+	public void initialize() {
+		if(!closed.compareAndSet(true, false))
+			return;
 		ArrayList<CacheContainer> list = new ArrayList<CacheContainer>();
+		if (containerSize <= 0)
+			throw new LYException("Param containerSize <= 0 is illegal");
 		for (int i = 0; i < containerSize; i++)
 			list.add(new CacheContainer());
 		this.bundles = list;
-		
+
 		setExpireTime(expireTime); // 30min = 60s*30min
 		setMemoryControl(memoryLimitation, threshold); // 1GB
 	}
 
 	public void setMemoryControl(long memoryLimitation, double threshold) {
-		if (threshold > 1.0D)
-			threshold = 1.0D;
-		setThreshold(threshold);
-		setMemoryLimitation(memoryLimitation);
-		List<CacheContainer> list = getBundles();
-		for (CacheContainer item : list) {
-			item.setMemoryLimitation(memoryLimitation / containerSize);
-			item.setThreshold(threshold);
+		synchronized (lock) {
+			if (threshold > 1.0D)
+				threshold = 1.0D;
+			setThreshold(threshold);
+			setMemoryLimitation(memoryLimitation);
+			List<CacheContainer> list = getBundles();
+			for (CacheContainer item : list) {
+				item.setMemoryLimitation(memoryLimitation / containerSize);
+				item.setThreshold(threshold);
+			}
+			flush();
 		}
-		flush();
 	}
 
-	private CacheContainer getContainer(Integer seq) {
-		if (seq < 0 || seq > getBundles().size())
-			return null;
+	private final CacheContainer getContainer(Integer seq) {
 		return getBundles().get(seq);
 	}
 
-	private CacheContainer getContainer(String key) {
+	private final CacheContainer getContainer(String key) {
 		Integer seq = keyRule(key);
 		return getContainer(seq);
 	}
@@ -63,7 +71,7 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		return Math.abs(Algorithm.hash(key, hashAlgorithm)) % containerSize;
 	}
 
-	public List<CacheContainer> getBundles() {
+	protected List<CacheContainer> getBundles() {
 		return bundles;
 	}
 
@@ -84,36 +92,31 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 	// function start
 	public int setCacheValue(String key, CacheValue cv) {
 		CacheContainer cc = getContainer(key);
-		if (cc == null)
-			return 1;
 		return cc.setCacheValue(key, cv);
 	}
-	
+
 	public int set(String key, byte[] value) {
 		CacheContainer cc = getContainer(key);
-		if (cc == null)
-			return 1;
+		return cc.set(key, value, expireTime);
+	}
+
+	public int set(String key, byte[] value, long expireTime) {
+		CacheContainer cc = getContainer(key);
 		return cc.set(key, value, expireTime);
 	}
 
 	public byte[] get(String key) {
 		CacheContainer cc = getContainer(key);
-		if (cc == null)
-			return null;
 		return cc.get(key);
 	}
 
 	public byte[] get(String key, boolean renew) {
 		CacheContainer cc = getContainer(key);
-		if (cc == null)
-			return null;
 		return cc.get(key, renew);
 	}
 
 	public byte[] delete(String key) {
 		CacheContainer cc = getContainer(key);
-		if (cc == null)
-			return null;
 		return cc.delete(key);
 	}
 

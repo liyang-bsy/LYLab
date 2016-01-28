@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.model.CacheValue;
+import net.vicp.lylab.utils.atomic.AtomicLong;
 import net.vicp.lylab.utils.tq.Task;
 
 /**
@@ -21,73 +22,41 @@ public final class CacheContainer extends NonCloneableBaseObject {
 	private Map<String, CacheValue> container = new ConcurrentHashMap<String, CacheValue>();
 	public long memoryLimitation;
 	public double threshold;
-	private volatile long memoryUsage = 0L;
-
-	private Map<String, CacheValue> getContainer() {
-		if (container == null)
-			synchronized (lock) {
-				if (container == null)
-					container = new ConcurrentHashMap<String, CacheValue>();
-			}
-		return container;
-	}
-
-	public long getMemoryUsage() {
-		return memoryUsage;
-	}
+	private AtomicLong memoryUsage = new AtomicLong(0L);
 
 	public int size() {
-		return getContainer().size();
+		return container.size();
 	}
 
 	// function start
-	public int set(String key, byte[] value, Long expireTime) {
-		if (memoryLimitation - memoryUsage < value.length)
-			return 2;
-		getContainer().put(key, new CacheValue(value, expireTime));
-		memoryUsage += value.length;
-		if (memoryUsage > memoryLimitation * threshold) {
-			new Task() {
-				private static final long serialVersionUID = 6661384694891274270L;
-				
-				CacheContainer c;
-				@Override
-				public void exec() {
-					double dec = 1.0;
-					do {
-						c.flush(dec);
-						dec /= 2;
-					} while (c.getMemoryUsage() > c.getMemoryLimitation()
-							* c.threshold / 2);
-				}
-				public Task setC(CacheContainer cc) {
-					this.c = cc;
-					return this;
-				}
-			}.setC(this).begin();
-		}
-		return 0;
+	public final int set(String key, byte[] value) {
+		return setCacheValue(key, new CacheValue(value, 0L));
 	}
 	
-	public int setCacheValue(String key, CacheValue cv) {
-		if (memoryLimitation - memoryUsage < cv.getValue().length)
+	public final int set(String key, byte[] value, long expireTime) {
+		return setCacheValue(key, new CacheValue(value, expireTime));
+	}
+	
+	public final int setCacheValue(String key, CacheValue cv) {
+		if (memoryLimitation - getMemoryUsage() < cv.getValue().length)
 			return 2;
-		getContainer().put(key, cv);
-		memoryUsage += cv.getValue().length;
-		if (memoryUsage > memoryLimitation * threshold) {
+		memoryUsage.getAndAdd(cv.getValue().length + key.getBytes().length + 8);
+		container.put(key, cv);
+		if (getMemoryUsage() > memoryLimitation * threshold) {
 			new Task() {
 				private static final long serialVersionUID = 6661384694891274270L;
-				
+
 				CacheContainer c;
+
 				@Override
 				public void exec() {
 					double dec = 1.0;
 					do {
 						c.flush(dec);
 						dec /= 2;
-					} while (c.getMemoryUsage() > c.getMemoryLimitation()
-							* c.threshold / 2);
+					} while (c.getMemoryUsage() > c.getMemoryLimitation() * c.threshold / 2);
 				}
+
 				public Task setCacheContainer(CacheContainer cc) {
 					this.c = cc;
 					return this;
@@ -98,7 +67,7 @@ public final class CacheContainer extends NonCloneableBaseObject {
 	}
 	
 	public CacheValue getCacheValue(String key) {
-		return getContainer().get(key);
+		return container.get(key);
 	}
 
 	public byte[] get(String key) {
@@ -106,34 +75,35 @@ public final class CacheContainer extends NonCloneableBaseObject {
 	}
 
 	public byte[] get(String key, boolean renew) {
-		CacheValue cv = getContainer().get(key);
+		CacheValue cv = container.get(key);
 		if (cv == null)
 			return null;
 		if (cv.getValidateTime() < System.currentTimeMillis() - cv.getStartTime()) {
-			remove(key, cv);
+			remove(key);
 			return null;
 		}
 		if (renew)
-			cv.renewStartTime();
+			cv.setStartTime(System.currentTimeMillis());
 		return cv.getValue();
 	}
 
 	public byte[] delete(String key) {
-		CacheValue cv = getContainer().get(key);
+		CacheValue cv = container.get(key);
 		if (cv == null)
 			return null;
-		remove(key, cv);
+		remove(key);
 		return cv.getValue();
 	}
 
-	public void remove(String key, CacheValue cv) {
-		getContainer().remove(key);
-		memoryUsage -= cv.getValue().length;
+	private void remove(String key) {
+		CacheValue cv = container.remove(key);
+		if (cv != null)
+			memoryUsage.getAndAdd(-1 * (cv.getValue().length + key.getBytes().length + 8));
 	}
 
 	public void clear() {
-		memoryUsage = 0L;
-		getContainer().clear();
+		memoryUsage.set(0L);
+		container.clear();
 	}
 
 	public boolean flush() {
@@ -143,19 +113,19 @@ public final class CacheContainer extends NonCloneableBaseObject {
 	public boolean flush(double dec) {
 		boolean result = false;
 		Long newMemoryUsage = 0L;
-		memoryUsage = Long.MAX_VALUE;
-		Iterator<String> it = getContainer().keySet().iterator();
+		memoryUsage.set(Long.MAX_VALUE);
+		Iterator<String> it = container.keySet().iterator();
 		while (it.hasNext()) {
 			String key = it.next();
-			CacheValue cv = getContainer().get(key);
+			CacheValue cv = container.get(key);
 			if (cv == null)
 				continue;
 			if (dec * cv.getValidateTime() < System.currentTimeMillis() - cv.getStartTime())
-				getContainer().remove(key);
+				container.remove(key);
 			else
-				newMemoryUsage += cv.size();
+				newMemoryUsage += cv.getValue().length + key.getBytes().length + 8;
 		}
-		memoryUsage = newMemoryUsage;
+		memoryUsage.set(newMemoryUsage);
 		return result;
 	}
 
@@ -167,8 +137,11 @@ public final class CacheContainer extends NonCloneableBaseObject {
 		return container.keySet();
 	}
 
+	public long getMemoryUsage() {
+		return memoryUsage.get();
+	}
+	
 	// getter & setter
-
 	public long getMemoryLimitation() {
 		return memoryLimitation;
 	}

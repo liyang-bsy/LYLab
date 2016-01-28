@@ -8,26 +8,14 @@ public class CacheValue extends CloneableBaseObject {
 	byte[] value;
 
 	public CacheValue(byte[] value, long validateTime) {
-		startTime = System.currentTimeMillis();
+		if (validateTime == 0)
+			startTime = Long.MAX_VALUE;
+		else
+			startTime = System.currentTimeMillis();
 		this.validateTime = validateTime;
 		this.value = value;
 	}
-	
-	public CacheValue() {
-		startTime = System.currentTimeMillis();
-		this.validateTime = 0L;
-		this.value = null;
-	}
 
-	public void renewStartTime()
-	{
-		startTime = System.currentTimeMillis();
-	}
-	
-	public int size() {
-		return value.length;
-	}
-	
 	public long getStartTime() {
 		return startTime;
 	}
