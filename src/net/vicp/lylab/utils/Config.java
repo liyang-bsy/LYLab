@@ -615,7 +615,7 @@ public final class Config extends NonCloneableBaseObject {
 	 * @throws LYException
 	 * If key not existed, contains information about key/file name etc.
 	 */
-	public Class<?> getValueTypeByKey(String key) {
+	public final Class<?> getValueTypeByKey(String key) {
 		return getProperty(key).getClass();
 	}
 
@@ -624,7 +624,7 @@ public final class Config extends NonCloneableBaseObject {
 	 * @param key
 	 * @return
 	 */
-	public Object getObject(String key) {
+	public final Object getObject(String key) {
 		return getProperty(key);
 	}
 
@@ -633,7 +633,7 @@ public final class Config extends NonCloneableBaseObject {
 	 * @param key
 	 * @return
 	 */
-	public Object getNewInstance(String key) {
+	public final Object getNewInstance(String key) {
 		return getNewInstance(key, false);
 	}
 
@@ -643,7 +643,7 @@ public final class Config extends NonCloneableBaseObject {
 	 * @param autoInitialize If this implemented Initializable, it will be initialize before return to user
 	 * @return
 	 */
-	public Object getNewInstance(String key, boolean autoInitialize) {
+	public final Object getNewInstance(String key, boolean autoInitialize) {
 		try {
 			String className = (String) getProperty(key);
 			Object instance = Class.forName(className).newInstance();
@@ -663,7 +663,7 @@ public final class Config extends NonCloneableBaseObject {
 	 * @throws
 	 * LYExceptin This entry is not a {@link Config}, this entry is not existed
 	 */
-	public Config getConfig(String key) {
+	public final Config getConfig(String key) {
 		try {
 			return (Config) getProperty(key);
 		} catch (Exception e) {
@@ -671,7 +671,7 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public <T> T[] getArray(String key, Class<T[]> arrayClass) {
+	public final <T> T[] getArray(String key, Class<T[]> arrayClass) {
 		Object value = getProperty(key);
 		try {
 			return (T[]) Caster.arrayCast((List) value, arrayClass);
@@ -681,7 +681,7 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public Object[] getArray(String key) {
+	public final Object[] getArray(String key) {
 		Object value = getProperty(key);
 		try {
 			return (Object[]) Caster.arrayCast((List) value, Object[].class);
@@ -691,7 +691,7 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public List getList(String key) {
+	public final List getList(String key) {
 		Object value = getProperty(key);
 		try {
 			return (List) Caster.arrayCast((List) value, ArrayList.class);
@@ -701,7 +701,7 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public Set getSet(String key) {
+	public final Set getSet(String key) {
 		Object value = getProperty(key);
 		try {
 			return (Set) Caster.arrayCast((List) value, HashSet.class);
@@ -711,11 +711,11 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public String getString(String key) {
+	public final String getString(String key) {
 		return getProperty(key).toString();
 	}
 
-	public Short getShort(String key) {
+	public final Short getShort(String key) {
 		String value = getString(key);
 		try {
 			return Short.valueOf(value);
@@ -725,7 +725,7 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public Integer getInteger(String key) {
+	public final Integer getInteger(String key) {
 		String value = getString(key);
 		try {
 			return Integer.valueOf(value);
@@ -735,7 +735,7 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public Long getLong(String key) {
+	public final Long getLong(String key) {
 		String value = getString(key);
 		try {
 			return Long.valueOf(value);
@@ -745,7 +745,7 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public Float getFloat(String key) {
+	public final Float getFloat(String key) {
 		String value = getString(key);
 		try {
 			return Float.valueOf(value);
@@ -755,7 +755,7 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public Double getDouble(String key) {
+	public final Double getDouble(String key) {
 		String value = getString(key);
 		try {
 			return Double.valueOf(value);
@@ -765,7 +765,7 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public Boolean getBoolean(String key) {
+	public final Boolean getBoolean(String key) {
 		String value = getString(key);
 		try {
 			return Boolean.valueOf(value);
@@ -775,7 +775,7 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public Byte getByte(String key) {
+	public final Byte getByte(String key) {
 		String value = getString(key);
 		try {
 			return Byte.valueOf(value);
@@ -785,7 +785,7 @@ public final class Config extends NonCloneableBaseObject {
 		}
 	}
 
-	public Character getCharacter(String key) {
+	public final Character getCharacter(String key) {
 		String value = getString(key);
 		try {
 			return Character.valueOf(value.charAt(0));

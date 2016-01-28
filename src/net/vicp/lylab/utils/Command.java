@@ -13,7 +13,7 @@ public abstract class Command extends NonCloneableBaseObject {
 	private static final Runtime rt = Runtime.getRuntime();
 	private static String defaultShellEncoding = "GBK";
 
-	public static Pair<Integer, String> execute(String cmd) {
+	public final static Pair<Integer, String> execute(String cmd) {
 		String[] cmdSeq = { "", "/c", "" };
 		if(CoreDef.OperationSystem.isWindows())
 			cmdSeq[0] = "cmd";
