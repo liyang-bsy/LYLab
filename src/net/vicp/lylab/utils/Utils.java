@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 
@@ -602,6 +603,10 @@ public abstract class Utils extends NonCloneableBaseObject {
 		if (length < head.length)
 			return true;
 		return bytesContinueWith(bytes, offset, head, 0, head.length);
+	}
+
+	public final static String createUUID() {
+		return UUID.randomUUID().toString().replaceAll("-", "");
 	}
 
 }
