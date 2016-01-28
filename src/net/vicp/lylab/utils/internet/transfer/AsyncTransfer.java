@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.Protocol;
@@ -91,7 +92,7 @@ public class AsyncTransfer extends AbstractTransfer {
 	public void exec() {
 		while (true) {
 			if (requestPool.isEmpty() && validateRequest())
-				await(1000);
+				await(CoreDef.WAITING_LONG);
 			else {
 				Pair<InetAddr, byte[]> request = requestPool.accessOne();
 				taskQueue.addTask(new DispatchExecutor<>(session.getClient(request.getLeft()), request.getRight(),

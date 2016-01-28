@@ -103,7 +103,7 @@ public class CoreDef extends NonCloneableBaseObject {
 
 	public static final long WAITING = ONE * SECOND;
 	public static final long WAITING_SHORT = HUNDRED * MILLISECOND;
-	public static final long WAITING_LONG = THREE * SECOND;
+	public static final long WAITING_LONG = FOUR * SECOND;
 
 	public static final long INTERVAL = TWO * SECOND;					// 2 second
 	public static final long INTERVAL_SHORT = SECOND / TWO;				// half second
