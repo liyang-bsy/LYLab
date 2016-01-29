@@ -605,6 +605,11 @@ public abstract class Utils extends NonCloneableBaseObject {
 		return bytesContinueWith(bytes, offset, head, 0, head.length);
 	}
 
+	public final static int writeNext(byte[] bytes, int offset, byte[] next) {
+		System.arraycopy(next, 0, bytes, offset, next.length);
+		return offset + next.length;
+	}
+
 	public final static String createUUID() {
 		return UUID.randomUUID().toString().replaceAll("-", "");
 	}

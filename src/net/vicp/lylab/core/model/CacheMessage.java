@@ -13,8 +13,8 @@ public class CacheMessage extends SimpleConfirm {
 	protected int expireTime;
 
 
-	public CacheMessage(String key, String left, byte[] right, boolean renew, int expireTime) {
-		super();
+	public CacheMessage(int code, String key, String left, byte[] right, boolean renew, int expireTime) {
+		super(code);
 		this.key = key;
 		this.pair = new Pair<>(left, right);
 		this.renew = renew;
