@@ -30,10 +30,10 @@ public final class CacheContainer extends NonCloneableBaseObject {
 
 	// function start
 	public final int set(String key, byte[] value) {
-		return setCacheValue(key, new CacheValue(value, 0L));
+		return setCacheValue(key, new CacheValue(value, 0));
 	}
 	
-	public final int set(String key, byte[] value, long expireTime) {
+	public final int set(String key, byte[] value, int expireTime) {
 		return setCacheValue(key, new CacheValue(value, expireTime));
 	}
 	

@@ -8,6 +8,7 @@ import org.apache.commons.lang3.SerializationUtils;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Confirm;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.Utils;
 
@@ -32,7 +33,7 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 	}
 	
 	@Override
-	public byte[] encode(Object obj) {
+	public byte[] encode(Confirm obj) {
 		byte[] data;
 		try {
 			data = SerializationUtils.serialize((Serializable) obj);
@@ -64,12 +65,12 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 	}
 
 	@Override
-	public Object decode(byte[] bytes) {
+	public Confirm decode(byte[] bytes) {
 		return decode(bytes, 0);
 	}
 
 	@Override
-	public Object decode(byte[] bytes, int offset) {
+	public Confirm decode(byte[] bytes, int offset) {
 		if (bytes == null)
 			return null;
 		if (!Utils.checkHead(bytes, offset, head))

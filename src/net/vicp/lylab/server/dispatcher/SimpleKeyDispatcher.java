@@ -10,7 +10,7 @@ import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.utils.Config;
 import net.vicp.lylab.utils.Utils;
 
-public class SimpleKeyDispatcher<I extends Message> extends AbstractDispatcher<I, Message> {
+public class SimpleKeyDispatcher<I extends Message> extends AbstractMessageDispatcher<I, Message> {
 	
 	protected Config actions = null;
 

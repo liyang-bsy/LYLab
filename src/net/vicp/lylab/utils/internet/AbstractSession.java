@@ -1,6 +1,7 @@
 package net.vicp.lylab.utils.internet;
 
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Confirm;
 import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Session;
@@ -24,11 +25,11 @@ public abstract class AbstractSession extends Task implements Session {
 	protected Protocol protocol;
 
 	// for server mode
-	protected Dispatcher<? super Object, ? super Object> dispatcher;
+	protected Dispatcher<? super Confirm, ? super Confirm> dispatcher;
 	// for long connection
 	protected HeartBeat heartBeat;
 
-	public AbstractSession(Protocol protocol, Dispatcher<? super Object, ? super Object> dispatcher,
+	public AbstractSession(Protocol protocol, Dispatcher<? super Confirm, ? super Confirm> dispatcher,
 			HeartBeat heartBeat) {
 		super();
 		if (protocol == null)

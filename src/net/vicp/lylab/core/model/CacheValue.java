@@ -4,10 +4,10 @@ import net.vicp.lylab.core.CloneableBaseObject;
 
 public class CacheValue extends CloneableBaseObject {
 	long startTime;
-	long validateTime;
+	int validateTime;
 	byte[] value;
 
-	public CacheValue(byte[] value, long validateTime) {
+	public CacheValue(byte[] value, int validateTime) {
 		if (validateTime == 0)
 			startTime = Long.MAX_VALUE;
 		else
@@ -24,11 +24,11 @@ public class CacheValue extends CloneableBaseObject {
 		this.startTime = startTime;
 	}
 
-	public long getValidateTime() {
+	public int getValidateTime() {
 		return validateTime;
 	}
 
-	public void setValidateTime(long validateTime) {
+	public void setValidateTime(int validateTime) {
 		this.validateTime = validateTime;
 	}
 

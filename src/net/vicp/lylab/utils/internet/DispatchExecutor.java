@@ -2,6 +2,7 @@ package net.vicp.lylab.utils.internet;
 
 import java.net.Socket;
 
+import net.vicp.lylab.core.interfaces.Confirm;
 import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Session;
@@ -15,7 +16,7 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2016.01.24
  *
  */
-public final class DispatchExecutor<I, O> extends Task {
+public final class DispatchExecutor<I extends Confirm, O extends Confirm> extends Task {
 	private static final long serialVersionUID = -8759689034880271599L;
 
 	Socket client;
@@ -49,7 +50,7 @@ public final class DispatchExecutor<I, O> extends Task {
 		if (dispatcher == null || protocol == null)
 			response = clientRequest;
 		else {
-			Object request = protocol.decode(clientRequest, 0);
+			Confirm request = protocol.decode(clientRequest, 0);
 			if (request instanceof HeartBeat)
 				response = protocol.encode(request);
 			else

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.interfaces.Confirm;
 import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Session;
@@ -42,10 +43,10 @@ public abstract class AbstractTransfer extends LoneWolf implements Transfer {
 	protected Session session;
 	protected Protocol protocol;
 	protected LYTaskQueue taskQueue;
-	protected Dispatcher<? super Object, ? super Object> dispatcher;
+	protected Dispatcher<? super Confirm, ? super Confirm> dispatcher;
 
 	public AbstractTransfer(Session session, Protocol protocol, LYTaskQueue taskQueue,
-			Dispatcher<? super Object, ? super Object> dispatcher) {
+			Dispatcher<? super Confirm, ? super Confirm> dispatcher) {
 		super();
 		this.session = session;
 		this.protocol = protocol;
@@ -145,11 +146,11 @@ public abstract class AbstractTransfer extends LoneWolf implements Transfer {
 		this.taskQueue = taskQueue;
 	}
 
-	public Dispatcher<? super Object, ? super Object> getDispatcher() {
+	public Dispatcher<? super Confirm, ? super Confirm> getDispatcher() {
 		return dispatcher;
 	}
 
-	public void setDispatcher(Dispatcher<? super Object, ? super Object> dispatcher) {
+	public void setDispatcher(Dispatcher<? super Confirm, ? super Confirm> dispatcher) {
 		this.dispatcher = dispatcher;
 	}
 

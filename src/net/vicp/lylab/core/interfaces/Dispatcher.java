@@ -2,7 +2,7 @@ package net.vicp.lylab.core.interfaces;
 
 import java.net.Socket;
 
-public interface Dispatcher<I, O> extends LifeCycle {
+public interface Dispatcher<I extends Confirm, O extends Confirm> extends LifeCycle {
 	
 	/**
 	 * do action

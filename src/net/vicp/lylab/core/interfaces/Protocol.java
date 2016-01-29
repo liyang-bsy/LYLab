@@ -10,7 +10,7 @@ public interface Protocol {
 	 * The byte stream you need
 	 * @throws LYException If any reason caused failure
 	 */
-	public byte[] encode(Object obj);
+	public byte[] encode(Confirm obj);
 
 	/**
 	 * Encode these bytes into objects defined by protocol
@@ -25,7 +25,7 @@ public interface Protocol {
 	 * An object, null may means failed
 	 * @throws LYException This contains information about why it fails
 	 */
-	public Object decode(byte[] bytes);
+	public Confirm decode(byte[] bytes);
 
 	/**
 	 * Encode these bytes into objects defined by protocol
@@ -36,7 +36,7 @@ public interface Protocol {
 	 * An object, null may means failed
 	 * @throws LYException This contains information about why it fails
 	 */
-	public Object decode(byte[] bytes, int offset);
+	public Confirm decode(byte[] bytes, int offset);
 
 	/**
 	 * Validate if these bytes could be assemble into a protocol

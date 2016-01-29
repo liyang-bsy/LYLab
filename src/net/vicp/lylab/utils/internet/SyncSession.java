@@ -9,6 +9,7 @@ import java.util.Arrays;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Confirm;
 import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Protocol;
@@ -44,7 +45,7 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 	protected long interval = CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT / 10;
 
 	public SyncSession(ServerSocket serverSocket, Protocol protocol,
-			Dispatcher<? super Object, ? super Object> dispatcher) {
+			Dispatcher<? super Confirm, ? super Confirm> dispatcher) {
 		this(serverSocket, protocol, dispatcher, null);
 	}
 
@@ -60,7 +61,7 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 	 * @param dispatcher
 	 * @param heartBeat
 	 */
-	public SyncSession(ServerSocket serverSocket, Protocol protocol, Dispatcher<? super Object, ? super Object> dispatcher,
+	public SyncSession(ServerSocket serverSocket, Protocol protocol, Dispatcher<? super Confirm, ? super Confirm> dispatcher,
 			HeartBeat heartBeat) {
 		super(protocol, dispatcher, heartBeat);
 		if (serverSocket == null)

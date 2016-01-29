@@ -21,7 +21,7 @@ import net.vicp.lylab.utils.atomic.AtomicBoolean;
 public final class LYCache extends NonCloneableBaseObject implements Initializable {
 	private List<CacheContainer> bundles = null;
 	private int containerSize = CoreDef.DEFAULT_LYCACHE_CONTAINER_SIZE;
-	private long expireTime = CoreDef.DEFAULT_LYCACHE_EXPIRE_TIME;
+	private int expireTime = CoreDef.DEFAULT_LYCACHE_EXPIRE_TIME;
 	private long memoryLimitation = CoreDef.DEFAULT_LYCACHE_MEMORY_LIMITATION;
 	private String hashAlgorithm = "MD5";
 	public double threshold = CoreDef.DEFAULT_LYCACHE_THRESHOLD;
@@ -100,7 +100,7 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		return cc.set(key, value, expireTime);
 	}
 
-	public int set(String key, byte[] value, long expireTime) {
+	public int set(String key, byte[] value, int expireTime) {
 		CacheContainer cc = getContainer(key);
 		return cc.set(key, value, expireTime);
 	}
@@ -139,7 +139,7 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		return expireTime;
 	}
 
-	public void setExpireTime(long expireTime) {
+	public void setExpireTime(int expireTime) {
 		this.expireTime = expireTime;
 	}
 

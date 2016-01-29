@@ -1,6 +1,7 @@
 package net.vicp.lylab.server.runtime;
 
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Confirm;
 import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
@@ -26,7 +27,7 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 	protected AtomicBoolean closed = new AtomicBoolean(true);
 	protected Session session;
 	protected LYTaskQueue taskQueue;
-	protected Dispatcher<? super Object, ? super Object> dispatcher;
+	protected Dispatcher<? super Confirm, ? super Confirm> dispatcher;
 	protected Integer port = null;
 	protected Protocol protocol;
 	protected HeartBeat heartBeat;
@@ -62,11 +63,11 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 		return closed.get();
 	}
 
-	public Dispatcher<? super Object, ? super Object> getDispatcher() {
+	public Dispatcher<? super Confirm, ? super Confirm> getDispatcher() {
 		return dispatcher;
 	}
 
-	public void setDispatcher(Dispatcher<? super Object, ? super Object> dispatcher) {
+	public void setDispatcher(Dispatcher<? super Confirm, ? super Confirm> dispatcher) {
 		this.dispatcher = dispatcher;
 	}
 

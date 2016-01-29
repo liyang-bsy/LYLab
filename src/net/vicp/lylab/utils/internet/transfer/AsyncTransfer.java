@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Confirm;
 import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Session;
@@ -25,7 +26,7 @@ public class AsyncTransfer extends AbstractTransfer {
 	private static final long serialVersionUID = -8449620508452125989L;
 
 	public AsyncTransfer(Session session, Protocol protocol, LYTaskQueue taskQueue,
-			Dispatcher<? super Object, ? super Object> dispatcher) {
+			Dispatcher<? super Confirm, ? super Confirm> dispatcher) {
 		super(session, protocol, taskQueue, dispatcher);
 	}
 

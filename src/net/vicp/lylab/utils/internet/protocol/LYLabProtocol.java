@@ -3,6 +3,7 @@ package net.vicp.lylab.utils.internet.protocol;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Confirm;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.utils.Algorithm;
 import net.vicp.lylab.utils.Utils;
@@ -28,7 +29,7 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 	}
 
 	@Override
-	public byte[] encode(Object obj) {
+	public byte[] encode(Confirm obj) {
 		byte[] info = obj.getClass().getName().getBytes();
 		byte[] data;
 		try {
@@ -66,12 +67,12 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 	}
 
 	@Override
-	public Object decode(byte[] bytes) {
+	public Confirm decode(byte[] bytes) {
 		return decode(bytes, 0);
 	}
 
 	@Override
-	public Object decode(byte[] bytes, int offset) {
+	public Confirm decode(byte[] bytes, int offset) {
 		if (bytes == null)
 			return null;
 		if (!Utils.checkHead(bytes, offset, head))
@@ -92,7 +93,7 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 
 			sInfo = new String(bytes, lengthEndPosition + splitSignal.length, infoLength);
 			sData = new String(bytes, infoEndPosition + splitSignal.length, dataLength, CoreDef.CHARSET());
-			return Utils.deserialize(Class.forName(sInfo), sData);
+			return (Confirm) Utils.deserialize(Class.forName(sInfo), sData);
 		} catch (Exception e) {
 			String originData = null;
 			try {

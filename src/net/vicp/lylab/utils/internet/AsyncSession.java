@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.Confirm;
 import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
@@ -69,7 +70,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 	 * @param port
 	 * @param heartBeat
 	 */
-	public AsyncSession(int port, Protocol protocol, Dispatcher<? super Object, ? super Object> dispatcher,
+	public AsyncSession(int port, Protocol protocol, Dispatcher<? super Confirm, ? super Confirm> dispatcher,
 			HeartBeat heartBeat, LYTaskQueue taskqueue) {
 		super(protocol, dispatcher, heartBeat);
 		super.setLonewolf(true);
