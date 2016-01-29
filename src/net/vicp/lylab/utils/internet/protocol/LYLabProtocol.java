@@ -1,12 +1,9 @@
 package net.vicp.lylab.utils.internet.protocol;
 
-import java.util.Arrays;
-
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.model.SimpleMessage;
 import net.vicp.lylab.utils.Algorithm;
 import net.vicp.lylab.utils.Utils;
 
@@ -21,23 +18,6 @@ import net.vicp.lylab.utils.Utils;
  * @version 2.0.0
  */
 public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
-
-	public static void main(String[] arg) {
-		Protocol protocol = new JavaObjProtocol();
-		{
-			byte[] bytes = protocol.encode(new SimpleMessage());
-			System.out.println(protocol.validate(bytes, bytes.length));
-			System.out.println(protocol.decode(bytes));
-		}
-		{
-			byte[] bytes = protocol.encode(new SimpleMessage());
-			bytes = Arrays.copyOf(bytes, 1400);
-			for (int i = 1200; i >= 20; i--)
-				bytes[i] = bytes[i - 20];
-			System.out.println(protocol.validate(bytes, 20, bytes.length));
-			System.out.println(protocol.decode(bytes, 20));
-		}
-	}
 
 	protected final byte[] head = "LYLab".getBytes();
 	protected final byte[] splitSignal = new byte[] { -15 };
@@ -102,11 +82,12 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 			headEndPosition = offset + head.length;
 
 			if (bytes.length - 4 < headEndPosition + splitSignal.length)
-				return 0;
+				return null;
 			int dataLength = Utils.Bytes4ToInt(bytes, headEndPosition + splitSignal.length);
 			lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
 			int infoLength = Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
-			infoLength = (infoLength == -1 ? 0 : infoLength);
+			if (infoLength == -1)
+				return null;
 			infoEndPosition = lengthEndPosition + splitSignal.length + infoLength;
 
 			sInfo = new String(bytes, lengthEndPosition + splitSignal.length, infoLength);
@@ -146,7 +127,8 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 		int lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
 
 		int infoLength = Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
-		infoLength = (infoLength == -1 ? 0 : infoLength);
+		if (infoLength == -1)
+			return 0;
 		int infoEndPosition = lengthEndPosition + splitSignal.length + infoLength;
 
 		int dataEndPosition = length + infoEndPosition + splitSignal.length;
