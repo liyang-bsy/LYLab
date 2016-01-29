@@ -1,7 +1,6 @@
 package net.vicp.lylab.utils.internet.protocol;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -27,27 +26,6 @@ import net.vicp.lylab.utils.Utils;
  * @version 2.0.0
  */
 public class CacheMessageProtocol extends NonCloneableBaseObject implements Protocol {
-
-	public static void main(String[] arg) {
-		CacheMessageProtocol protocol = new CacheMessageProtocol();
-		{
-			byte[] bytes = protocol.encode(new CacheMessage(0, "delete", "0000", "111111".getBytes(), false, 1000));
-			System.out.println(protocol.validate(bytes, bytes.length));
-			CacheMessage c = protocol.decode(bytes);
-			System.out.println(c);
-			System.out.println(Arrays.toString(c.getPair().getRight()));
-		}
-		{
-			byte[] bytes = protocol.encode(new CacheMessage(0, "delete", "aaa", "bbbbbbbb".getBytes(), false, 1000));
-			bytes = Arrays.copyOf(bytes, 1400);
-			for (int i = 1200; i >= 20; i--)
-				bytes[i] = bytes[i - 20];
-			System.out.println(protocol.validate(bytes, 20, bytes.length));
-			CacheMessage c = protocol.decode(bytes, 20);
-			System.out.println(c);
-			System.out.println(Arrays.toString(c.getPair().getRight()));
-		}
-	}
 
 	protected final byte[] head = "Pair".getBytes();
 	protected final byte[] splitSignal = new byte[] { -15 };
