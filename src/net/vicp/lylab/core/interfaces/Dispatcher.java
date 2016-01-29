@@ -12,12 +12,5 @@ public interface Dispatcher<I, O> extends LifeCycle {
 	 * Object you want to reply to client
 	 */
 	public O doAction(Socket client, I request);
-	/**
-	 * You should set filters when initialize
-	 * @param client
-	 * @param request
-	 * @return
-	 */
-	public void initialize();
 	
 }
