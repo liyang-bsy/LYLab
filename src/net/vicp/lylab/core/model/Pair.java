@@ -3,15 +3,14 @@ package net.vicp.lylab.core.model;
 import net.vicp.lylab.core.CloneableBaseObject;
 
 /**
+ * STL: “对”，可用于返回两个数据的时候用
  * 
  * @author liyang
  *
- *         SLL: “对”，可用于返回两个数据的时候用
- *
  */
 public class Pair<L, R> extends CloneableBaseObject {
-	private L left;
-	private R right;
+	protected L left;
+	protected R right;
 
 	public Pair() {
 		this.left = null;
