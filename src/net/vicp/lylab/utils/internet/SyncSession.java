@@ -128,9 +128,9 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 				if (bytesContainer == null)
 					return;
 //				transfer.putRequest(socket, buffer, bytesContainer.getRight());
-				DispatchExecutor<?, ?> de = new DispatchExecutor<>(socket, bytesContainer.getLeft(), this, dispatcher,
-						protocol);
-				byte[] bytes = de.doResponse();
+//				DispatchExecutor<? super Confirm, ? super Confirm> de = new DispatchExecutor<>(socket, bytesContainer.getLeft(), this, dispatcher,
+//						protocol);
+				byte[] bytes = DispatchExecutor.doResponse(socket, bytesContainer.getLeft(), this, dispatcher, protocol);
 				if (bytes == null)
 					throw new LYException("Server attempt respond null to client");
 				send(bytes);

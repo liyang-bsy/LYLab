@@ -1,5 +1,6 @@
 package net.vicp.lylab.utils.internet;
 
+import java.io.IOException;
 import java.net.Socket;
 
 import net.vicp.lylab.core.interfaces.Confirm;
@@ -7,6 +8,7 @@ import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Session;
 import net.vicp.lylab.core.model.HeartBeat;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.tq.Task;
 
 /**
@@ -22,10 +24,10 @@ public final class DispatchExecutor<I extends Confirm, O extends Confirm> extend
 	Socket client;
 	byte[] clientRequest;
 	Session session;
-	Dispatcher<I, O> dispatcher;
+	Dispatcher<? super Confirm, ? super Confirm> dispatcher;
 	Protocol protocol;
 
-	public DispatchExecutor(Socket client, byte[] clientRequest, Session session, Dispatcher<I, O> dispatcher, Protocol protocol) {
+	public DispatchExecutor(Socket client, byte[] clientRequest, Session session, Dispatcher<? super Confirm, ? super Confirm> dispatcher, Protocol protocol) {
 		this.client = client;
 		this.clientRequest = clientRequest;
 		this.session = session;
@@ -38,14 +40,14 @@ public final class DispatchExecutor<I extends Confirm, O extends Confirm> extend
 	 */
 	@Override
 	public void exec() {
-		send(doResponse());
+		byte[] response = doResponse(client, clientRequest, session, dispatcher, protocol);
+		send(client, session, response);
 	}
 
 	/**
 	 * sync mode
 	 */
-	@SuppressWarnings("unchecked")
-	public byte[] doResponse() {
+	public final static byte[] doResponse(Socket client, byte[] clientRequest, Session session, Dispatcher<? super Confirm, ? super Confirm> dispatcher, Protocol protocol) {
 		byte[] response = null;
 		if (dispatcher == null || protocol == null)
 			response = clientRequest;
@@ -54,13 +56,26 @@ public final class DispatchExecutor<I extends Confirm, O extends Confirm> extend
 			if (request instanceof HeartBeat)
 				response = protocol.encode(request);
 			else
-				response = protocol.encode(dispatcher.doAction(client, (I) request));
+				response = protocol.encode(dispatcher.doAction(client, request));
 		}
 		return response;
 	}
 
-	public void send(byte[] response) {
+	public final static void send(Socket client, Session session, byte[] response) {
 		session.send(client, response);
+	}
+
+	public final void close(Socket client) {
+		try {
+			client.close();
+		} catch (IOException e) {
+			log.error("Socket close failed:" + Utils.getStringFromException(e));
+		}
+	}
+	
+	public final void sendAndClose(Socket client, Session session, byte[] response) {
+		send(client, session, response);
+		close(client);
 	}
 
 }
