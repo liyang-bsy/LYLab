@@ -17,7 +17,7 @@ import net.vicp.lylab.utils.Utils;
 
 /**
  * A custom protocol to transfer CacheMessage.<br>
- * Data will be transfered as JSON string.<br>
+ * Data will be transfered as organized byte array.<br>
  * <br>
  * <br>
  * Release Under GNU Lesser General Public License (LGPL).
@@ -43,7 +43,7 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 			for (int i = 1200; i >= 20; i--)
 				bytes[i] = bytes[i - 20];
 			System.out.println(protocol.validate(bytes, 20, bytes.length));
-			CacheMessage c = protocol.decode(bytes);
+			CacheMessage c = protocol.decode(bytes, 20);
 			System.out.println(c);
 			System.out.println(Arrays.toString(c.getPair().getRight()));
 		}
@@ -76,9 +76,9 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 			throw new NullPointerException("Parameter pair.getRight() is null");
 
 		byte[] code = Utils.IntToBytes4(cm.getCode());
-		byte[] renew = cm.isRenew() ? Utils.IntToBytes4(0) : Utils.IntToBytes4(1);
+		byte[] renew = cm.isRenew() ? Utils.IntToBytes4(1) : Utils.IntToBytes4(0);
 		byte[] expireTime = Utils.IntToBytes4(cm.getExpireTime());
-		byte[] key = pair.getLeft().getBytes();
+		byte[] key = cm.getKey().getBytes();
 		byte[] left = pair.getLeft().getBytes();
 		byte[] right = pair.getRight();
 

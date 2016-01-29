@@ -12,7 +12,6 @@ public class CacheMessage extends SimpleConfirm {
 	protected boolean renew;
 	protected int expireTime;
 
-
 	public CacheMessage(int code, String key, String left, byte[] right, boolean renew, int expireTime) {
 		super(code);
 		this.key = key;
@@ -28,7 +27,7 @@ public class CacheMessage extends SimpleConfirm {
 		renew = false;
 		expireTime = 0;
 	}
-	
+
 	public void copyBasicInfo(CacheMessage other) {
 		setKey(other.getKey());
 	}
@@ -72,14 +71,15 @@ public class CacheMessage extends SimpleConfirm {
 	public void fail(String msg) {
 		this.setCode(1);
 	}
-	
+
 	public void fail(int code, String msg) {
 		this.setCode(1);
 	}
 
 	@Override
 	public String toString() {
-		return "Message [key=" + key + ", pair=" + pair + ", code=" + code + "]";
+		return "CacheMessage [key=" + key + ", pair=" + pair + ", renew=" + renew + ", expireTime=" + expireTime
+				+ ", code=" + code + "]";
 	}
 
 }
