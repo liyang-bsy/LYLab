@@ -49,8 +49,8 @@ public interface Protocol {
 	 * @param bytes source
 	 * @param len the maximum number of bytes to validate
 	 * @return
-	 * 0 not enough data<br>>0 index of the end position and of course validate passed
-	 * @throws LYException If data is corrupt
+	 * 0 not enough data<br>>0 index of the end position of byte array and certainly validate passed
+	 * @throws LYException This contains information about why it fails
 	 */
 	public int validate(byte[] bytes, int len);
 	
@@ -60,8 +60,8 @@ public interface Protocol {
 	 * @param offset validate from offset
 	 * @param len the maximum number of bytes to validate
 	 * @return
-	 * 0 not enough data<br>>0 index of the end position and of course validate passed
-	 * @throws LYException If data is corrupt
+	 * 0 not enough data<br>>0 index of the end position of byte array and certainly validate passed
+	 * @throws LYException This contains information about why it fails
 	 */
 	public int validate(byte[] bytes, int offset, int len);
 
