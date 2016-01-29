@@ -5,10 +5,10 @@ import java.net.Socket;
 import net.vicp.lylab.core.AbstractAction;
 import net.vicp.lylab.core.BaseAction;
 import net.vicp.lylab.core.interfaces.Dispatcher;
-import net.vicp.lylab.core.model.Message;
+import net.vicp.lylab.core.model.SimpleMessage;
 import net.vicp.lylab.utils.Utils;
 
-public abstract class AbstractMessageDispatcher<I extends O, O extends Message> extends AbstractDispatcher<I, O> implements Dispatcher<I, O> {
+public abstract class AbstractMessageDispatcher<I extends O, O extends SimpleMessage> extends AbstractDispatcher<I, O> implements Dispatcher<I, O> {
 
 	protected abstract void dispatcher(AbstractAction action, Socket client, I request, O response);
 

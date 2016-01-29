@@ -20,6 +20,14 @@ public class CacheMessage extends SimpleConfirm {
 		this.expireTime = expireTime;
 	}
 
+	public CacheMessage(int code) {
+		super(code);
+		key = "Invalid";
+		pair = new Pair<String, byte[]>();
+		renew = false;
+		expireTime = 0;
+	}
+
 	public CacheMessage() {
 		super(-1);
 		key = "Invalid";
@@ -30,6 +38,9 @@ public class CacheMessage extends SimpleConfirm {
 
 	public void copyBasicInfo(CacheMessage other) {
 		setKey(other.getKey());
+		setRenew(other.isRenew());
+		setExpireTime(other.getExpireTime());
+		getPair().setLeft(other.getPair().getLeft());
 	}
 
 	public String getKey() {

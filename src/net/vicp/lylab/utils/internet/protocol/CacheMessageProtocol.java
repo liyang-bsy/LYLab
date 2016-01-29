@@ -48,10 +48,10 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 		Pair<String, byte[]> pair = cm.getPair();
 		if (pair == null)
 			throw new NullPointerException("Parameter pair is null");
-		if (StringUtils.isBlank(pair.getLeft()))
-			throw new NullPointerException("Parameter pair.getLeft() is blank");
+		if (pair.getLeft() == null)
+			pair.setLeft("");
 		if (pair.getRight() == null)
-			throw new NullPointerException("Parameter pair.getRight() is null");
+			pair.setRight(new byte[0]);
 
 		byte[] code = Utils.IntToBytes4(cm.getCode());
 		byte[] renew = cm.isRenew() ? Utils.IntToBytes4(1) : Utils.IntToBytes4(0);
