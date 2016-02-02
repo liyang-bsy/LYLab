@@ -1,4 +1,4 @@
-package net.vicp.lylab.utils.rpc.client;
+package net.vicp.lylab.utils.client;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +19,7 @@ import net.vicp.lylab.utils.creator.InstanceCreator;
 import net.vicp.lylab.utils.internet.SyncSession;
 import net.vicp.lylab.utils.operation.KeepAliveValidator;
 
-public class RPCaller extends NonCloneableBaseObject implements LifeCycle {
+public class RPCClient extends NonCloneableBaseObject implements LifeCycle {
 	protected AutoGeneratePool<SyncSession> pool = null;
 	protected AutoCreator<SyncSession> creator = null;
 	protected AtomicBoolean closed = new AtomicBoolean(true);
