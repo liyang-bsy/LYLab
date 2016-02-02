@@ -1,7 +1,5 @@
 package net.vicp.lylab.utils.internet.protocol;
 
-import java.nio.ByteBuffer;
-
 import org.apache.commons.lang3.StringUtils;
 
 import net.vicp.lylab.core.CoreDef;
@@ -53,26 +51,20 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 		if (pair.getRight() == null)
 			pair.setRight(new byte[0]);
 
-		byte[] code = Utils.IntToBytes4(cm.getCode());
-		byte[] renew = cm.isRenew() ? Utils.IntToBytes4(1) : Utils.IntToBytes4(0);
-		byte[] expireTime = Utils.IntToBytes4(cm.getExpireTime());
+		byte[] code = Utils.int2Bytes(cm.getCode());
+		byte[] renew = cm.isRenew() ? Utils.int2Bytes(1) : Utils.int2Bytes(0);
+		byte[] expireTime = Utils.int2Bytes(cm.getExpireTime());
 		byte[] key = cm.getKey().getBytes();
 		byte[] left = pair.getLeft().getBytes();
 		byte[] right = pair.getRight();
 
-		int intLength = code.length + splitSignal.length + renew.length + splitSignal.length + expireTime.length
+		int iLength = code.length + splitSignal.length + renew.length + splitSignal.length + expireTime.length
 				+ splitSignal.length + key.length + splitSignal.length + left.length + splitSignal.length + right.length
 				+ splitSignal.length;
 
-		byte[] byteLength = Utils.IntToBytes4(intLength);
+		byte[] byteLength = Utils.int2Bytes(iLength);
 
-		int size = head.length + splitSignal.length + CoreDef.SIZEOF_INTEGER + splitSignal.length + intLength;
-
-		ByteBuffer bb = ByteBuffer.allocate(size);
-		bb.put(head);
-		bb.put(splitSignal);
-		bb.putInt(intLength);
-		bb.putInt(cm.getCode());
+		int size = head.length + splitSignal.length + CoreDef.SIZEOF_INTEGER + splitSignal.length + iLength;
 
 		byte[] bytes = new byte[size];
 		int offset = 0;
@@ -112,20 +104,18 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 			int endPosition = offset + head.length + splitSignal.length;
 			if (bytes.length - 4 < endPosition)
 				return null;
-			int length = Utils.Bytes4ToInt(bytes, endPosition);
-			int dataSegmentStart = head.length + splitSignal.length + CoreDef.SIZEOF_INTEGER + splitSignal.length;
-			if (dataSegmentStart + length > bytes.length)
+			int length = Utils.bytes2Int(bytes, endPosition);
+			endPosition = head.length + splitSignal.length + CoreDef.SIZEOF_INTEGER + splitSignal.length;
+			if (endPosition + length > bytes.length)
 				return null;
 
+			int code = Utils.bytes2Int(bytes, endPosition);
 			endPosition = endPosition + CoreDef.SIZEOF_INTEGER + splitSignal.length;
 
-			int code = Utils.Bytes4ToInt(bytes, endPosition);
+			boolean renew = Utils.bytes2Int(bytes, endPosition) == 0 ? false : true;
 			endPosition = endPosition + CoreDef.SIZEOF_INTEGER + splitSignal.length;
 
-			boolean renew = Utils.Bytes4ToInt(bytes, endPosition) == 0 ? false : true;
-			endPosition = endPosition + CoreDef.SIZEOF_INTEGER + splitSignal.length;
-
-			int expireTime = Utils.Bytes4ToInt(bytes, endPosition);
+			int expireTime = Utils.bytes2Int(bytes, endPosition);
 			endPosition = endPosition + CoreDef.SIZEOF_INTEGER + splitSignal.length;
 
 			dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
@@ -155,7 +145,7 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 			} catch (Exception ex) {
 				originData = "Convert failed:" + Utils.getStringFromException(ex);
 			}
-			throw new LYException("Failed to convert data[" + originData + "] into Pair<String, String>", e);
+			throw new LYException("Failed to convert data[" + originData + "] into CacheMessage", e);
 		}
 	}
 
@@ -174,33 +164,11 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 			throw new LYException("Bad data package: mismatch head\n" + new String(bytes, offset, len - offset).trim()
 					+ "\nOriginal(start from " + offset + "):\n" + new String(bytes).trim());
 
-		int dataLength = 0;
 		int endPosition = offset + head.length + splitSignal.length;
-		if (bytes.length - 4 < endPosition)
+		if (len - 4 < endPosition)
 			return 0;
-		int length = Utils.Bytes4ToInt(bytes, endPosition);
-		if (head.length + splitSignal.length + length + splitSignal.length > bytes.length)
-			return 0;
-
-		endPosition = endPosition + CoreDef.SIZEOF_INTEGER + splitSignal.length;
-		endPosition = endPosition + CoreDef.SIZEOF_INTEGER + splitSignal.length;
-		endPosition = endPosition + CoreDef.SIZEOF_INTEGER + splitSignal.length;
-		endPosition = endPosition + CoreDef.SIZEOF_INTEGER + splitSignal.length;
-
-		dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
-		if (dataLength == -1)
-			return 0;
-		endPosition = endPosition + dataLength + splitSignal.length;
-
-		dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
-		if (dataLength == -1)
-			return 0;
-		endPosition = endPosition + dataLength + splitSignal.length;
-
-		dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
-		if (dataLength == -1)
-			return 0;
-		endPosition = endPosition + dataLength + splitSignal.length;
+		int length = Utils.bytes2Int(bytes, endPosition);
+		endPosition += CoreDef.SIZEOF_INTEGER + splitSignal.length + length;
 
 		if (len < endPosition)
 			return 0;

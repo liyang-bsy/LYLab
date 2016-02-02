@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
@@ -12,8 +13,8 @@ import net.vicp.lylab.core.exceptions.LYException;
 public class JsonConverUtil extends NonCloneableBaseObject {
 	
 	private static final JsonFactory jsonFactory = new JsonFactory();
-	private static final ObjectMapper mapper = new ObjectMapper();
-
+	private static final ObjectMapper mapper = new ObjectMapper().disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+	
 	public static String serialize(Object obj) {
 		if (obj == null)
 			throw new LYException("Parameter obj is null");

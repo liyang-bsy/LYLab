@@ -474,12 +474,41 @@ public abstract class Utils extends NonCloneableBaseObject {
 	}
 
 	/**
-	 * 数字转byte
+	 * Boolean to byte
 	 * 
 	 * @param num
 	 * @return
 	 */
-	public final static byte[] IntToBytes4(int x) {
+	public final static byte[] boolean2Bytes(boolean b) {
+		return new byte[] { (byte) (b ? 1 : 0) };
+	}
+
+	/**
+	 * Byte to boolean
+	 * 
+	 * @param bytes
+	 * @return
+	 */
+	public final static boolean bytes2Boolean(byte[] bytes, int offset) {
+		if (bytes.length - 1 < offset)
+			throw new LYException("Out of bounds, byte length is " + bytes.length + " while offset is " + offset);
+
+		if (bytes[0] == 0)
+			return false;
+		return true;
+	}
+
+	public final static boolean bytes2Boolean(byte[] bytes) {
+		return bytes2Boolean(bytes,0);
+	}
+
+	/**
+	 * Integer to byte
+	 * 
+	 * @param num
+	 * @return
+	 */
+	public final static byte[] int2Bytes(int x) {
 		byte[] bytes = new byte[4];
 		if (CoreDef.BIG_ENDIAN) {
 			bytes[3] = int3(x);
@@ -496,12 +525,12 @@ public abstract class Utils extends NonCloneableBaseObject {
 	}
 
 	/**
-	 * byte转数字
+	 * Byte to integer
 	 * 
 	 * @param bytes
 	 * @return
 	 */
-	public final static int Bytes4ToInt(byte[] bytes) {
+	public final static int bytes2Int(byte[] bytes) {
 		if (CoreDef.BIG_ENDIAN)
 			return makeInt(bytes[3], bytes[2], bytes[1], bytes[0]);
 		else
@@ -509,12 +538,13 @@ public abstract class Utils extends NonCloneableBaseObject {
 	}
 
 	/**
-	 * byte转数字
+	 * Byte to integer
 	 * 
 	 * @param bytes
+	 * @param offset
 	 * @return
 	 */
-	public final static int Bytes4ToInt(byte[] bytes, int offset) {
+	public final static int bytes2Int(byte[] bytes, int offset) {
 		if (bytes.length - 4 < offset)
 			throw new LYException("Out of bounds, byte length is " + bytes.length + " while offset is " + offset);
 

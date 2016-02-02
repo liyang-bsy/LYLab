@@ -23,15 +23,15 @@ import net.vicp.lylab.utils.Utils;
  * @version 2.0.0
  */
 public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol {
-	
+
 	protected final byte[] head = "JavaObj".getBytes();
 	protected final byte[] splitSignal = new byte[] { -15 };
-	
+
 	@Override
 	public byte[] getHead() {
 		return head;
 	}
-	
+
 	@Override
 	public byte[] encode(Confirm obj) {
 		byte[] data;
@@ -41,7 +41,7 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 			throw new LYException("Cannot serialize object into data", e);
 		}
 
-		byte[] length = Utils.IntToBytes4(data.length);
+		byte[] length = Utils.int2Bytes(data.length);
 		int headLength = head.length;
 		int lengthLength = length.length;
 		int dataLength = data.length;
@@ -79,7 +79,7 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 		int headEndPosition = offset + head.length;
 
 		int lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
-		int length = Utils.Bytes4ToInt(bytes, head.length + splitSignal.length);
+		int length = Utils.bytes2Int(bytes, head.length + splitSignal.length);
 
 		byte[] data = Arrays.copyOfRange(bytes, lengthEndPosition + splitSignal.length,
 				lengthEndPosition + splitSignal.length + length);
@@ -89,7 +89,7 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 			throw new LYException("Failed to convert data into object", e);
 		}
 	}
-	
+
 	@Override
 	public int validate(byte[] bytes, int len) {
 		return validate(bytes, 0, len);
@@ -104,15 +104,15 @@ public class JavaObjProtocol extends NonCloneableBaseObject implements Protocol 
 		if (!Utils.checkHead(bytes, offset, len, head))
 			throw new LYException("Bad data package: mismatch head");
 
-		int headEndPosition = offset + head.length;
-		int lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
-		int length = Utils.Bytes4ToInt(bytes, headEndPosition + splitSignal.length);
-
-		int dataEnd = length + lengthEndPosition + splitSignal.length;
-
-		if (len < dataEnd)
+		int endPosition = offset + head.length + splitSignal.length;
+		if (len - 4 < endPosition)
 			return 0;
-		return dataEnd;
+		int length = Utils.bytes2Int(bytes, endPosition);
+		endPosition += CoreDef.SIZEOF_INTEGER + splitSignal.length + length;
+		
+		if (len < endPosition)
+			return 0;
+		return endPosition;
 	}
-	
+
 }

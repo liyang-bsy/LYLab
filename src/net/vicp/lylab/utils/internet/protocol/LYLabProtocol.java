@@ -1,5 +1,7 @@
 package net.vicp.lylab.utils.internet.protocol;
 
+import java.util.Arrays;
+
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
@@ -38,31 +40,21 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 			throw new LYException("Cannot serialize object into data", e);
 		}
 
-		byte[] length = Utils.IntToBytes4(data.length);
-		int headLength = head.length;
-		int lengthLength = length.length;
-		int infoLength = info.length;
-		int dataLength = data.length;
-		int splitSignalLength = splitSignal.length;
+		int iLength = info.length + splitSignal.length + data.length + splitSignal.length;
+		byte[] length = Utils.int2Bytes(iLength);
 
-		int size = headLength + lengthLength + infoLength + dataLength + splitSignalLength * 3;
+		int size = head.length + splitSignal.length + length.length + splitSignal.length + iLength;
 
 		byte[] bytes = new byte[size];
-		int i = 0;
-		for (int j = 0; j < headLength; j++)
-			bytes[i++] = head[j];
-		for (int j = 0; j < splitSignalLength; j++)
-			bytes[i++] = splitSignal[j];
-		for (int j = 0; j < lengthLength; j++)
-			bytes[i++] = length[j];
-		for (int j = 0; j < splitSignalLength; j++)
-			bytes[i++] = splitSignal[j];
-		for (int j = 0; j < infoLength; j++)
-			bytes[i++] = info[j];
-		for (int j = 0; j < splitSignalLength; j++)
-			bytes[i++] = splitSignal[j];
-		for (int j = 0; j < dataLength; j++)
-			bytes[i++] = data[j];
+		int offset = 0;
+		offset = Utils.writeNext(bytes, offset, head);
+		offset = Utils.writeNext(bytes, offset, splitSignal);
+		offset = Utils.writeNext(bytes, offset, length);
+		offset = Utils.writeNext(bytes, offset, splitSignal);
+		offset = Utils.writeNext(bytes, offset, info);
+		offset = Utils.writeNext(bytes, offset, splitSignal);
+		offset = Utils.writeNext(bytes, offset, data);
+		offset = Utils.writeNext(bytes, offset, splitSignal);
 		return bytes;
 	}
 
@@ -77,31 +69,37 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 			return null;
 		if (!Utils.checkHead(bytes, offset, head))
 			throw new LYException("Bad data package: mismatch head");
-		String sInfo = null, sData = null;
-		int headEndPosition = 0, lengthEndPosition = 0, infoEndPosition = 0;
 		try {
-			headEndPosition = offset + head.length;
-
-			if (bytes.length - 4 < headEndPosition + splitSignal.length)
+			int dataLength = 0;
+			int endPosition = offset + head.length + splitSignal.length;
+			if (bytes.length - 4 < endPosition)
 				return null;
-			int dataLength = Utils.Bytes4ToInt(bytes, headEndPosition + splitSignal.length);
-			lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
-			int infoLength = Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
-			if (infoLength == -1)
+			int length = Utils.bytes2Int(bytes, endPosition);
+			endPosition = head.length + splitSignal.length + CoreDef.SIZEOF_INTEGER + splitSignal.length;
+			if (endPosition + length > bytes.length)
 				return null;
-			infoEndPosition = lengthEndPosition + splitSignal.length + infoLength;
 
-			sInfo = new String(bytes, lengthEndPosition + splitSignal.length, infoLength);
-			sData = new String(bytes, infoEndPosition + splitSignal.length, dataLength, CoreDef.CHARSET());
-			return (Confirm) Utils.deserialize(Class.forName(sInfo), sData);
+			dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
+			if (dataLength == -1)
+				return null;
+			String info = new String(bytes, endPosition, dataLength);
+			endPosition = endPosition + dataLength + splitSignal.length;
+
+			dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
+			if (dataLength == -1)
+				return null;
+			String data = new String(bytes, endPosition, dataLength);
+			endPosition = endPosition + dataLength + splitSignal.length;
+
+			return (Confirm) Utils.deserialize(Class.forName(info), data);
 		} catch (Exception e) {
 			String originData = null;
 			try {
 				originData = new String(bytes, CoreDef.CHARSET());
 			} catch (Exception ex) {
-				originData = "Convert failed:" + Utils.getStringFromException(ex);
+				originData = "Encode failed:\n" + Arrays.toString(bytes) + Utils.getStringFromException(ex);
 			}
-			throw new LYException("Failed to convert data[" + originData + "] into specific class:" + sInfo, e);
+			throw new LYException("Failed to convert data into object:\n" + originData, e);
 		}
 	}
 
@@ -120,22 +118,15 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 			throw new LYException("Bad data package: mismatch head\n" + new String(bytes, offset, len - offset).trim()
 					+ "\nOriginal(start from " + offset + "):\n" + new String(bytes).trim());
 
-		int headEndPosition = head.length + offset;
-
-		if (bytes.length - 4 < headEndPosition + splitSignal.length)
+		int endPosition = offset + head.length + splitSignal.length;
+		if (len - 4 < endPosition)
 			return 0;
-		int length = Utils.Bytes4ToInt(bytes, headEndPosition + splitSignal.length);
-		int lengthEndPosition = headEndPosition + splitSignal.length + CoreDef.SIZEOF_INTEGER;
+		int length = Utils.bytes2Int(bytes, endPosition);
+		endPosition += CoreDef.SIZEOF_INTEGER + splitSignal.length + length;
 
-		int infoLength = Algorithm.KMPSearch(bytes, splitSignal, lengthEndPosition + splitSignal.length);
-		if (infoLength == -1)
+		if (len < endPosition)
 			return 0;
-		int infoEndPosition = lengthEndPosition + splitSignal.length + infoLength;
-
-		int dataEndPosition = length + infoEndPosition + splitSignal.length;
-		if (len < dataEndPosition)
-			return 0;
-		return dataEndPosition;
+		return endPosition;
 	}
 
 }
