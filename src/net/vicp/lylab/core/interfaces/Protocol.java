@@ -47,7 +47,7 @@ public interface Protocol {
      * } </pre>
      * 
 	 * @param bytes source
-	 * @param len the maximum number of bytes to validate
+	 * @param len the maximum number of bytes to validate from 0
 	 * @return
 	 * 0 not enough data<br>>0 index of the end position of byte array and certainly validate passed
 	 * @throws LYException This contains information about why it fails
@@ -58,7 +58,7 @@ public interface Protocol {
 	 * Validate from bytes if a specific position contains a protocol
 	 * @param bytes source
 	 * @param offset validate from offset
-	 * @param len the maximum number of bytes to validate
+	 * @param len the maximum number of bytes to validate from 0
 	 * @return
 	 * 0 not enough data<br>>0 index of the end position of byte array and certainly validate passed
 	 * @throws LYException This contains information about why it fails
