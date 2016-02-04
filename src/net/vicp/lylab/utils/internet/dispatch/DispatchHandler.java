@@ -48,12 +48,12 @@ public final class DispatchHandler extends Task implements Initializable {
 				await();
 				continue;
 			}
-			byte[] response = DispatchExecutor.doResponse(client, clientRequest, session, dispatcher, protocol);
-			DispatchExecutor.send(client, session, response);
-			
+			try {
+				byte[] response = DispatchExecutor.doResponse(client, clientRequest, session, dispatcher, protocol);
+				DispatchExecutor.send(client, session, response);
+			} catch (Exception e) { }
 			session = null;
-			
-			controller.recycle(this.getObjectId());
+			controller.recycle(this);
 		}
 	}
 

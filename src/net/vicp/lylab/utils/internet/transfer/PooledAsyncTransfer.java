@@ -104,9 +104,18 @@ public class PooledAsyncTransfer extends AbstractTransfer {
 			else {
 				Pair<InetAddr, byte[]> request = requestPool.accessOne();
 
-				DispatchHandler dispatchHandler = dispatchHandlerPool.accessOne();
-				dispatchHandler.setController(dispatchHandlerPool);
-				dispatchHandler.handlerRequest(session.getClient(request.getLeft()), request.getRight(), session, dispatcher, protocol);
+				while (true) {
+					DispatchHandler dispatchHandler = dispatchHandlerPool.accessOne();
+					if (dispatchHandler == null) {
+						// extreme short wait
+						await(1L);
+						continue;
+					}
+					dispatchHandler.setController(dispatchHandlerPool);
+					dispatchHandler.handlerRequest(session.getClient(request.getLeft()), request.getRight(), session,
+							dispatcher, protocol);
+					break;
+				}
 			}
 		}
 	}
