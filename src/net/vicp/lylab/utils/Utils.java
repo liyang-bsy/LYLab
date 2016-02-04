@@ -6,10 +6,12 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +39,32 @@ public abstract class Utils extends NonCloneableBaseObject {
 			} catch (Exception e) {
 				log.error(Utils.getStringFromException(e));
 			}
+	}
+
+	public static Object convertAndInvoke(Object owner, Method method, Object... parameters)
+			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		Class<?>[] parameterClasses = method.getParameterTypes();
+		if (parameterClasses.length != parameters.length)
+			throw new LYException("Dismatch parameters with method[" + method.getName() + "]:" + Arrays.deepToString(parameters));
+		Object[] convertedParams = new Object[parameters.length];
+		for (int i = 0; i < parameters.length; i++) {
+			Object temp = parameters[i];
+			if (!temp.getClass().equals(parameterClasses[i])) {
+				if (Caster.isBasicType(parameterClasses[i]) && Caster.isBasicType(temp))
+					temp = Caster.simpleCast(parameters[i].toString(), parameterClasses[i]);
+				else if (Caster.isGenericArrayType(parameterClasses[i]) || Caster.isGenericArrayType(temp)) {
+					if (temp instanceof Collection)
+						temp = Caster.arrayCast((Collection<?>) parameters[i], parameterClasses[i]);
+					if (temp instanceof Collection)
+						temp = Caster.arrayCast(Arrays.asList(parameters[i]), parameterClasses[i]);
+				} else
+					throw new LYException("Method[" + method.getName() + "] requires parameter "
+							+ parameterClasses[i].getName() + ", but provided parameter is "
+							+ temp.getClass().getName());
+			}
+			convertedParams[i] = temp;
+		}
+		return method.invoke(owner, parameters);
 	}
 
 	/**

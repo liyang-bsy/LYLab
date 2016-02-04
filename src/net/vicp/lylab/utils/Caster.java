@@ -77,7 +77,12 @@ public abstract class Caster extends NonCloneableBaseObject {
 	public final static boolean isBasicType(Object target) {
 		if (target == null)
 			throw new NullPointerException("Parameter target is null");
-		Class<?> targetClass = target.getClass();
+		return isBasicType(target.getClass());
+	}
+
+	public final static boolean isBasicType(Class<?> targetClass) {
+		if (targetClass == null)
+			throw new NullPointerException("Parameter targetClass is null");
 		if (targetClass == String.class)
 			return true;
 		else if (targetClass == Short.class)
@@ -125,7 +130,18 @@ public abstract class Caster extends NonCloneableBaseObject {
 	public final static boolean isGenericArrayType(Object target) {
 		if (target == null)
 			throw new NullPointerException("Parameter target is null");
-		Class<?> targetClass = target.getClass();
+		return isGenericArrayType(target.getClass());
+	}
+
+	/**
+	 * Test target type is java build-in Array type
+	 * 
+	 * @param target
+	 * @return
+	 */
+	public final static boolean isGenericArrayType(Class<?> targetClass) {
+		if (targetClass == null)
+			throw new NullPointerException("Parameter targetClass is null");
 		if (targetClass.getName().matches("^\\[L[a-zA-Z0-9_.]*;$") || Collection.class.isAssignableFrom(targetClass))
 			return true;
 		else
@@ -192,9 +208,9 @@ public abstract class Caster extends NonCloneableBaseObject {
 	}
 
 	/**
-	 * ArrayList-based simple cast, from one {@link java.util.Collection} type
-	 * to Array-based basic type However, original sort may be changed based on
-	 * the container you selected.
+	 * Collection-based simple cast, from one {@link java.util.Collection} type
+	 * to Array-based basic type<br>
+	 * However, original sort may be changed based on the container you selected.
 	 * 
 	 * @param originalArray
 	 * @param targetClass
@@ -203,7 +219,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 *             If convert failed
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public final static Object arrayCast(List originalArray, Class targetClass) {
+	public final static Object arrayCast(Collection originalArray, Class targetClass) {
 		if (originalArray == null)
 			throw new NullPointerException("Parameter originalArray is null");
 		if (targetClass == null)
@@ -238,6 +254,61 @@ public abstract class Caster extends NonCloneableBaseObject {
 				if (targetArray == null)
 					throw new LYException("Unsupport target Array type:" + targetClass.getName());
 				((Collection) targetArray).addAll(originalArray);
+			} else
+				throw new LYException("Unsupport target type(" + targetClass.getName() + "), maybe it isn't Array?");
+			return targetArray;
+		} catch (Exception e) {
+			throw new LYException("Cast failed from " + originalArray.getClass().getName() + " {" + originalArray + "} to " + targetClass.getName(), e);
+		}
+	}
+
+	/**
+	 * Array-based simple cast, from one {@link java.util.Collection} type
+	 * to Array-based basic type<br>
+	 * However, original sort may be changed based on the container you selected.
+	 * 
+	 * @param originalArray
+	 * @param targetClass
+	 * @return Object of convert result
+	 * @throws LYException
+	 *             If convert failed
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public final static <T> Object arrayCast(T[] originalArray, Class targetClass) {
+		if (originalArray == null)
+			throw new NullPointerException("Parameter originalArray is null");
+		if (targetClass == null)
+			throw new NullPointerException("Parameter targetClass is null");
+
+		Object targetArray = null;
+		try {
+			if (targetClass.getName().matches("^\\[L[a-zA-Z0-9_.]*;$")) {
+				targetArray = Arrays.copyOf(originalArray, originalArray.length, targetClass);
+			} else if (Collection.class.isAssignableFrom(targetClass)) {
+				try {
+					// Generic instance, if this type could be initialized
+					targetArray = targetClass.newInstance();
+				} catch (Exception e) {
+					// If can't initialize, it maybe an interface
+					if (List.class.isAssignableFrom(targetClass))
+						targetArray = new ArrayList();
+					else if (SortedSet.class.isAssignableFrom(targetClass))
+						targetArray = new TreeSet();
+					else if (Set.class.isAssignableFrom(targetClass))
+						targetArray = new HashSet();
+					else if (TransferQueue.class.isAssignableFrom(targetClass))
+						targetArray = new LinkedTransferQueue();
+					else if (BlockingQueue.class.isAssignableFrom(targetClass))
+						targetArray = new SynchronousQueue();
+					else if (Deque.class.isAssignableFrom(targetClass))
+						targetArray = new LinkedList();
+					// If no matches
+					else
+						targetArray = new ArrayList();
+				}
+				if (targetArray == null)
+					throw new LYException("Unsupport target Array type:" + targetClass.getName());
+				((Collection) targetArray).addAll(Arrays.asList(originalArray));
 			} else
 				throw new LYException("Unsupport target type(" + targetClass.getName() + "), maybe it isn't Array?");
 			return targetArray;

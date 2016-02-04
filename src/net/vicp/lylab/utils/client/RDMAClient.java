@@ -10,7 +10,6 @@ import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.core.model.Message;
-import net.vicp.lylab.core.model.RPCMessage;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.utils.Caster;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
@@ -24,8 +23,8 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 	protected AutoCreator<SyncSession> creator = null;
 	protected AtomicBoolean closed = new AtomicBoolean(true);
 	protected Protocol protocol;
-	protected String rpcHost;
-	protected int rpcPort;
+	protected String rdmaHost;
+	protected int rdmaPort;
 	protected HeartBeat heartBeat;
 	//
 	protected boolean backgroundServer = false;
@@ -33,23 +32,22 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 	protected int serverPort;
 
 	@SuppressWarnings("unchecked")
-	public List<Message> call(RPCMessage message, boolean broadcast) {
-		message.setRpcKey("RPC");
-		message.setBroadcast(broadcast);
+	public List<Message> call(Message message, boolean broadcast) {
+		message.setKey("RPC");
 
 		List<Message> callResult = new ArrayList<>();
-		Message retM = callRpcServer(message);
+		Message retM = callRdmaServer(message);
 		List<HashMap<String, Object>> list = ((List<HashMap<String, Object>>) retM.getBody().get("CallResult"));
 		for (HashMap<String, Object> temp : list)
 			callResult.add(Caster.map2Object(Message.class, (HashMap<String, Object>) temp.get("right")));
 		return callResult;
 	}
 
-	public Message call(RPCMessage message) {
+	public Message call(Message message) {
 		return call(message, false).get(0);
 	}
 
-	public Message callRpcServer(RPCMessage message) {
+	public Message callRdmaServer(Message message) {
 		if (closed.get())
 			throw new LYException("Client closed, did you initialize() Caller?");
 		SyncSession session = pool.accessOne();
@@ -64,16 +62,16 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 	@Override
 	public void initialize() {
 		if (closed.compareAndSet(true, false)) {
-			creator = new InstanceCreator<SyncSession>(SyncSession.class, rpcHost, rpcPort, protocol, heartBeat);
+			creator = new InstanceCreator<SyncSession>(SyncSession.class, rdmaHost, rdmaPort, protocol, heartBeat);
 			pool = new AutoGeneratePool<SyncSession>(creator, new KeepAliveValidator<SyncSession>(), 20000,
 					Integer.MAX_VALUE);
 
 			if (isBackgroundServer()) {
-				RPCMessage message = new RPCMessage();
-				message.setRpcKey("RegisterServer");
+				Message message = new Message();
+				message.setKey("RegisterServer");
 				message.getBody().put("server", serverName);
 				message.getBody().put("port", serverPort);
-				Message m = callRpcServer(message);
+				Message m = callRdmaServer(message);
 				if (m.getCode() != 0)
 					throw new LYException("RPC Server register failed:\n" + m.toString());
 			}
@@ -84,8 +82,8 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 	public void close() {
 		if (closed.compareAndSet(false, true)) {
 			if (isBackgroundServer()) {
-				RPCMessage message = new RPCMessage();
-				message.setRpcKey("RemoveServer");
+				Message message = new Message();
+				message.setKey("RemoveServer");
 				message.getBody().put("server", serverName);
 				call(message);
 			}
@@ -110,20 +108,20 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 		this.protocol = protocol;
 	}
 
-	public String getRpcHost() {
-		return rpcHost;
+	public String getRdmaHost() {
+		return rdmaHost;
 	}
 
-	public void setRpcHost(String rpcHost) {
-		this.rpcHost = rpcHost;
+	public void setRdmaHost(String rdmaHost) {
+		this.rdmaHost = rdmaHost;
 	}
 
-	public int getRpcPort() {
-		return rpcPort;
+	public int getRdmaPort() {
+		return rdmaPort;
 	}
 
-	public void setRpcPort(int rpcPort) {
-		this.rpcPort = rpcPort;
+	public void setRdmaPort(int rdmaPort) {
+		this.rdmaPort = rdmaPort;
 	}
 
 	public HeartBeat getHeartBeat() {
