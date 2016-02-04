@@ -17,6 +17,7 @@ import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.core.model.InetAddr;
 import net.vicp.lylab.core.model.Pair;
 import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.internet.dispatch.DispatchExecutor;
 
 /**
  * A raw socket can be used for communicating with server, you need close socket after using it.

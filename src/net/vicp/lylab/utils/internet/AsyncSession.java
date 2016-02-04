@@ -28,7 +28,7 @@ import net.vicp.lylab.core.model.Pair;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.creator.SelectorCreator;
-import net.vicp.lylab.utils.internet.transfer.AsyncTransfer;
+import net.vicp.lylab.utils.internet.transfer.PooledAsyncTransfer;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 
 /**
@@ -82,7 +82,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 			serverSocket.bind(new InetSocketAddress(port));
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 			
-			transfer = new AsyncTransfer(this, protocol, taskqueue, dispatcher);
+			transfer = new PooledAsyncTransfer(this, protocol, taskqueue, dispatcher);
 			this.heartBeat = heartBeat;
 			setServer(true);
 		} catch (Exception e) {

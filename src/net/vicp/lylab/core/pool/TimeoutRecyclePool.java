@@ -14,12 +14,12 @@ import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
 /**
- * 超时控制回收池
+ * 超时控制分离池
  * 
  * @author liyang
  *
  */
-public class TimeoutRecyclePool<T extends BaseObject> extends RecyclePool<T> implements Recyclable {
+public class TimeoutRecyclePool<T extends BaseObject> extends SeparatePool<T> implements Recyclable {
 	protected Map<Long, Long> startTime;
 	protected Long timeout;
 

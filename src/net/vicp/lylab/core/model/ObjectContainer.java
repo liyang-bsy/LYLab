@@ -11,6 +11,10 @@ public class ObjectContainer<T> extends CloneableBaseObject {
 		return new ObjectContainer<T>(object);
 	}
 	
+	public void setObject(T object) {
+		this.object = object;
+	}
+
 	private ObjectContainer(T object) {
 		this.object = object;
 	}

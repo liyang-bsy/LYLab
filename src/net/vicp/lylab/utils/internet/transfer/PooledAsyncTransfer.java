@@ -12,8 +12,11 @@ import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Session;
 import net.vicp.lylab.core.model.InetAddr;
 import net.vicp.lylab.core.model.Pair;
+import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.utils.Utils;
-import net.vicp.lylab.utils.internet.dispatch.DispatchExecutor;
+import net.vicp.lylab.utils.creator.AutoCreator;
+import net.vicp.lylab.utils.creator.InitializationCreator;
+import net.vicp.lylab.utils.internet.dispatch.DispatchHandler;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
 
 /**
@@ -22,25 +25,29 @@ import net.vicp.lylab.utils.tq.LYTaskQueue;
  * @author Young
  *
  */
-public class AsyncTransfer extends AbstractTransfer {
+public class PooledAsyncTransfer extends AbstractTransfer {
 	private static final long serialVersionUID = -8449620508452125989L;
 
-	public AsyncTransfer(Session session, Protocol protocol, LYTaskQueue taskQueue,
+	AutoGeneratePool<DispatchHandler> dispatchHandlerPool;
+
+	public PooledAsyncTransfer(Session session, Protocol protocol, LYTaskQueue taskQueue,
 			Dispatcher<? super Confirm, ? super Confirm> dispatcher) {
 		super(session, protocol, taskQueue, dispatcher);
+		AutoCreator<DispatchHandler> creator = new InitializationCreator<DispatchHandler>(DispatchHandler.class);
+		dispatchHandlerPool = new AutoGeneratePool<DispatchHandler>(creator);
 	}
 
 	@Override
 	public void initialize() {
-		if(protocol == null)
+		if (protocol == null)
 			throw new LYException("No protocol is assigned");
-		if(taskQueue == null)
+		if (taskQueue == null)
 			throw new LYException("No taskQueue is assigned");
 		if (session == null)
 			throw new LYException("No session is assigned");
 		if (!closed.compareAndSet(true, false))
 			return;
-		this.begin("Async Transfer");
+		this.begin("Pooled Async Transfer");
 		super.initialize();
 	}
 
@@ -96,8 +103,10 @@ public class AsyncTransfer extends AbstractTransfer {
 				await(CoreDef.WAITING_LONG);
 			else {
 				Pair<InetAddr, byte[]> request = requestPool.accessOne();
-				taskQueue.addTask(new DispatchExecutor(session.getClient(request.getLeft()), request.getRight(),
-						session, dispatcher, protocol));
+
+				DispatchHandler dispatchHandler = dispatchHandlerPool.accessOne();
+				dispatchHandler.setController(dispatchHandlerPool);
+				dispatchHandler.handlerRequest(session.getClient(request.getLeft()), request.getRight(), session, dispatcher, protocol);
 			}
 		}
 	}

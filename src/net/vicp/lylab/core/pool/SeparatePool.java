@@ -19,14 +19,14 @@ import net.vicp.lylab.utils.Utils;
  * @author liyang
  *
  */
-public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
+public class SeparatePool<T extends BaseObject> extends IndexedPool<T> {
 	protected Map<Long, T> busyContainer;
 
-	public RecyclePool() {
+	public SeparatePool() {
 		this(CoreDef.DEFAULT_CONTAINER_MAX_SIZE);
 	}
 	
-	public RecyclePool(Integer maxSize) {
+	public SeparatePool(Integer maxSize) {
 		super(new HashSet<Long>(), maxSize);
 		busyContainer = new ConcurrentHashMap<Long, T>();
 	}
@@ -256,7 +256,7 @@ public class RecyclePool<T extends BaseObject> extends IndexedPool<T> {
 				return;
 			synchronized (lock) {
 				iterator.remove();
-				RecyclePool.this.remove(lastId);
+				SeparatePool.this.remove(lastId);
 			}
 		}
 	}

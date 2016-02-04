@@ -1,21 +1,23 @@
 package net.vicp.lylab.core.model;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CloneableBaseObject;
 
-public class DualMap<K, V> extends CloneableBaseObject implements Map<K, V> {
+public class ReverseMap<K, V> extends CloneableBaseObject implements Map<K, V> {
 	public final Map<K, V> kvMap;
-	public final Map<V, K> vkMap;
+	public final Map<V, Collection<K>> vkMap;
 
-	public DualMap() {
+	public ReverseMap() {
 		kvMap = new ConcurrentHashMap<>();
 		vkMap = new ConcurrentHashMap<>();
 	}
-	
+
 	public void clear() {
 		synchronized (lock) {
 			kvMap.clear();
@@ -43,10 +45,6 @@ public class DualMap<K, V> extends CloneableBaseObject implements Map<K, V> {
 		return kvMap.get(key);
 	}
 
-	public K getKey(Object key) {
-		return vkMap.get(key);
-	}
-
 	public int hashCode() {
 		return kvMap.hashCode();
 	}
@@ -65,7 +63,11 @@ public class DualMap<K, V> extends CloneableBaseObject implements Map<K, V> {
 
 	public V put(K key, V value) {
 		synchronized (lock) {
-			vkMap.put(value, key);
+			Collection<K> kc = vkMap.get(value);
+			if (kc == null)
+				kc = new ArrayList<>();
+			kc.add(key);
+			vkMap.put(value, kc);
 			return kvMap.put(key, value);
 		}
 	}
@@ -73,24 +75,31 @@ public class DualMap<K, V> extends CloneableBaseObject implements Map<K, V> {
 	public void putAll(Map<? extends K, ? extends V> m) {
 		synchronized (lock) {
 			kvMap.putAll(m);
-			for (Map.Entry<? extends K, ? extends V> e : m.entrySet())
-				vkMap.put(e.getValue(), e.getKey());
+			for (Map.Entry<? extends K, ? extends V> e : m.entrySet()) {
+				Collection<K> kc = vkMap.get(e.getValue());
+				if (kc == null)
+					kc = new ArrayList<>();
+				kc.add(e.getKey());
+				vkMap.put(e.getValue(), kc);
+			}
 		}
 	}
 
 	public V remove(Object key) {
 		synchronized (lock) {
 			V v = kvMap.remove(key);
-			vkMap.remove(v);
+			Collection<K> kc = vkMap.get(v);
+			kc.remove(key);
 			return v;
 		}
 	}
 
-	public K removeValue(Object value) {
+	public void removeValue(Object value) {
 		synchronized (lock) {
-			K k = vkMap.remove(value);
-			kvMap.remove(k);
-			return k;
+			Collection<K> kc = vkMap.remove(value);
+			for (K k : kc)
+				kvMap.remove(k);
+			return;
 		}
 	}
 
@@ -103,7 +112,10 @@ public class DualMap<K, V> extends CloneableBaseObject implements Map<K, V> {
 	}
 
 	public Collection<K> keys() {
-		return vkMap.values();
+		List<K> kc = new ArrayList<>();
+		for (Collection<K> kl : vkMap.values())
+			kc.addAll(kl);
+		return kc;
 	}
 
 	@Override

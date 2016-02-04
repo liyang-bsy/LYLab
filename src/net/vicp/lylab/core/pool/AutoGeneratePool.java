@@ -210,4 +210,20 @@ public class AutoGeneratePool<T extends BaseObject> extends TimeoutRecyclePool<T
 		throw new LYException("AccessMany() is not supported!");
 	}
 
+	public AutoCreator<T> getCreator() {
+		return creator;
+	}
+
+	public void setCreator(AutoCreator<T> creator) {
+		this.creator = creator;
+	}
+
+	public AdditionalOperation<T> getOperator() {
+		return operator;
+	}
+
+	public void setOperator(AdditionalOperation<T> operator) {
+		this.operator = operator;
+	}
+
 }

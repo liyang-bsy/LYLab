@@ -1,4 +1,4 @@
-package net.vicp.lylab.utils.internet;
+package net.vicp.lylab.utils.internet.dispatch;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -18,7 +18,7 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2016.01.24
  *
  */
-public final class DispatchExecutor<I extends Confirm, O extends Confirm> extends Task {
+public final class DispatchExecutor extends Task {
 	private static final long serialVersionUID = -8759689034880271599L;
 
 	Socket client;
