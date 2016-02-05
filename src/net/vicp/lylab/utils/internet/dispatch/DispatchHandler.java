@@ -8,6 +8,7 @@ import net.vicp.lylab.core.interfaces.Initializable;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Session;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.tq.Task;
 
 /**
@@ -48,10 +49,18 @@ public final class DispatchHandler extends Task implements Initializable {
 				await();
 				continue;
 			}
+			byte[] response;
 			try {
-				byte[] response = DispatchExecutor.doResponse(client, clientRequest, session, dispatcher, protocol);
+				response = DispatchExecutor.doResponse(client, clientRequest, session, dispatcher, protocol);
+			} catch (Exception e) {
+				log.error("Dispatcher report an error:" + Utils.getStringFromException(e));
+				continue;
+			}
+			try {
 				DispatchExecutor.send(client, session, response);
-			} catch (Exception e) { }
+			} catch (Exception e) {
+				log.error("Sender report an error:" + Utils.getStringFromException(e));
+			}
 			session = null;
 			controller.recycle(this);
 		}
