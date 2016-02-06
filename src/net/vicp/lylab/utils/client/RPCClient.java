@@ -11,15 +11,30 @@ import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.model.RPCMessage;
+import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.utils.Caster;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.creator.AutoCreator;
 import net.vicp.lylab.utils.creator.InstanceCreator;
 import net.vicp.lylab.utils.internet.SyncSession;
+import net.vicp.lylab.utils.internet.protocol.LYLabProtocol;
 import net.vicp.lylab.utils.operation.KeepAliveValidator;
 
 public class RPCClient extends NonCloneableBaseObject implements LifeCycle {
+	
+	public static void main(String[] args) {
+		RPCClient client = new RPCClient();
+		client.setProtocol(new LYLabProtocol());
+		client.setRpcHost("127.0.0.1");
+		client.setRpcPort(2001);
+		client.setHeartBeat(new SimpleHeartBeat());
+		client.setBackgroundServer(false);
+		client.initialize();
+		
+		client.close();
+	}
+	
 	protected AutoGeneratePool<SyncSession> pool = null;
 	protected AutoCreator<SyncSession> creator = null;
 	protected AtomicBoolean closed = new AtomicBoolean(true);
@@ -82,15 +97,19 @@ public class RPCClient extends NonCloneableBaseObject implements LifeCycle {
 
 	@Override
 	public void close() {
-		if (closed.compareAndSet(false, true)) {
-			if (isBackgroundServer()) {
-				RPCMessage message = new RPCMessage();
-				message.setRpcKey("RemoveServer");
-				message.getBody().put("server", serverName);
-				call(message);
-			}
+		synchronized (lock) {
+			if (!closed.get()) {
+				if (isBackgroundServer()) {
+					RPCMessage message = new RPCMessage();
+					message.setRpcKey("RemoveServer");
+					message.getBody().put("server", serverName);
+					message.getBody().put("port", serverPort);
+					callRpcServer(message);
+				}
 
-			pool.close();
+				pool.close();
+				closed.set(true);
+			}
 		}
 	}
 
