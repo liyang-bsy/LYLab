@@ -8,6 +8,7 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.model.CacheMessage;
 import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
@@ -27,9 +28,6 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 	protected int rdmaPort;
 	protected HeartBeat heartBeat;
 	//
-	protected boolean backgroundServer = false;
-	protected String serverName;
-	protected int serverPort;
 
 	@SuppressWarnings("unchecked")
 	public List<Message> call(Message message, boolean broadcast) {
@@ -47,7 +45,7 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 		return call(message, false).get(0);
 	}
 
-	public Message callRdmaServer(Message message) {
+	public CacheMessage callRdmaServer(CacheMessage message) {
 		if (closed.get())
 			throw new LYException("Client closed, did you initialize() Caller?");
 		SyncSession session = pool.accessOne();
@@ -56,7 +54,7 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 		session.send(req);
 		res = session.receive().getLeft();
 		pool.recycle(session);
-		return (Message) protocol.decode(res);
+		return (CacheMessage) protocol.decode(res);
 	}
 	
 	@Override
@@ -65,39 +63,14 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 			creator = new InstanceCreator<SyncSession>(SyncSession.class, rdmaHost, rdmaPort, protocol, heartBeat);
 			pool = new AutoGeneratePool<SyncSession>(creator, new KeepAliveValidator<SyncSession>(), 20000,
 					Integer.MAX_VALUE);
-
-			if (isBackgroundServer()) {
-				Message message = new Message();
-				message.setKey("RegisterServer");
-				message.getBody().put("server", serverName);
-				message.getBody().put("port", serverPort);
-				Message m = callRdmaServer(message);
-				if (m.getCode() != 0)
-					throw new LYException("RPC Server register failed:\n" + m.toString());
-			}
 		}
 	}
 
 	@Override
 	public void close() {
 		if (closed.compareAndSet(false, true)) {
-			if (isBackgroundServer()) {
-				Message message = new Message();
-				message.setKey("RemoveServer");
-				message.getBody().put("server", serverName);
-				call(message);
-			}
-
 			pool.close();
 		}
-	}
-
-	public boolean isBackgroundServer() {
-		return backgroundServer;
-	}
-
-	public void setBackgroundServer(boolean backgroundServer) {
-		this.backgroundServer = backgroundServer;
 	}
 
 	public Protocol getProtocol() {
@@ -130,22 +103,6 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 
 	public void setHeartBeat(HeartBeat heartBeat) {
 		this.heartBeat = heartBeat;
-	}
-
-	public String getServerName() {
-		return serverName;
-	}
-
-	public void setServerName(String serverName) {
-		this.serverName = serverName;
-	}
-
-	public int getServerPort() {
-		return serverPort;
-	}
-
-	public void setServerPort(int serverPort) {
-		this.serverPort = serverPort;
 	}
 
 }
