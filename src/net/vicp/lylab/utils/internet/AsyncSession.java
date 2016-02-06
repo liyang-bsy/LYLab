@@ -126,6 +126,10 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 			SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
 			try {
 				Pair<byte[], Integer> data = receive(socketChannel.socket());
+				if (data == null) {
+					socketChannel.close();
+					return;
+				}
 				transfer.putRequest(getPeer(socketChannel), data.getLeft(), data.getRight());
 			} catch (Throwable t) {
 				if (socketChannel != null) {
