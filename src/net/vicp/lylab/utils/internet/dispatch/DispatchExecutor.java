@@ -5,9 +5,9 @@ import java.net.Socket;
 
 import net.vicp.lylab.core.interfaces.Confirm;
 import net.vicp.lylab.core.interfaces.Dispatcher;
+import net.vicp.lylab.core.interfaces.HeartBeat;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Session;
-import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.tq.Task;
 

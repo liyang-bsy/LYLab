@@ -6,9 +6,11 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Confirm;
+import net.vicp.lylab.core.interfaces.HeartBeat;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.CacheMessage;
 import net.vicp.lylab.core.model.Pair;
+import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.utils.Algorithm;
 import net.vicp.lylab.utils.Utils;
 
@@ -36,13 +38,32 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 	@Deprecated
 	@Override
 	public byte[] encode(Confirm obj) {
+		if(obj instanceof HeartBeat)
+			return encode((HeartBeat) obj);
 		CacheMessage pair = CacheMessage.class.cast(obj);
 		return encode(pair);
 	}
+	
+	public byte[] encode(HeartBeat hb) {
+		int iLength = 0;
+
+		byte[] byteLength = Utils.int2Bytes(iLength);
+
+		int size = head.length + splitSignal.length + CoreDef.SIZEOF_INTEGER + splitSignal.length + iLength;
+
+		byte[] bytes = new byte[size];
+		int offset = 0;
+		offset = Utils.writeNext(bytes, offset, head);
+		offset = Utils.writeNext(bytes, offset, splitSignal);
+		offset = Utils.writeNext(bytes, offset, byteLength);
+		offset = Utils.writeNext(bytes, offset, splitSignal);
+
+		return bytes;
+	}
 
 	public byte[] encode(CacheMessage cm) {
-		if (StringUtils.isBlank(cm.getKey()))
-			throw new NullPointerException("Parameter pair.getLeft() is blank");
+		if (StringUtils.isBlank(cm.getAction()))
+			throw new NullPointerException("Parameter action is blank");
 		Pair<String, byte[]> pair = cm.getPair();
 		if (pair == null)
 			throw new NullPointerException("Parameter pair is null");
@@ -52,15 +73,16 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 			pair.setRight(new byte[0]);
 
 		byte[] code = Utils.int2Bytes(cm.getCode());
-		byte[] renew = cm.isRenew() ? Utils.int2Bytes(1) : Utils.int2Bytes(0);
+		byte[] renew = cm.isRenew() ? new byte[] { 1 } : new byte[] { 0 };
 		byte[] expireTime = Utils.int2Bytes(cm.getExpireTime());
-		byte[] key = cm.getKey().getBytes();
+		byte[] action = cm.getAction().getBytes();
 		byte[] left = pair.getLeft().getBytes();
 		byte[] right = pair.getRight();
+		byte[] cmpData = cm.getCmpData();
 
 		int iLength = code.length + splitSignal.length + renew.length + splitSignal.length + expireTime.length
-				+ splitSignal.length + key.length + splitSignal.length + left.length + splitSignal.length + right.length
-				+ splitSignal.length;
+				+ splitSignal.length + action.length + splitSignal.length + left.length + splitSignal.length + right.length
+				+ splitSignal.length + cmpData.length + splitSignal.length;
 
 		byte[] byteLength = Utils.int2Bytes(iLength);
 
@@ -78,23 +100,25 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 		offset = Utils.writeNext(bytes, offset, splitSignal);
 		offset = Utils.writeNext(bytes, offset, expireTime);
 		offset = Utils.writeNext(bytes, offset, splitSignal);
-		offset = Utils.writeNext(bytes, offset, key);
+		offset = Utils.writeNext(bytes, offset, action);
 		offset = Utils.writeNext(bytes, offset, splitSignal);
 		offset = Utils.writeNext(bytes, offset, left);
 		offset = Utils.writeNext(bytes, offset, splitSignal);
 		offset = Utils.writeNext(bytes, offset, right);
+		offset = Utils.writeNext(bytes, offset, splitSignal);
+		offset = Utils.writeNext(bytes, offset, cmpData);
 		offset = Utils.writeNext(bytes, offset, splitSignal);
 
 		return bytes;
 	}
 
 	@Override
-	public CacheMessage decode(byte[] bytes) {
+	public Confirm decode(byte[] bytes) {
 		return decode(bytes, 0);
 	}
 
 	@Override
-	public CacheMessage decode(byte[] bytes, int offset) {
+	public Confirm decode(byte[] bytes, int offset) {
 		if (bytes == null)
 			return null;
 		if (!Utils.checkHead(bytes, offset, head))
@@ -108,12 +132,14 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 			endPosition = head.length + splitSignal.length + CoreDef.SIZEOF_INTEGER + splitSignal.length;
 			if (endPosition + length > bytes.length)
 				return null;
+			if(length == 0)
+				return new SimpleHeartBeat();
 
 			int code = Utils.bytes2Int(bytes, endPosition);
 			endPosition = endPosition + CoreDef.SIZEOF_INTEGER + splitSignal.length;
 
-			boolean renew = Utils.bytes2Int(bytes, endPosition) == 0 ? false : true;
-			endPosition = endPosition + CoreDef.SIZEOF_INTEGER + splitSignal.length;
+			boolean renew = bytes[endPosition] == 0 ? false : true;
+			endPosition = endPosition + CoreDef.SIZEOF_BOOLEAN + splitSignal.length;
 
 			int expireTime = Utils.bytes2Int(bytes, endPosition);
 			endPosition = endPosition + CoreDef.SIZEOF_INTEGER + splitSignal.length;
@@ -121,7 +147,7 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 			dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
 			if (dataLength == -1)
 				return null;
-			String key = new String(bytes, endPosition, dataLength);
+			String action = new String(bytes, endPosition, dataLength);
 			endPosition = endPosition + dataLength + splitSignal.length;
 
 			dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
@@ -137,7 +163,14 @@ public class CacheMessageProtocol extends NonCloneableBaseObject implements Prot
 			System.arraycopy(bytes, endPosition, right, 0, dataLength);
 			endPosition = endPosition + dataLength + splitSignal.length;
 
-			return new CacheMessage(code, key, left, right, renew, expireTime);
+			dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
+			if (dataLength == -1)
+				return null;
+			byte[] cmpData = new byte[dataLength];
+			System.arraycopy(bytes, endPosition, cmpData, 0, dataLength);
+			endPosition = endPosition + dataLength + splitSignal.length;
+
+			return new CacheMessage(code, action, left, right, renew, expireTime).setCmpData(cmpData);
 		} catch (Exception e) {
 			String originData = null;
 			try {

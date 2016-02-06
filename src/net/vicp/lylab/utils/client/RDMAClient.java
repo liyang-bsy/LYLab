@@ -1,25 +1,49 @@
 package net.vicp.lylab.utils.client;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.HeartBeat;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.CacheMessage;
-import net.vicp.lylab.core.model.HeartBeat;
-import net.vicp.lylab.core.model.Message;
+import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
-import net.vicp.lylab.utils.Caster;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.creator.AutoCreator;
 import net.vicp.lylab.utils.creator.InstanceCreator;
 import net.vicp.lylab.utils.internet.SyncSession;
+import net.vicp.lylab.utils.internet.protocol.CacheMessageProtocol;
 import net.vicp.lylab.utils.operation.KeepAliveValidator;
 
 public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
+	
+	public static void main(String[] args) throws InterruptedException {
+		RDMAClient client = new RDMAClient();
+		client.setHeartBeat(new SimpleHeartBeat());
+		client.setProtocol(new CacheMessageProtocol());
+		client.setRdmaHost("127.0.0.1");
+		client.setRdmaPort(2050);
+		client.initialize();
+		
+		client.set("a", "a".getBytes(), 1000);
+		System.out.println("设置a，取值:" + new String(client.get("a")));
+		Thread.sleep(990L);
+		System.out.println("接近过期，取值并延期:" + new String(client.get("a", true)));
+		Thread.sleep(990L);
+		System.out.println("快过期了:" + new String(client.get("a", false)));
+		Thread.sleep(11L);
+		System.out.println("过期了:" + new String(client.get("a")));
+		client.set("a", "b".getBytes());
+		System.out.println("设置b，取值，永不过期:" + new String(client.get("a")));
+		System.out.println("CAS结果：" + client.compareAndSet("a", "d".getBytes(), "c".getBytes()));
+		System.out.println("CAS试c/设d，后取值:" + new String(client.get("a")));
+		System.out.println("CAS结果：" + client.compareAndSet("a", "d".getBytes(), "b".getBytes()));
+		System.out.println("CAS试b/设d，后取值:" + new String(client.get("a")));
+		client.set("a", "e".getBytes());
+		System.out.println("设置取值，永不过期:" + new String(client.get("a")));
+		client.close();
+	}
+	
 	protected AutoGeneratePool<SyncSession> pool = null;
 	protected AutoCreator<SyncSession> creator = null;
 	protected AtomicBoolean closed = new AtomicBoolean(true);
@@ -27,22 +51,38 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 	protected String rdmaHost;
 	protected int rdmaPort;
 	protected HeartBeat heartBeat;
-	//
 
-	@SuppressWarnings("unchecked")
-	public List<Message> call(Message message, boolean broadcast) {
-		message.setKey("RPC");
-
-		List<Message> callResult = new ArrayList<>();
-		Message retM = callRdmaServer(message);
-		List<HashMap<String, Object>> list = ((List<HashMap<String, Object>>) retM.getBody().get("CallResult"));
-		for (HashMap<String, Object> temp : list)
-			callResult.add(Caster.map2Object(Message.class, (HashMap<String, Object>) temp.get("right")));
-		return callResult;
+	public int set(String key, byte[] data) {
+		return set(key, data, 0);
 	}
 
-	public Message call(Message message) {
-		return call(message, false).get(0);
+	public int set(String key, byte[] data, int expireTime) {
+		CacheMessage cm = new CacheMessage(0, "Set", key, data, false, expireTime);
+		return callRdmaServer(cm).getCode();
+	}
+
+	public int compareAndSet(String key, byte[] data, byte[] cmpData) {
+		return compareAndSet(key, data, cmpData, 0);
+	}
+
+	public int compareAndSet(String key, byte[] data, byte[] cmpData, int expireTime) {
+		CacheMessage cm = new CacheMessage(0, "CompareAndSet", key, data, false, expireTime);
+		cm.setCmpData(cmpData);
+		return callRdmaServer(cm).getCode();
+	}
+
+	public byte[] get(String key) {
+		return get(key, false);
+	}
+
+	public byte[] get(String key, boolean renew) {
+		CacheMessage cm = new CacheMessage(0, "Get", key, new byte[0], renew, 0);
+		return callRdmaServer(cm).getPair().getRight();
+	}
+
+	public byte[] delete(String key) {
+		CacheMessage cm = new CacheMessage(0, "Delete", key, new byte[0], false, 0);
+		return callRdmaServer(cm).getPair().getRight();
 	}
 
 	public CacheMessage callRdmaServer(CacheMessage message) {

@@ -9,12 +9,12 @@ import net.vicp.lylab.core.interfaces.Confirm;
  * @author Young Lee
  * 
  */
-public class SimpleConfirm extends BaseObject implements Confirm {
+public class CodeConfirm extends BaseObject implements Confirm {
 	protected int code;
 	
-	public SimpleConfirm() { }
+	public CodeConfirm() { }
 
-	public SimpleConfirm(Integer code) {
+	public CodeConfirm(Integer code) {
 		this.code = code;
 	}
 

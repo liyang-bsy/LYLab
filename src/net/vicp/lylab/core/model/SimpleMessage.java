@@ -9,7 +9,7 @@ import java.util.Map;
  * @author Young Lee
  * 
  */
-public class SimpleMessage extends SimpleConfirm {
+public class SimpleMessage extends CodeConfirm {
 	protected String message;
 	protected String key;
 	protected Map<String, Object> body;

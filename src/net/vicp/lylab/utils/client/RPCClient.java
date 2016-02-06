@@ -6,9 +6,9 @@ import java.util.List;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.interfaces.HeartBeat;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
-import net.vicp.lylab.core.model.HeartBeat;
 import net.vicp.lylab.core.model.Message;
 import net.vicp.lylab.core.model.RPCMessage;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
