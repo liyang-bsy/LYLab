@@ -204,17 +204,16 @@ public final class Config extends NonCloneableBaseObject {
 	 */
 	public void deepClose() {
 		synchronized (lock) {
-			for(String key:dataMap.keySet())
-			{
+			for (String key : dataMap.keySet()) {
 				Object tmp = dataMap.get(key);
-				if(tmp instanceof AutoCloseable)
+				if (tmp instanceof AutoCloseable)
 					try {
 						((AutoCloseable) tmp).close();
 						log.info(tmp.getClass().getSimpleName() + " - Closed");
 					} catch (Throwable t) {
 						log.error(tmp.getClass().getSimpleName() + " - Close failed:" + Utils.getStringFromThrowable(t));
 					}
-				else if(tmp instanceof Config)
+				else if (tmp instanceof Config)
 					((Config) tmp).deepClose();
 			}
 			// clear old data
