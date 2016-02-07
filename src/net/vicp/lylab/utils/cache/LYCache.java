@@ -23,12 +23,12 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 	private int containerSize = CoreDef.DEFAULT_LYCACHE_CONTAINER_SIZE;
 	private long memoryLimitation = CoreDef.DEFAULT_LYCACHE_MEMORY_LIMITATION;
 	private String hashAlgorithm = "MD5";
-	public double threshold = CoreDef.DEFAULT_LYCACHE_THRESHOLD;
+	private double threshold = CoreDef.DEFAULT_LYCACHE_THRESHOLD;
 	
 	private AtomicBoolean closed = new AtomicBoolean(true);
 
 	@Override
-	public void initialize() {
+	public final void initialize() {
 		if(!closed.compareAndSet(true, false))
 			return;
 		ArrayList<CacheContainer> list = new ArrayList<CacheContainer>();
@@ -41,7 +41,7 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		setMemoryControl(memoryLimitation, threshold); // 1GB
 	}
 
-	public void setMemoryControl(long memoryLimitation, double threshold) {
+	public final void setMemoryControl(long memoryLimitation, double threshold) {
 		synchronized (lock) {
 			if (threshold > 1.0D)
 				threshold = 1.0D;
@@ -73,14 +73,14 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		return bundles;
 	}
 
-	public long getEntrySize() {
+	public final long getEntrySize() {
 		long size = 0;
 		for (CacheContainer cc : getBundles())
 			size += cc.size();
 		return size;
 	}
 
-	public long getMemorySize() {
+	public final long getMemorySize() {
 		long size = 0;
 		for (CacheContainer cc : getBundles())
 			size += cc.getMemoryUsage();
@@ -88,36 +88,35 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 	}
 
 	// function start
-	public int setCacheValue(String key, CacheValue cv) {
+	public final int setCacheValue(String key, CacheValue cv) {
 		CacheContainer cc = getContainer(key);
 		return cc.setCacheValue(key, cv);
 	}
 
-	public int set(String key, byte[] value) {
-		CacheContainer cc = getContainer(key);
-		return cc.set(key, value, 0);
+	public final int set(String key, byte[] value) {
+		return set(key, value, 0);
 	}
 
-	public int set(String key, byte[] value, int expireTime) {
+	public final int set(String key, byte[] value, int expireTime) {
 		CacheContainer cc = getContainer(key);
 		return cc.set(key, value, expireTime);
 	}
 
-	public byte[] get(String key) {
+	public final byte[] get(String key) {
 		return get(key, false);
 	}
 
-	public byte[] get(String key, boolean renew) {
+	public final byte[] get(String key, boolean renew) {
 		CacheContainer cc = getContainer(key);
 		return cc.get(key, renew);
 	}
 
-	public byte[] delete(String key) {
+	public final byte[] delete(String key) {
 		CacheContainer cc = getContainer(key);
 		return cc.delete(key);
 	}
 
-	public boolean flush() {
+	public final boolean flush() {
 		try {
 			for (CacheContainer cc : getBundles())
 				cc.flush();
@@ -127,41 +126,41 @@ public final class LYCache extends NonCloneableBaseObject implements Initializab
 		return true;
 	}
 
-	public void clear() {
+	public final void clear() {
 		for (CacheContainer cc : getBundles())
 			cc.clear();
 	}
 
 	// getter & setter
-	public long getMemoryLimitation() {
+	public final long getMemoryLimitation() {
 		return memoryLimitation;
 	}
 
-	public void setMemoryLimitation(long memoryLimitation) {
+	public final void setMemoryLimitation(long memoryLimitation) {
 		this.memoryLimitation = memoryLimitation;
 	}
 
-	public double getThreshold() {
+	public final double getThreshold() {
 		return threshold;
 	}
 
-	public void setThreshold(double threshold) {
+	public final void setThreshold(double threshold) {
 		this.threshold = threshold;
 	}
 
-	public int getContainerSize() {
+	public final int getContainerSize() {
 		return containerSize;
 	}
 
-	public void setContainerSize(int containerSize) {
+	public final void setContainerSize(int containerSize) {
 		this.containerSize = containerSize;
 	}
 
-	public String getHashAlgorithm() {
+	public final String getHashAlgorithm() {
 		return hashAlgorithm;
 	}
 
-	public void setHashAlgorithm(String hashAlgorithm) {
+	public final void setHashAlgorithm(String hashAlgorithm) {
 		this.hashAlgorithm = hashAlgorithm;
 	}
 
