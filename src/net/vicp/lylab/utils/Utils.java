@@ -96,19 +96,20 @@ public abstract class Utils extends NonCloneableBaseObject {
 			throw new NullPointerException("Parameter is null for setter[" + setMethod.getName() + "]");
 		String setter = setMethod.getName();
 		Class<?> parameterClass = setMethod.getParameterTypes()[0];
+		Class<?> originalClass = param.getClass();
 		try {
 			// Should I throw exception?
 			if (!setMethod.isAccessible())
 				setMethod.setAccessible(true);
 			// If we got its setter, then invoke it
-			if (Caster.isGenericArrayType(param))
-				setMethod.invoke(owner, Caster.arrayCast((List<Object>) param, parameterClass));
-			else if (param.getClass() == String.class)
-				setMethod.invoke(owner, Caster.simpleCast((String) param, parameterClass));
-			else if (Caster.isBasicType(param))
-				setMethod.invoke(owner, Caster.simpleCast(param.toString(), parameterClass));
-			else
+			if(parameterClass.isAssignableFrom(originalClass))
 				setMethod.invoke(owner, param);
+			else if (Caster.isGenericArrayType(originalClass) && Caster.isGenericArrayType(parameterClass))
+				setMethod.invoke(owner, Caster.arrayCast((List<Object>) param, parameterClass));
+			else if (Caster.isBasicType(originalClass) && Caster.isBasicType(parameterClass))
+				setMethod.invoke(owner, Caster.simpleCast(param, parameterClass));
+			else
+				throw new LYException("Cannot convert param from [" + param.getClass() + "] to [" + parameterClass + "]");
 		} catch (Exception e) {
 			throw new LYException("Cannot invoke setter[" + setter + "] for " + owner.getClass(), e);
 		}
