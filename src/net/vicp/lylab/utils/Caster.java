@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -18,6 +19,10 @@ import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TransferQueue;
 
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.DateUtils;
+
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
@@ -157,9 +162,12 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @throws LYException
 	 *             If convert failed
 	 */
-	public final static Object simpleCast(String originalString, Class<?> targetClass) {
-		if (originalString == null)
+	public final static Object simpleCast(Object original, Class<?> targetClass) {
+		if (original == null)
 			throw new NullPointerException("Parameter originalObject is null");
+		String originalString = original instanceof Date
+				? DateFormatUtils.format((Date) original, CoreDef.DATETIME_FORMAT)
+				: original.toString();
 		if (targetClass == null)
 			throw new NullPointerException("Parameter targetClass is null");
 		if (targetClass == String.class)
@@ -184,6 +192,8 @@ public abstract class Caster extends NonCloneableBaseObject {
 				return Byte.valueOf(originalString);
 			else if (targetClass == Character.class)
 				return Character.valueOf((originalString).charAt(0));
+			else if (targetClass == Date.class)
+				return DateUtils.parseDate(originalString, CoreDef.DATETIME_FORMAT);
 			else if (targetClass.getName().equals("short"))
 				return Short.valueOf(originalString);
 			else if (targetClass.getName().equals("int"))
