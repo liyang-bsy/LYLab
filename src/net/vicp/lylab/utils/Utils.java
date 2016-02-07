@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.InvalidParameterException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +17,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -672,6 +674,21 @@ public abstract class Utils extends NonCloneableBaseObject {
 	public final static int writeNext(byte[] bytes, int offset, byte[] next) {
 		System.arraycopy(next, 0, bytes, offset, next.length);
 		return offset + next.length;
+	}
+
+	private static Random random = new Random();
+
+	public static String createRandomNumberCode(int length) {
+		if (length >= 10)
+			throw new InvalidParameterException("Only support Integer range");
+		int max = 1;
+		for (int i = 0; i < length; i++)
+			max *= 10;
+		StringBuilder result = new StringBuilder();
+		result.append(random.nextInt(max));
+		while (result.toString().length() < length)
+			result.insert(0, "0");
+		return result.toString();
 	}
 
 	public final static String createUUID() {
