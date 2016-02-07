@@ -104,6 +104,8 @@ public abstract class Caster extends NonCloneableBaseObject {
 			return true;
 		else if (targetClass == Byte.class)
 			return true;
+		else if (targetClass == Date.class)
+			return true;
 		else if (targetClass == Character.class)
 			return true;
 		else if (targetClass.getName().equals("short"))
