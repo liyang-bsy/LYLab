@@ -77,7 +77,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	public final static void setter(Object owner, String fieldName, Object param) {
 		if (fieldName == null)
 			throw new NullPointerException("Parameter fieldName is null");
-		Method setMethod = getSetterForField(owner, fieldName);
+		Method setMethod = getSetterForField(owner, fieldName, param);
 		if (setMethod == null)
 			throw new LYException("No available setter was found for field[" + fieldName + "] " + owner.getClass());
 		setter(owner, setMethod, param);
@@ -115,7 +115,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 		}
 	}
 
-	public final static Method getSetterForField(Object owner, String fieldName) {
+	public final static Method getSetterForField(Object owner, String fieldName, Object param) {
 		if (fieldName == null)
 			throw new NullPointerException("Parameter fieldName is null");
 		String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
@@ -123,6 +123,11 @@ public abstract class Utils extends NonCloneableBaseObject {
 			throw new NullPointerException("Owner is null for setter[" + setter + "]");
 		// Get setter by java.lang.reflect.*
 		Method setMethod = null;
+		try {
+			setMethod = owner.getClass().getDeclaredMethod(setter, param.getClass());
+		} catch (Exception e) { }
+		if (setMethod != null)
+			return setMethod;
 		Set<Method> methods = new HashSet<>();
 		methods.addAll(Arrays.asList(owner.getClass().getDeclaredMethods()));
 		methods.addAll(Arrays.asList(owner.getClass().getMethods()));

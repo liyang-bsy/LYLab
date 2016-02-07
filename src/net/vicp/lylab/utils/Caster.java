@@ -54,7 +54,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 			for (String name : names) {
 				try {
 					Object node = map.get(name);
-					Method setter = Utils.getSetterForField(owner, name);
+					Method setter = Utils.getSetterForField(owner, name, node);
 					if (setter == null)
 						continue;
 					Class<?> paramClass = setter.getParameterTypes()[0];
