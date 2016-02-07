@@ -4,6 +4,13 @@ import net.vicp.lylab.core.CloneableBaseObject;
 
 public class ObjectContainer<T> extends CloneableBaseObject {
 	T object;
+	
+	/**
+	 * Empty container
+	 */
+	public ObjectContainer() {
+		object = null;
+	}
 
 	public static <T> ObjectContainer<T> fromObject(T object) {
 		if (object == null)
