@@ -15,23 +15,23 @@ import net.vicp.lylab.utils.Config;
  * 
  * @author Young Lee
  * @since 2015.06.26
- * @version 1.0.7
+ * @version 1.0.8
  * 
  */
 public class CoreDef extends NonCloneableBaseObject {
-	public static final String VERSION = "1.0.7";
+	public static final String VERSION = "1.0.8";
 
 	public static Config config = new Config();
 	public static Object[] dock = new Object[16];
-	
+
 	public static final OSInfo OperationSystem = new OSInfo();
 	protected static String _charset = "UTF-8";
 	protected static Charset charset = Charset.forName(CoreDef._charset);
 	public static CharsetEncoder charsetEncoder = charset.newEncoder();
 	public static CharsetDecoder charsetDecoder = charset.newDecoder();
-	public static final boolean BIG_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN? true :false;
-	public static final boolean LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN? true :false;
-	
+	public static final boolean BIG_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN ? true : false;
+	public static final boolean LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN ? true : false;
+
 	public static String CHARSET() {
 		return _charset;
 	}
@@ -44,20 +44,26 @@ public class CoreDef extends NonCloneableBaseObject {
 	}
 
 	public static String rootPath;
+
 	static {
 		File file = new File("");
 		rootPath = file.getAbsolutePath();
 	}
-	
+
+	public static String DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+	public static String DATE_FORMAT = "yyyy-MM-dd";
+	public static String TIME_FORMAT = "HH:mm:ss";
+	public static String YEARMONTH_FORMAT = "yyyy-MM";
+
 	public static final String LINE_SEPARATOR = System.getProperty("line.separator", "\n");
-	
+
 	public static final double DOUBLE = 1.0;
-	
+
 	public static final int B = 1;
-	public static final int KB = 1024*B;
-	public static final int MB = 1024*KB;
-	public static final int GB = 1024*MB;
-	public static final long TB = 1024*GB;
+	public static final int KB = 1024 * B;
+	public static final int MB = 1024 * KB;
+	public static final int GB = 1024 * MB;
+	public static final long TB = 1024 * GB;
 
 	public static final int ZERO = 0;
 	public static final double HALF = 0.5;
@@ -105,18 +111,18 @@ public class CoreDef extends NonCloneableBaseObject {
 	public static final long WAITING_SHORT = HUNDRED * MILLISECOND;
 	public static final long WAITING_LONG = FOUR * SECOND;
 
-	public static final long INTERVAL = TWO * SECOND;					// 2 second
-	public static final long INTERVAL_SHORT = SECOND / TWO;				// half second
-	public static final long INTERVAL_LONG = FIVE * SECOND;				// 5 second
+	public static final long INTERVAL = TWO * SECOND; // 2 second
+	public static final long INTERVAL_SHORT = SECOND / TWO; // half second
+	public static final long INTERVAL_LONG = FIVE * SECOND; // 5 second
 
-	public static final long WAITING_TOLERANCE = TWO * MINUTE;			// 5 min
-	public static final int REQUEST_TTIMEOUT = (int) MINUTE;			// 60 second
+	public static final long WAITING_TOLERANCE = TWO * MINUTE; // 5 min
+	public static final int REQUEST_TTIMEOUT = (int) MINUTE; // 60 second
 
 	public static final long ONE_TIME_TASK = ZERO;
-	
-	public static final long DEFAULT_TASK_TTIMEOUT = TEN * MINUTE;		// 10 minutes
 
-	public static final long DEFAULT_CONTAINER_TIMEOUT = 2 * MINUTE;		// 2 min
+	public static final long DEFAULT_TASK_TTIMEOUT = TEN * MINUTE; // 10 minutes
+
+	public static final long DEFAULT_CONTAINER_TIMEOUT = 2 * MINUTE; // 2 min
 	public static final int DEFAULT_CONTAINER_MAX_SIZE = 2 * HUNDRED;
 	public static final int MASSIVE_CONTAINER_MAX_SIZE = Integer.MAX_VALUE;
 
@@ -125,7 +131,8 @@ public class CoreDef extends NonCloneableBaseObject {
 	public static final long DEFAULT_TERMINATE_TIMEOUT = TWO * MINUTE;
 	public static final long DEFAULT_TIMTOUT_CONTROLLER_INTERVAL = MINUTE / TWO;
 
-	public static final long DEFAULT_PERMANENT_INTERVAL = SIX * TEN * SIX * TEN;		// 60 times
+	public static final long DEFAULT_PERMANENT_INTERVAL = SIX * TEN * SIX * TEN; // 60
+																					// times
 
 	public static final int SOCKET_MAX_BUFFER = TWO * KB;
 	public static final int SOCKET_MAX_BUFFER_EXTEND_RATE = TEN;
@@ -138,5 +145,5 @@ public class CoreDef extends NonCloneableBaseObject {
 	public static final double DEFAULT_LYCACHE_THRESHOLD = DOUBLE * EIGHT / TEN;
 
 	public static final int DEFAULT_PAGE_SIZE = TWENTY;
-	
+
 }
