@@ -39,7 +39,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 			try {
 				((AutoCloseable) target).close();
 			} catch (Exception e) {
-				log.error(Utils.getStringFromException(e));
+				log.error("Close target failed:" + Utils.getStringFromException(e));
 			}
 	}
 
