@@ -20,7 +20,7 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 	public static void main(String[] args) throws InterruptedException {
 		RDMAClient client = new RDMAClient();
 		client.setHeartBeat(new SimpleHeartBeat());
-		client.setProtocol(new CacheMessageProtocol());
+//		client.setProtocol(new CacheMessageProtocol());
 		client.setRdmaHost("127.0.0.1");
 		client.setRdmaPort(2050);
 		client.initialize();
@@ -34,20 +34,20 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 		Thread.sleep(11L);
 		System.out.println("过期了:" + new String(client.get("a")));
 		client.set("a", "b".getBytes());
-		System.out.println("设置b，取值，永不过期:" + new String(client.get("a")));
+		System.out.println("设置b，永不过期，取值:" + new String(client.get("a")));
 		System.out.println("CAS结果：" + client.compareAndSet("a", "d".getBytes(), "c".getBytes()));
 		System.out.println("CAS试c/设d，后取值:" + new String(client.get("a")));
 		System.out.println("CAS结果：" + client.compareAndSet("a", "d".getBytes(), "b".getBytes()));
 		System.out.println("CAS试b/设d，后取值:" + new String(client.get("a")));
 		client.set("a", "e".getBytes());
-		System.out.println("设置取值，永不过期:" + new String(client.get("a")));
+		System.out.println("设置e，永不过期，取值:" + new String(client.get("a")));
 		client.close();
 	}
 	
 	protected AutoGeneratePool<SyncSession> pool = null;
 	protected AutoCreator<SyncSession> creator = null;
 	protected AtomicBoolean closed = new AtomicBoolean(true);
-	protected Protocol protocol;
+	protected static final Protocol protocol = new CacheMessageProtocol();
 	protected String rdmaHost;
 	protected int rdmaPort;
 	protected HeartBeat heartBeat;
@@ -111,14 +111,6 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 		if (closed.compareAndSet(false, true)) {
 			pool.close();
 		}
-	}
-
-	public Protocol getProtocol() {
-		return protocol;
-	}
-
-	public void setProtocol(Protocol protocol) {
-		this.protocol = protocol;
 	}
 
 	public String getRdmaHost() {
