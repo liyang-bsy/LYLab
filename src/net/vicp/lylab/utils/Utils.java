@@ -34,13 +34,14 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * Close an object, safe if item is null
 	 * @param target to be closed item
 	 */
-	public final static void tryClose(Object target) {
-		if (target instanceof AutoCloseable)
-			try {
-				((AutoCloseable) target).close();
-			} catch (Exception e) {
-				log.error("Close target failed:" + Utils.getStringFromException(e));
-			}
+	public final static void tryClose(Object... targets) {
+		for (Object target : targets)
+			if (target instanceof AutoCloseable)
+				try {
+					((AutoCloseable) target).close();
+				} catch (Throwable t) {
+					log.error("Close target failed:" + Utils.getStringFromThrowable(t));
+				}
 	}
 
 	public static Object convertAndInvoke(Object owner, Method method, Object... parameters)

@@ -31,10 +31,10 @@ public class PooledAsyncTransfer extends AbstractTransfer {
 	AutoGeneratePool<DispatchHandler> dispatchHandlerPool;
 
 	public PooledAsyncTransfer(Session session, Protocol protocol, LYTaskQueue taskQueue,
-			Dispatcher<? super Confirm, ? super Confirm> dispatcher) {
+			Dispatcher<? super Confirm, ? super Confirm> dispatcher, Integer maxHandlerSize) {
 		super(session, protocol, taskQueue, dispatcher);
 		AutoCreator<DispatchHandler> creator = new InitializationCreator<DispatchHandler>(DispatchHandler.class);
-		dispatchHandlerPool = new AutoGeneratePool<DispatchHandler>(creator);
+		dispatchHandlerPool = new AutoGeneratePool<DispatchHandler>(creator, null, CoreDef.DEFAULT_CONTAINER_TIMEOUT, maxHandlerSize);
 	}
 
 	@Override

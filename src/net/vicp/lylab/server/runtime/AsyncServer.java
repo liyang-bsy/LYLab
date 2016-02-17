@@ -7,6 +7,7 @@ import net.vicp.lylab.core.interfaces.HeartBeat;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Session;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.internet.AsyncSession;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
@@ -32,6 +33,8 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 	protected Protocol protocol;
 	protected HeartBeat heartBeat;
 
+	protected int maxHandlerSize;
+
 	@Override
 	public void initialize() {
 		if(!closed.compareAndSet(true, false))
@@ -43,13 +46,13 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 	public void close() throws Exception {
 		if(!closed.compareAndSet(false, true))
 			return;
-		session.close();
+		Utils.tryClose(session);
 		this.callStop();
 	}
 
 	@Override
 	public void exec() {
-		session = new AsyncSession(port, protocol, dispatcher, heartBeat, taskQueue);
+		session = new AsyncSession(port, protocol, dispatcher, heartBeat, taskQueue, maxHandlerSize);
 		session.initialize();
 	}
 
@@ -105,6 +108,14 @@ public class AsyncServer extends LoneWolf implements LifeCycle {
 
 	public void setHeartBeat(HeartBeat heartBeat) {
 		this.heartBeat = heartBeat;
+	}
+
+	public int getMaxHandlerSize() {
+		return maxHandlerSize;
+	}
+
+	public void setMaxHandlerSize(int maxHandlerSize) {
+		this.maxHandlerSize = maxHandlerSize;
 	}
 
 }

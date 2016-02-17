@@ -43,8 +43,8 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 //	private volatile Integer maxThread = 200;
 	private volatile Long tolerance = CoreDef.WAITING_TOLERANCE;
 
-	private Pool<Task> taskPool = new SequenceTemporaryPool<Task>(100000);
-	private Pool<Task> threadPool = new SequencePool<Task>(200);
+	private Pool<Task> taskPool = new SequenceTemporaryPool<Task>(CoreDef.MAX_TASK_QUEUE_SIZE);
+	private Pool<Task> threadPool = new SequencePool<Task>(CoreDef.MAX_THREAD_POOL_SIZE);
 	
 	/**
 	 * At your service!

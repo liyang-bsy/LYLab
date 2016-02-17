@@ -122,6 +122,9 @@ public class CoreDef extends NonCloneableBaseObject {
 
 	public static final long DEFAULT_TASK_TTIMEOUT = TEN * MINUTE; // 10 minutes
 
+	public static final int MAX_TASK_QUEUE_SIZE = 100000;
+	public static final int MAX_THREAD_POOL_SIZE = 200;
+
 	public static final long DEFAULT_CONTAINER_TIMEOUT = 2 * MINUTE; // 2 min
 	public static final int DEFAULT_CONTAINER_MAX_SIZE = 2 * HUNDRED;
 	public static final int MASSIVE_CONTAINER_MAX_SIZE = Integer.MAX_VALUE;

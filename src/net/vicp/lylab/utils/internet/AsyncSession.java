@@ -71,7 +71,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 	 * @param heartBeat
 	 */
 	public AsyncSession(int port, Protocol protocol, Dispatcher<? super Confirm, ? super Confirm> dispatcher,
-			HeartBeat heartBeat, LYTaskQueue taskqueue) {
+			HeartBeat heartBeat, LYTaskQueue taskqueue, int maxHandlerSize) {
 		super(protocol, dispatcher, heartBeat);
 		super.setLonewolf(true);
 		try {
@@ -82,7 +82,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 			serverSocket.bind(new InetSocketAddress(port));
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 			
-			transfer = new PooledAsyncTransfer(this, protocol, taskqueue, dispatcher);
+			transfer = new PooledAsyncTransfer(this, protocol, taskqueue, dispatcher, maxHandlerSize);
 			this.heartBeat = heartBeat;
 			setServer(true);
 		} catch (Exception e) {

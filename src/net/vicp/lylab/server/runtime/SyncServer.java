@@ -29,16 +29,23 @@ public class SyncServer extends LoneWolf implements LifeCycle {
 	
 	protected AtomicBoolean closed = new AtomicBoolean(true);
 	protected ServerSocket serverSocket;
-	protected LYTaskQueue taskQueue;
 	protected Dispatcher<? super Confirm, ? super Confirm> dispatcher;
 	protected Integer port = null;
 	protected Protocol protocol;
 	protected HeartBeat heartBeat;
 
+	protected LYTaskQueue taskQueue;
+	protected int maxHandlerSize;
+
 	@Override
 	public void initialize() {
 		if(!closed.compareAndSet(true, false))
 			return;
+		
+		taskQueue = new LYTaskQueue();
+		
+		taskQueue.setMaxThread(maxHandlerSize);
+		taskQueue.initialize();
 		try {
 			if (port == null)
 				throw new NullPointerException("Server port not defined");
@@ -53,7 +60,7 @@ public class SyncServer extends LoneWolf implements LifeCycle {
 	public void close() throws Exception {
 		if(!closed.compareAndSet(false, true))
 			return;
-		serverSocket.close();
+		Utils.tryClose(taskQueue, serverSocket);
 		this.callStop();
 	}
 
@@ -72,14 +79,6 @@ public class SyncServer extends LoneWolf implements LifeCycle {
 
 	public boolean isClosed() {
 		return closed.get();
-	}
-
-	public LYTaskQueue getTaskQueue() {
-		return taskQueue;
-	}
-
-	public void setTaskQueue(LYTaskQueue taskQueue) {
-		this.taskQueue = taskQueue;
 	}
 
 	public Dispatcher<? super Confirm, ? super Confirm> getDispatcher() {
@@ -116,6 +115,14 @@ public class SyncServer extends LoneWolf implements LifeCycle {
 
 	public void setHeartBeat(HeartBeat heartBeat) {
 		this.heartBeat = heartBeat;
+	}
+
+	public int getMaxHandlerSize() {
+		return maxHandlerSize;
+	}
+
+	public void setMaxHandlerSize(int maxHandlerSize) {
+		this.maxHandlerSize = maxHandlerSize;
 	}
 
 }
