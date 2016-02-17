@@ -153,10 +153,10 @@ public class AutoGeneratePool<T extends BaseObject> extends TimeoutRecyclePool<T
 	@Override
 	public T accessOne() {
 		synchronized (lock) {
-			if (isFull()) {
+			if (availableSize() == 0 && isFull()) {
 				// if full, recycle bad items and retry if is really full
 				recycle();
-				if (isFull())
+				if (availableSize() == 0 && isFull())
 					return null;
 			}
 			// Create and validate
