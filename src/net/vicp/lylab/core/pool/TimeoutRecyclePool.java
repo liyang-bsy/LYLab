@@ -11,6 +11,7 @@ import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Recyclable;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
 /**
@@ -138,9 +139,10 @@ public class TimeoutRecyclePool<T extends BaseObject> extends SeparatePool<T> im
 		synchronized (lock) {
 			for (Long id : availableKeySet()) {
 				T tmp = getFromContainer(id);
-				if (tmp instanceof KeepAlive && ((KeepAlive) tmp).isOutdated()
-						&& !((KeepAlive) tmp).isAlive())
+				if (tmp instanceof KeepAlive && ((KeepAlive) tmp).isOutdated() && !((KeepAlive) tmp).isAlive()) {
 					removeFromContainer(id);
+					Utils.tryClose(tmp);
+				}
 			}
 			Iterator<Entry<Long, Long>> it = startTime.entrySet().iterator();
 			while (it.hasNext()) {
