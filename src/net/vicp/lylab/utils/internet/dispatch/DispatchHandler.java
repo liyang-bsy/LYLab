@@ -4,7 +4,7 @@ import java.net.Socket;
 
 import net.vicp.lylab.core.interfaces.Confirm;
 import net.vicp.lylab.core.interfaces.Dispatcher;
-import net.vicp.lylab.core.interfaces.Initializable;
+import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.interfaces.Session;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
@@ -18,7 +18,7 @@ import net.vicp.lylab.utils.tq.Task;
  * @since 2016.02.04
  *
  */
-public final class DispatchHandler extends Task implements Initializable {
+public final class DispatchHandler extends Task implements LifeCycle {
 	private static final long serialVersionUID = -1968695102042408808L;
 
 	Socket client;
@@ -69,6 +69,11 @@ public final class DispatchHandler extends Task implements Initializable {
 	@Override
 	public void initialize() {
 		this.begin("Dispatch Handler");
+	}
+
+	@Override
+	public void close() throws Exception {
+		this.callStop();
 	}
 
 	public void setController(AutoGeneratePool<DispatchHandler> controller) {
