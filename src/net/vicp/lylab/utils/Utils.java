@@ -32,9 +32,11 @@ import net.vicp.lylab.utils.convert.XmlConverUtil;
 public abstract class Utils extends NonCloneableBaseObject {
 	/**
 	 * Close an object, safe if item is null
-	 * @param target to be closed item
+	 * @param target to be closed item, it's safe if targets were null
 	 */
 	public final static void tryClose(Object... targets) {
+		if (targets == null)
+			return;
 		for (Object target : targets)
 			if (target instanceof AutoCloseable)
 				try {
