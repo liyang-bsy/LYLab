@@ -103,18 +103,9 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 		setServer(false);
 	}
 
-	public InetAddr getPeer() {
-		if(isServer())
-			// client ip + local port(a random port assigned by operation system)
-			return InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getPort());
-		else
-			// server ip + server port
-			return InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getPort());
-	}
-
 	@Override
 	public Socket getClient(InetAddr clientAddr) {
-		if(getPeer().equals(clientAddr))
+		if(Utils.getPeer(socket).equals(clientAddr))
 			return socket;
 		throw new LYException("No match client");
 	}

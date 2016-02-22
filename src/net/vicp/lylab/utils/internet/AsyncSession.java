@@ -122,7 +122,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 				ServerSocketChannel serverSocketChannel = (ServerSocketChannel) selectionKey.channel();
 				socketChannel = serverSocketChannel.accept();
 				socketChannel.configureBlocking(false);
-				addr2client.put(getPeer(socketChannel), socketChannel);
+				addr2client.put(Utils.getPeer(socketChannel), socketChannel);
 				socketChannel.register(selector, SelectionKey.OP_READ);
 			} catch (Exception e) {
 				throw new LYException("Close failed", e);
@@ -136,7 +136,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 					socketChannel.close();
 					return;
 				}
-				transfer.putRequest(getPeer(socketChannel), data.getLeft(), data.getRight());
+				transfer.putRequest(Utils.getPeer(socketChannel), data.getLeft(), data.getRight());
 			} catch (Throwable t) {
 				if (socketChannel != null) {
 					try {
@@ -157,7 +157,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 		}
 		// record last activate
 		if(socketChannel != null)	// won't be true
-			lastActivityMap.put(getPeer(socketChannel), System.currentTimeMillis());
+			lastActivityMap.put(Utils.getPeer(socketChannel), System.currentTimeMillis());
 
 	}
 
@@ -184,20 +184,6 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 		}
 	}
 
-	public InetAddr getPeer(SocketChannel socketChannel) {
-		Socket socket = socketChannel.socket();
-		return getPeer(socket);
-	}
-
-	public InetAddr getPeer(Socket socket) {
-		if(isServer())
-			// client ip + local port(a random port assigned by operation system)
-			return InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getPort());
-		else
-			// server ip + server port
-			return InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getPort());
-	}
-
 	@Override
 	public Socket getClient(InetAddr clientAddr) {
 		return addr2client.get(clientAddr).socket();
@@ -215,7 +201,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 		niobuf.clear();
 		while (true) {
 			try {
-				ret = addr2client.get(getPeer(socket)).read(niobuf);
+				ret = addr2client.get(Utils.getPeer(socket)).read(niobuf);
 				if (ret <= 0) {
 					if (ret == 0) {
 						// move niobuf to buffer
@@ -247,7 +233,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 		if (isClosed())
 			throw new LYException("Session closed");
 		try {
-			SocketChannel socketChannel = addr2client.get(getPeer(client));
+			SocketChannel socketChannel = addr2client.get(Utils.getPeer(client));
 			if (socketChannel != null)
 				flushChannel(socketChannel, ByteBuffer.wrap(request), CoreDef.DEFAULT_SOCKET_WRITE_TTIMEOUT);
 			else

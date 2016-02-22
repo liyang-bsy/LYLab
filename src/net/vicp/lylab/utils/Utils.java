@@ -8,6 +8,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.Socket;
+import java.nio.channels.SocketChannel;
 import java.security.InvalidParameterException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
+import net.vicp.lylab.core.model.InetAddr;
 import net.vicp.lylab.utils.convert.JsonConverUtil;
 import net.vicp.lylab.utils.convert.XmlConverUtil;
 
@@ -46,7 +49,16 @@ public abstract class Utils extends NonCloneableBaseObject {
 				}
 	}
 
-	public static Object convertAndInvoke(Object owner, Method method, Object... parameters)
+	public final static InetAddr getPeer(SocketChannel socketChannel) {
+		Socket socket = socketChannel.socket();
+		return getPeer(socket);
+	}
+
+	public final static InetAddr getPeer(Socket socket) {
+		return InetAddr.fromInetAddr(socket.getInetAddress().getHostAddress(), socket.getPort());
+	}
+
+	public final static Object convertAndInvoke(Object owner, Method method, Object... parameters)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		Class<?>[] parameterClasses = method.getParameterTypes();
 		if (parameterClasses.length != parameters.length)
