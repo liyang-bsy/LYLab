@@ -103,9 +103,13 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 		setServer(false);
 	}
 
+	public InetAddr getPeer() {
+		return Utils.getPeer(socket);
+	}
+
 	@Override
 	public Socket getClient(InetAddr clientAddr) {
-		if(Utils.getPeer(socket).equals(clientAddr))
+		if(getPeer().equals(clientAddr))
 			return socket;
 		throw new LYException("No match client");
 	}

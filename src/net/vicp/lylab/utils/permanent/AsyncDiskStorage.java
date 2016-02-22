@@ -35,7 +35,7 @@ public class AsyncDiskStorage extends DiskStorage {
 			working.set(false);
 			long wait= 100L;
 			thread.interrupt();
-			while (join(wait)) {
+			while (!join(wait)) {
 				log.info("Waiting for finish, interval=" + wait);
 				wait*=2;
 			}
