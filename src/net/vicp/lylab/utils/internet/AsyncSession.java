@@ -55,10 +55,11 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 	protected AutoGeneratePool<ObjectContainer<Selector>> selectorPool;
 	protected Transfer transfer;
 
-	// Long socket keep alive
+	// Long socket keep alive & recycle bad request
 	protected Map<InetAddr, Long> lastActivityMap = new ConcurrentHashMap<InetAddr, Long>();
 	protected HeartBeat heartBeat;
 	protected long interval = CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT/10;
+	long timeout = CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT;
 
 	// Buffer
 	private ByteBuffer niobuf = ByteBuffer.allocate(CoreDef.SOCKET_MAX_BUFFER);
@@ -131,6 +132,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 			try {
 				Pair<byte[], Integer> data = receive(socketChannel.socket());
 				if (data == null) {
+					selectionKey.cancel();
 					socketChannel.close();
 					return;
 				}
@@ -223,7 +225,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 					} else if (ret == -1)
 						return null;
 					else
-						throw new LYException("IMPOSSIBLE?");
+						throw new LYException("IMPOSSIBLE? Socket returns:" + ret);
 				}
 				if (niobuf.remaining() == 0) {
 					// extend current max size
@@ -365,6 +367,14 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 				}
 			}
 		}
+	}
+
+	public long getSoTimeout() {
+		return timeout;
+	}
+
+	public void setSoTimeout(long timeout) {
+		this.timeout = timeout;
 	}
 
 	// TODO will be useful in client mode
