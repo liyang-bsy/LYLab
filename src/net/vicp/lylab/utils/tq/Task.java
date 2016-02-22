@@ -27,7 +27,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	/**
 	 * This value doesn't make any sense if you didn't use WatchDog
 	 */
-	protected long timeout = CoreDef.DEFAULT_TASK_TTIMEOUT;
+	protected long taskTimeout = CoreDef.DEFAULT_TASK_TTIMEOUT;
 	/**
 	 * How many time you want retry if this task was killed by WatchDog
 	 */
@@ -271,12 +271,12 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 		return startTime;
 	}
 
-	public long getTimeout() {
-		return timeout;
+	public long getTaskTimeout() {
+		return taskTimeout;
 	}
 
-	public Task setTimeout(Long timeout) {
-		this.timeout = timeout;
+	public Task setTaskTimeout(Long taskTimeout) {
+		this.taskTimeout = taskTimeout;
 		return this;
 	}
 
@@ -297,7 +297,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	public Task setLonewolf(boolean lonewolf) {
 		this.lonewolf = lonewolf;
 		// avoid WatchDog
-		timeout = 0L;
+		taskTimeout = 0L;
 		return this;
 	}
 
@@ -328,8 +328,8 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 			break;
 		}
 		return "taskId=" + getTaskId() + ",className=" + getClass().getName()
-				+ ",state=" + sState + ",startTime=" + startTime + ",timeout="
-				+ timeout;
+				+ ",state=" + sState + ",startTime=" + startTime + ",taskTimeout="
+				+ taskTimeout;
 	}
 
 }

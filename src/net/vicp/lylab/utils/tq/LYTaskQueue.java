@@ -179,7 +179,7 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 
 		synchronized (threadPool) {
 			for (Task t : threadPool)
-				t.setTimeout(timeout);
+				t.setTaskTimeout(timeout);
 		}
 
 		if (!useWatchDog)
@@ -271,15 +271,15 @@ public final class LYTaskQueue extends LoneWolf implements LifeCycle, Recyclable
 				while (iterator.hasNext()) {
 					Task task = iterator.next();
 					// -1L means infinite
-					if (task.getTimeout() == -1L)
+					if (task.getTaskTimeout() == -1L)
 						continue;
 					if(task.getStartTime() == null) {
 						log.error("A running task missing its start time will be killed immediately:" + task.toString());
 						forceStopList.add(task);
 					}
-					if (task.getTimeout() + tolerance < new Date().getTime() - task.getStartTime().getTime())
+					if (task.getTaskTimeout() + tolerance < new Date().getTime() - task.getStartTime().getTime())
 						forceStopList.add(task);
-					else if (task.getTimeout() < new Date().getTime() - task.getStartTime().getTime())
+					else if (task.getTaskTimeout() < new Date().getTime() - task.getStartTime().getTime())
 						callStopList.add(task);
 				}
 				finished = true;

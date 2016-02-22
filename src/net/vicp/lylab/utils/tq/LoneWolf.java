@@ -7,7 +7,7 @@ public abstract class LoneWolf extends Task {
 	private static final long serialVersionUID = -8596789769206129576L;
 
 	public LoneWolf() {
-		timeout = 0;
+		setLonewolf(true);
 	}
 	
 	@Override
