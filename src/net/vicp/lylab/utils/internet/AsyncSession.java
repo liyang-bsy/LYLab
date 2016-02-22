@@ -9,9 +9,9 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDef;
@@ -21,12 +21,14 @@ import net.vicp.lylab.core.interfaces.Dispatcher;
 import net.vicp.lylab.core.interfaces.HeartBeat;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import net.vicp.lylab.core.interfaces.Protocol;
+import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.core.interfaces.Transfer;
 import net.vicp.lylab.core.model.InetAddr;
 import net.vicp.lylab.core.model.ObjectContainer;
 import net.vicp.lylab.core.model.Pair;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.utils.Utils;
+import net.vicp.lylab.utils.controller.TimeoutController;
 import net.vicp.lylab.utils.creator.SelectorCreator;
 import net.vicp.lylab.utils.internet.transfer.PooledAsyncTransfer;
 import net.vicp.lylab.utils.tq.LYTaskQueue;
@@ -41,7 +43,7 @@ import net.vicp.lylab.utils.tq.LYTaskQueue;
  * @since 2015.07.21
  * @version 0.0.5
  */
-public class AsyncSession extends AbstractSession implements LifeCycle {//, Transmission {
+public class AsyncSession extends AbstractSession implements LifeCycle, Recyclable {//, Transmission {
 	private static final long serialVersionUID = -3262692917974231303L;
 	
 	// Raw data source
@@ -49,12 +51,12 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 	protected SelectionKey selectionKey = null;
 	
 	// Clients			client			Socket
-	protected Map<InetAddr, SocketChannel> addr2client = new HashMap<>();
+	protected Map<InetAddr, SocketChannel> addr2client = new ConcurrentHashMap<>();
 	protected AutoGeneratePool<ObjectContainer<Selector>> selectorPool;
 	protected Transfer transfer;
 
 	// Long socket keep alive
-	protected Map<String, Long> lastActivityMap = new ConcurrentHashMap<String, Long>();
+	protected Map<InetAddr, Long> lastActivityMap = new ConcurrentHashMap<InetAddr, Long>();
 	protected HeartBeat heartBeat;
 	protected long interval = CoreDef.DEFAULT_SOCKET_READ_TTIMEOUT/10;
 
@@ -85,6 +87,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 			transfer = new PooledAsyncTransfer(this, protocol, taskqueue, dispatcher, maxHandlerSize);
 			this.heartBeat = heartBeat;
 			setServer(true);
+			TimeoutController.addToWatch(this);
 		} catch (Exception e) {
 			throw new LYException("Establish server failed", e);
 		}
@@ -104,6 +107,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 //			socketChannel.register(selector, SelectionKey.OP_READ);
 //			this.heartBeat = heartBeat;
 //			setServer(false);
+//			TimeoutController.addToWatch(this);
 //		} catch (Exception e) {
 //			throw new LYException("Connect to server failed", e);
 //		}
@@ -111,19 +115,19 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 
 	public void selectionKeyHandler()
 	{
+		SocketChannel socketChannel = null;
 		if (selectionKey.isAcceptable()) {
 			try {
 				ServerSocketChannel serverSocketChannel = (ServerSocketChannel) selectionKey.channel();
-				SocketChannel socketChannel = serverSocketChannel.accept();
+				socketChannel = serverSocketChannel.accept();
 				socketChannel.configureBlocking(false);
-//				Socket socket = socketChannel.socket();
 				addr2client.put(getPeer(socketChannel), socketChannel);
 				socketChannel.register(selector, SelectionKey.OP_READ);
 			} catch (Exception e) {
 				throw new LYException("Close failed", e);
 			}
 		} else if (selectionKey.isReadable()) {
-			SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
+			socketChannel = (SocketChannel) selectionKey.channel();
 			try {
 				Pair<byte[], Integer> data = receive(socketChannel.socket());
 				if (data == null) {
@@ -149,6 +153,9 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 		} else {
 			System.out.println("TODO: else");
 		}
+		// record last activate
+		if(socketChannel != null)	// won't be true
+			lastActivityMap.put(getPeer(socketChannel), System.currentTimeMillis());
 
 	}
 
@@ -317,6 +324,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 					log.debug("Close failed, maybe client already lost connection" + Utils.getStringFromException(e));
 				}
 			}
+			TimeoutController.removeFromWatch(this);
 			addr2client.clear();
 			if (transfer != null) {
 				transfer.close();
@@ -332,9 +340,31 @@ public class AsyncSession extends AbstractSession implements LifeCycle {//, Tran
 			throw new LYException("Close failed", e);
 		}
 	}
-
 	public boolean isClosed() {
 		return !selector.isOpen();
+	}
+
+	// Recyclable
+	@Override
+	public boolean isRecyclable() {
+		return !addr2client.isEmpty();
+	}
+
+	@Override
+	public void recycle() {
+		synchronized (lock) {
+			Iterator<Entry<InetAddr, Long>> it = lastActivityMap.entrySet().iterator();
+			while (it.hasNext()) {
+				Entry<InetAddr, Long> entry = it.next();
+				InetAddr addr = entry.getKey();
+				Long last = entry.getValue();
+				if (System.currentTimeMillis() - last > timeout) {
+					SocketChannel tmp = addr2client.remove(addr);
+					Utils.tryClose(tmp);
+					it.remove();
+				}
+			}
+		}
 	}
 
 	// TODO will be useful in client mode
