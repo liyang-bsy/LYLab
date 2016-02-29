@@ -1,8 +1,8 @@
 package net.vicp.lylab.core.interfaces;
 
 /**
- * General Executor interface for all classes.<br>
- * If run() was used.
+ * General Executor interface for all classes, means to execute something.<br>
+ * If run() was used. The class must define a method of no arguments called exec.<br>
  * <br><br>Release Under GNU Lesser General Public License (LGPL).
  * 
  * @author Young Lee

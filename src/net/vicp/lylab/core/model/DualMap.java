@@ -108,7 +108,7 @@ public class DualMap<K, V> extends CloneableBaseObject implements Map<K, V> {
 
 	@Override
 	public String toString() {
-		return "DualIndexMap [map=" + kvMap + "]";
+		return "DualMap [map=" + kvMap + "]";
 	}
 
 }
