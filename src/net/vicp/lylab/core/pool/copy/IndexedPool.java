@@ -59,7 +59,6 @@ public class IndexedPool<T extends BaseObject> extends AbstractPool<T> {
 		}
 	}
 
-	@Override
 	public T accessOne() {
 		synchronized (lock) {
 			if (keyContainer.isEmpty())
@@ -70,12 +69,10 @@ public class IndexedPool<T extends BaseObject> extends AbstractPool<T> {
 		}
 	}
 
-	@Override
 	public List<T> accessMany(int amount) {
 		return accessMany(amount, false);
 	}
 	
-	@Override
 	public List<T> accessMany(int amount, boolean absolute) {
 		synchronized (lock) {
 			if (absolute && keyContainer.size() < amount)
@@ -148,6 +145,30 @@ public class IndexedPool<T extends BaseObject> extends AbstractPool<T> {
 				IndexedPool.this.remove(lastId);
 			}
 		}
+	}
+
+	@Override
+	public T access() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isRecyclable() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void recycle() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void close() throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
