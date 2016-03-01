@@ -45,6 +45,8 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 */
 	@SuppressWarnings("unchecked")
 	private final static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map, Stack<Map<String, ?>> mapStackTrace) {
+		if (map == null)
+			throw new NullPointerException("Parameter map is null");
 		if (mapStackTrace.contains(map))
 			return null;
 		try {
