@@ -1,7 +1,5 @@
 package net.vicp.lylab.core;
 
-import net.vicp.lylab.core.exceptions.LYException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -42,7 +40,6 @@ public class BaseObject {
 			try {
 				lock.wait(timeout);
 			} catch (Exception e) {
-				throw new LYException("Waiting Interrupted");
 			}
 		}
 	}
@@ -52,7 +49,6 @@ public class BaseObject {
 			try {
 				lock.wait();
 			} catch (Exception e) {
-				throw new LYException("Waiting Interrupted");
 			}
 		}
 	}
