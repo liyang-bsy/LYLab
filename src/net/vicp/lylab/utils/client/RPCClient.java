@@ -72,8 +72,9 @@ public class RPCClient extends NonCloneableBaseObject implements LifeCycle {
 		req = protocol.encode(message);
 		session.send(req);
 		res = session.receive().getLeft();
+		Message msg = (Message) protocol.decode(res);
 		pool.recycle(session);
-		return (Message) protocol.decode(res);
+		return msg;
 	}
 	
 	@Override
