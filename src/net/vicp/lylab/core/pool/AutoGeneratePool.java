@@ -153,19 +153,18 @@ public class AutoGeneratePool<T extends BaseObject> extends TimeoutRecyclePool<T
 	@Override
 	public T accessOne() {
 		synchronized (lock) {
-			if (availableSize() == 0 && isFull()) {
-				// if full, recycle bad items and retry if is really full
-				recycle();
-				if (availableSize() == 0 && isFull())
-					return null;
+			if (availableSize() == 0) {
+				if (isFull())
+					recycle();
+				else
+					createAndValidateAndAdd();
 			}
+			if (isFull())
+				return null;
 			// Create and validate
 			Iterator<Long> iterator = availableKeySet().iterator();
-			if (!iterator.hasNext()) {
-				if (!createAndValidateAndAdd())
-					return null;
-				iterator = availableKeySet().iterator();
-			}
+			if (!iterator.hasNext())
+				return null;
 			return accessOne(iterator.next());
 		}
 	}
