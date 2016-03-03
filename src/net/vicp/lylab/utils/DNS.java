@@ -11,8 +11,7 @@ public abstract class DNS extends CloneableBaseObject {
 
 	public final static String domainNameService(String domain) throws UnknownHostException {
 		domain = domain.replaceAll("^[a-zA-Z]*://", "").replaceAll("/[\\S]*", "");
-		String ip = InetAddress.getByName(domain).getHostAddress();
-		return ip;
+		return InetAddress.getByName(domain).getHostAddress();
 	}
 
 	public final static boolean isIP(String ipAddr) {
