@@ -16,6 +16,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
@@ -24,6 +25,8 @@ import net.vicp.lylab.core.exceptions.LYException;
  */
 public class MailSender extends NonCloneableBaseObject {
 	
+	// 邮件发送的别名
+	private String personal = null;
 	// 邮件发送服务器的用户名
 	private String userName;
 	// 邮件发送服务器的密码
@@ -32,7 +35,7 @@ public class MailSender extends NonCloneableBaseObject {
 	private String smtpServer;
 	// 邮件发送服务器的端口
 	// SSL=465, normal=25
-	private int smtpPort = 465;
+	private int smtpPort = 25;
 
 	public Properties getSesstionProperties() {
 		Properties p = new Properties();
@@ -40,7 +43,6 @@ public class MailSender extends NonCloneableBaseObject {
 		p.put("mail.smtp.port", String.valueOf(smtpPort));
 		p.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
 		p.put("mail.smtp.auth", "true");
-//		p.put("mail.imap.ssl.enable", "true");
 		return p;
 	}
 
@@ -58,10 +60,9 @@ public class MailSender extends NonCloneableBaseObject {
 	public Message encode(Mail mail) {
 		try {
 			// 根据session创建一个邮件消息
-			Message message = new MimeMessage(
-					Session.getDefaultInstance(getSesstionProperties(), new MailAuthenticator(userName, password)));
+			Message message = new MimeMessage(Session.getDefaultInstance(getSesstionProperties(), new MailAuth(userName, password)));
 			// 创建邮件发送者地址
-			Address from = new InternetAddress(mail.getFromAddress());
+			Address from = new InternetAddress(mail.getFromAddress(), personal, CoreDef.CHARSET());
 			// 设置邮件消息的发送者
 			message.setFrom(from);
 			// 创建邮件的接收者地址，并设置到邮件消息中
@@ -96,11 +97,11 @@ public class MailSender extends NonCloneableBaseObject {
 		}
 	}
 
-	class MailAuthenticator extends Authenticator {
+	private class MailAuth extends Authenticator {
 		String userName = null;
 		String password = null;
 
-		public MailAuthenticator(String userName, String password) {
+		public MailAuth(String userName, String password) {
 			if (userName == null)
 				throw new LYException("Parameter username is null");
 			if (password == null)
@@ -130,6 +131,14 @@ public class MailSender extends NonCloneableBaseObject {
 
 	public void setSmtpPort(int smtpPort) {
 		this.smtpPort = smtpPort;
+	}
+
+	public String getPersonal() {
+		return personal;
+	}
+
+	public void setPersonal(String personal) {
+		this.personal = personal;
 	}
 
 	public void setUserName(String userName) {
