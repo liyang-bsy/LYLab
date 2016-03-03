@@ -23,6 +23,7 @@ import net.vicp.lylab.core.exceptions.LYException;
  * 简单邮件（不带附件的邮件）发送器
  */
 public class MailSender extends NonCloneableBaseObject {
+	
 	// 邮件发送服务器的用户名
 	private String userName;
 	// 邮件发送服务器的密码
@@ -30,7 +31,8 @@ public class MailSender extends NonCloneableBaseObject {
 	// 邮件发送服务器的域名
 	private String smtpServer;
 	// 邮件发送服务器的端口
-	private int smtpPort;
+	// SSL=465, normal=25
+	private int smtpPort = 465;
 
 	public Properties getSesstionProperties() {
 		Properties p = new Properties();
@@ -38,6 +40,7 @@ public class MailSender extends NonCloneableBaseObject {
 		p.put("mail.smtp.port", String.valueOf(smtpPort));
 		p.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
 		p.put("mail.smtp.auth", "true");
+//		p.put("mail.imap.ssl.enable", "true");
 		return p;
 	}
 
