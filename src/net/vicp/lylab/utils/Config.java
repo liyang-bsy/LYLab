@@ -343,12 +343,14 @@ public final class Config extends NonCloneableBaseObject {
 					case 0:
 						config = new Config(null, fileNameTrace, this);
 						putToMap(dataMap, propertyRealName, config);
+						// add reference before load, if load failed, reference still exists
 						config.reload(realFileName);
 						break;
 					case 1:
 						config = new Config(null, fileNameTrace, this);
-						readFromConfig(dataMap, config);
 						config.reload(realFileName);
+						// read after load, or nothing could be obtained
+						readFromConfig(dataMap, config);
 						break;
 					default:
 						throw new LYException("Unknow config mode: " + inputMode);
