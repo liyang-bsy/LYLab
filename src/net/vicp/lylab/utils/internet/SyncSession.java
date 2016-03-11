@@ -147,6 +147,10 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 		// do nothing
 	}
 
+	public void send(Confirm request) {
+		send(protocol.encode(request));
+	}
+
 	public void send(byte[] request) {
 		send(socket, request);
 	}

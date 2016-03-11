@@ -228,6 +228,10 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 		}
 		return new Pair<>(buffer, bufferLen);
 	}
+	
+	public void send(Socket client, Confirm request) {
+		send(client, protocol.encode(request));
+	}
 
 	public void send(Socket client, byte[] request) {
 		if (isClosed())
