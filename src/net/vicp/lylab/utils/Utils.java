@@ -38,6 +38,8 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param target to be closed item, it's safe if targets were null
 	 */
 	public final static void tryClose(Object... targets) {
+		log.debug("TryClose is called on follow target(s):\n" + Arrays.deepToString(targets));
+		log.debug(getStringFromException(new LYException("Current location is below")));
 		if (targets == null)
 			return;
 		for (Object target : targets)
