@@ -85,6 +85,11 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 		return callRdmaServer(cm).getPair().getRight();
 	}
 
+	public void stop() {
+		CacheMessage cm = new CacheMessage(0, "Stop", "", new byte[0], false, 0);
+		callRdmaServer(cm);
+	}
+
 	public CacheMessage callRdmaServer(CacheMessage message) {
 		if (closed.get())
 			throw new LYException("Client closed, did you initialize() Caller?");

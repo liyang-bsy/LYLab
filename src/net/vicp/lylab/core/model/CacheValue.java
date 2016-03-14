@@ -3,9 +3,12 @@ package net.vicp.lylab.core.model;
 import net.vicp.lylab.core.CloneableBaseObject;
 
 public class CacheValue extends CloneableBaseObject {
+	
 	long startTime;
 	int validateTime;
 	byte[] value;
+
+	public CacheValue() { }
 
 	public CacheValue(byte[] value, int validateTime) {
 		if (validateTime == 0)
