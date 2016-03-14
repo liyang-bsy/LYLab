@@ -36,6 +36,14 @@ public class PooledAsyncTransfer extends AbstractTransfer {
 		AutoCreator<DispatchHandler> creator = new InitializationCreator<DispatchHandler>(DispatchHandler.class);
 		dispatchHandlerPool = new AutoGeneratePool<DispatchHandler>(creator, null, CoreDef.DEFAULT_CONTAINER_TIMEOUT, maxHandlerSize);
 	}
+	
+	@Override
+	public void close() {
+		if (closed.getAndSet(true))
+			return;
+		super.close();
+		dispatchHandlerPool.close();
+	}
 
 	@Override
 	public void initialize() {
@@ -99,6 +107,8 @@ public class PooledAsyncTransfer extends AbstractTransfer {
 	@Override
 	public void exec() {
 		while (true) {
+			if (isClosed())
+				break;
 			if (requestPool.isEmpty() && validateRequest())
 				await(CoreDef.WAITING_LONG);
 			else {

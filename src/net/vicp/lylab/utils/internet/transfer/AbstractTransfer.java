@@ -76,6 +76,10 @@ public abstract class AbstractTransfer extends LoneWolf implements Transfer {
 			signalAll();
 		}
 	}
+
+	public boolean isClosed() {
+		return closed.get();
+	}
 	
 	@Override
 	public void close() {
@@ -86,6 +90,7 @@ public abstract class AbstractTransfer extends LoneWolf implements Transfer {
 		addr2timeout.clear();
 		addr2byte.clear();
 		requestPool.clear();
+		taskQueue.close();
 	}
 
 	@Override
