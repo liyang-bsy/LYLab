@@ -332,8 +332,9 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 			throw new LYException("Close failed", e);
 		}
 	}
+
 	public boolean isClosed() {
-		return !selector.isOpen();
+		return selector == null || !selector.isOpen();
 	}
 
 	// Recyclable
