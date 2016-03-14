@@ -40,7 +40,7 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 			throw new LYException("Cannot serialize object into data", e);
 		}
 
-		int iLength = info.length + splitSignal.length + data.length + splitSignal.length;
+		int iLength = info.length + splitSignal.length + data.length;// + splitSignal.length;
 		byte[] length = Utils.int2Bytes(iLength);
 
 		int size = head.length + splitSignal.length + length.length + splitSignal.length + iLength;
@@ -54,7 +54,7 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 		offset = Utils.writeNext(bytes, offset, info);
 		offset = Utils.writeNext(bytes, offset, splitSignal);
 		offset = Utils.writeNext(bytes, offset, data);
-		offset = Utils.writeNext(bytes, offset, splitSignal);
+//		offset = Utils.writeNext(bytes, offset, splitSignal);
 		return bytes;
 	}
 
@@ -85,11 +85,14 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 			String info = new String(bytes, endPosition, dataLength, CoreDef.CHARSET());
 			endPosition = endPosition + dataLength + splitSignal.length;
 
-			dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
-			if (dataLength == -1)
-				return null;
-			String data = new String(bytes, endPosition, dataLength, CoreDef.CHARSET());
-			endPosition = endPosition + dataLength + splitSignal.length;
+//			dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
+//			if (dataLength == -1)
+//				return null;
+//			String data = new String(bytes, endPosition, dataLength, CoreDef.CHARSET());
+//			endPosition = endPosition + dataLength + splitSignal.length;
+
+			String data = new String(bytes, endPosition, length, CoreDef.CHARSET());
+			endPosition = endPosition + length;
 
 			return (Confirm) Utils.deserialize(Class.forName(info), data);
 		} catch (Exception e) {
