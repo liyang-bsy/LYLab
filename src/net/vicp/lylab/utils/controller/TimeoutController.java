@@ -66,7 +66,7 @@ public final class TimeoutController extends LoneWolf implements LifeCycle {
 				getInstance().timeoutControl();
 			}
 		} catch (InterruptedException e) {
-			throw new LYException("TimeoutController is interrupted");
+			throw new LYException("TimeoutController is interrupted", e);
 		}
 	}
 
