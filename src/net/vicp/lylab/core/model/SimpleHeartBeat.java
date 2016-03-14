@@ -1,5 +1,6 @@
 package net.vicp.lylab.core.model;
 
+import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.interfaces.HeartBeat;
 
 /**
@@ -11,7 +12,7 @@ import net.vicp.lylab.core.interfaces.HeartBeat;
  * @since 2015.07.01
  * @version 1.0.0
  */
-public class SimpleHeartBeat implements HeartBeat {
+public class SimpleHeartBeat extends BaseObject implements HeartBeat {
 	public SimpleHeartBeat() { }
 
 	@Override
