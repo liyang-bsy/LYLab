@@ -82,13 +82,13 @@ public class LYLabProtocol extends NonCloneableBaseObject implements Protocol {
 			dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
 			if (dataLength == -1)
 				return null;
-			String info = new String(bytes, endPosition, dataLength);
+			String info = new String(bytes, endPosition, dataLength, CoreDef.CHARSET());
 			endPosition = endPosition + dataLength + splitSignal.length;
 
 			dataLength = Algorithm.KMPSearch(bytes, splitSignal, endPosition);
 			if (dataLength == -1)
 				return null;
-			String data = new String(bytes, endPosition, dataLength);
+			String data = new String(bytes, endPosition, dataLength, CoreDef.CHARSET());
 			endPosition = endPosition + dataLength + splitSignal.length;
 
 			return (Confirm) Utils.deserialize(Class.forName(info), data);
