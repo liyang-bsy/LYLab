@@ -209,6 +209,7 @@ public class SyncSession extends AbstractSession implements KeepAlive {
 					break;
 			}
 		}
+		lastActivity = System.currentTimeMillis();
 		return new Pair<>(buffer, bufferLen);
 	}
 	

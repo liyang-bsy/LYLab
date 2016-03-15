@@ -155,7 +155,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 			System.out.println("TODO: else");
 		}
 		// record last activate
-		if(socketChannel != null)	// won't be true
+		if (socketChannel != null)	// won't be true
 			lastActivityMap.put(Utils.getPeer(socketChannel), System.currentTimeMillis());
 
 	}
