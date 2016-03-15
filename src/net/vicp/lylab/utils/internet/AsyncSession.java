@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.CoreDef;
@@ -164,14 +165,13 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 	public void exec() {
 		try {
 			// Will be block here
-			while (!isStopped() && selector.select() > 0) {
+			while (!isStopped()) {
+				selector.select();
 				synchronized (lock) {
-					Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-					while (iterator.hasNext()) {
-						SelectionKey selectionKey = iterator.next();
-						iterator.remove();
+					Set<SelectionKey> selectionKeys = selector.selectedKeys();
+					for (SelectionKey selectionKey : selectionKeys)
 						selectionKeyHandler(selectionKey);
-					}
+					selectionKeys.clear();
 				}
 			}
 		} catch (Throwable t) {
