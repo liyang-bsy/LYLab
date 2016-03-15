@@ -48,7 +48,6 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 	
 	// Raw data source
 	protected Selector selector = null;
-	protected SelectionKey selectionKey = null;
 	
 	// Clients			client			Socket
 	protected Map<InetAddr, SocketChannel> addr2client = new ConcurrentHashMap<>();
@@ -114,7 +113,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 //		}
 	}
 
-	public void selectionKeyHandler()
+	public void selectionKeyHandler(SelectionKey selectionKey)
 	{
 		SocketChannel socketChannel = null;
 		if (selectionKey.isAcceptable()) {
@@ -128,15 +127,15 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 				throw new LYException("Close failed", e);
 			}
 		} else if (selectionKey.isReadable()) {
-			socketChannel = (SocketChannel) selectionKey.channel();
 			try {
+				socketChannel = (SocketChannel) selectionKey.channel();
 				Pair<byte[], Integer> data = receive(socketChannel.socket());
 				if (data == null) {
 					selectionKey.cancel();
 					socketChannel.close();
-					return;
 				}
-				transfer.putRequest(Utils.getPeer(socketChannel), data.getLeft(), data.getRight());
+				else
+					transfer.putRequest(Utils.getPeer(socketChannel), data.getLeft(), data.getRight());
 			} catch (Throwable t) {
 				if (socketChannel != null) {
 					try {
@@ -166,21 +165,20 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 		try {
 			// Will be block here
 			while (!isStopped() && selector.select() > 0) {
-				Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-				while (iterator.hasNext()) {
-					selectionKey = iterator.next();
-					iterator.remove();
-					selectionKeyHandler();
+				synchronized (lock) {
+					Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+					while (iterator.hasNext()) {
+						SelectionKey selectionKey = iterator.next();
+						iterator.remove();
+						selectionKeyHandler(selectionKey);
+					}
 				}
 			}
-		} catch (Exception e) {
-			throw new LYException("Connect break", e);
+		} catch (Throwable t) {
+			Utils.printStack("AsyncSession is stopped" + Utils.getStringFromThrowable(t), "fatal");
+			throw new LYException("AsyncSession is stopped", t);
 		} finally {
-			try {
-				close();
-			} catch (Exception ex) {
-				log.info(Utils.getStringFromException(ex));
-			}
+			Utils.tryClose(this);
 		}
 	}
 
@@ -318,14 +316,9 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 			}
 			TimeoutController.removeFromWatch(this);
 			addr2client.clear();
-			if (transfer != null) {
-				transfer.close();
-				transfer = null;
-			}
-			if (selector != null) {
-				selector.close();
-				selector = null;
-			}
+			Utils.tryClose(transfer, selector);
+			transfer = null;
+			selector = null;
 			if (thread != null)
 				callStop();
 		} catch (Exception e) {
