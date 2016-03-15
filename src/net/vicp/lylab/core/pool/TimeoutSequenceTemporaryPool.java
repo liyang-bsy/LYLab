@@ -10,7 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
+import net.vicp.lylab.core.interfaces.KeepAlive;
 import net.vicp.lylab.core.interfaces.Recyclable;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.controller.TimeoutController;
 
 /**
@@ -20,6 +22,9 @@ import net.vicp.lylab.utils.controller.TimeoutController;
  *
  */
 public class TimeoutSequenceTemporaryPool<T extends BaseObject> extends SequenceTemporaryPool<T> implements Recyclable {
+	/**
+	 * left is id, right is time
+	 */
 	protected Map<Long, Long> startTime;
 	protected Long timeout;
 
@@ -124,8 +129,16 @@ public class TimeoutSequenceTemporaryPool<T extends BaseObject> extends Sequence
 				Entry<Long, Long> entry = it.next();
 				long start = entry.getValue();
 				if (System.currentTimeMillis() - start > timeout) {
-					remove(entry.getKey());
+					removeFromContainer(entry.getKey());
 					it.remove();
+				} else {
+					T tmp = getFromContainer(entry.getKey());
+					if (tmp instanceof KeepAlive && ((KeepAlive) tmp).isOutdated() && !((KeepAlive) tmp).isAlive()) {
+						removeFromContainer(entry.getKey());
+						it.remove();
+						Utils.tryClose(tmp);
+
+					}
 				}
 			}
 			safeCheck();
