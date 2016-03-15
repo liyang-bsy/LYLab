@@ -266,7 +266,7 @@ public class AsyncSession extends AbstractSession implements LifeCycle, Recyclab
 					}
 					key = socketChannel.register(writeSelector, SelectionKey.OP_WRITE);
 					if (writeSelector.select(writeTimeout) == 0) {
-						if (torelent > 5) {
+						if (torelent > CoreDef.RETRY_TOLERANCE) {
 							try {
 								socketChannel.close();
 							} catch (Exception e) {
