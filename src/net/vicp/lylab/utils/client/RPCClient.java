@@ -67,14 +67,21 @@ public class RPCClient extends NonCloneableBaseObject implements LifeCycle {
 	public Message callRpcServer(RPCMessage message) {
 		if (closed.get())
 			throw new LYException("Client closed, did you initialize() Caller?");
-		SyncSession session = pool.accessOne();
-		byte[] req, res;
-		req = protocol.encode(message);
-		session.send(req);
-		res = session.receive().getLeft();
-		Message msg = (Message) protocol.decode(res);
-		pool.recycle(session);
-		return msg;
+		do {
+			SyncSession session = pool.accessOne();
+			try {
+				byte[] req, res;
+				req = protocol.encode(message);
+				session.send(req);
+				res = session.receive().getLeft();
+				return (Message) protocol.decode(res);
+			} catch (Exception e) {
+				log.error("Communication with server failed, retry...");
+			}
+			finally {
+				pool.recycle(session);
+			}
+		} while(true);
 	}
 	
 	@Override

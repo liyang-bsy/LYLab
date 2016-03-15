@@ -93,13 +93,28 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 	public CacheMessage callRdmaServer(CacheMessage message) {
 		if (closed.get())
 			throw new LYException("Client closed, did you initialize() Caller?");
-		SyncSession session = pool.accessOne();
-		byte[] req, res;
-		req = protocol.encode(message);
-		session.send(req);
-		res = session.receive().getLeft();
-		pool.recycle(session);
-		return (CacheMessage) protocol.decode(res);
+		do {
+			SyncSession session = pool.accessOne();
+			try {
+				byte[] req, res;
+				req = protocol.encode(message);
+				session.send(req);
+				res = session.receive().getLeft();
+				return (CacheMessage) protocol.decode(res);
+			} catch (Exception e) {
+				log.error("Communication with server failed, retry...");
+			}
+			finally {
+				pool.recycle(session);
+			}
+		} while(true);
+//		SyncSession session = pool.accessOne();
+//		byte[] req, res;
+//		req = protocol.encode(message);
+//		session.send(req);
+//		res = session.receive().getLeft();
+//		pool.recycle(session);
+//		return (CacheMessage) protocol.decode(res);
 	}
 	
 	@Override
