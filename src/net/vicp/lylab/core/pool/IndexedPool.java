@@ -93,13 +93,13 @@ public class IndexedPool<T extends BaseObject> extends AbstractPool<T> {
 		synchronized (lock) {
 			if(keyContainer.size() == size())
 				return;
-//			keyContainer.clear();
-//			keyContainer.addAll(availableKeySet());
-			throw new LYError("Pool maintainence failed! To continue use, please clear before next use"
+			keyContainer.clear();
+			keyContainer.addAll(availableKeySet());
+			log.fatal(new LYError("Pool maintainence failed! To continue use, please clear before next use"
 					+ "\nkey list size is:" + keyContainer.size()
 					+ "\ncontainer size is:" + size()
 					+ "\nkey list is:" + keyContainer
-					+ "\ncontainer is:" + availableContainer);
+					+ "\ncontainer is:" + availableContainer));
 		}
 	}
 
