@@ -83,7 +83,8 @@ public final class TimeoutController extends LoneWolf implements LifeCycle {
 				continue;
 			}
 			try {
-				if (rec.isRecyclable()) rec.recycle();
+				if (rec.isRecyclable())
+					rec.recycle();
 			} catch (Throwable t) {
 				log.error(Utils.getStringFromThrowable(t));
 			}
