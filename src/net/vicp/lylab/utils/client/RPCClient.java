@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.HeartBeat;
@@ -14,6 +15,7 @@ import net.vicp.lylab.core.model.RPCMessage;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
 import net.vicp.lylab.utils.Caster;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.creator.AutoCreator;
 import net.vicp.lylab.utils.creator.InstanceCreator;
@@ -67,6 +69,7 @@ public class RPCClient extends NonCloneableBaseObject implements LifeCycle {
 	public Message callRpcServer(RPCMessage message) {
 		if (closed.get())
 			throw new LYException("Client closed, did you initialize() Caller?");
+		int torelent = CoreDef.RETRY_TOLERANCE;
 		do {
 			SyncSession session = pool.accessOne();
 			try {
@@ -76,12 +79,12 @@ public class RPCClient extends NonCloneableBaseObject implements LifeCycle {
 				res = session.receive().getLeft();
 				return (Message) protocol.decode(res);
 			} catch (Exception e) {
-				log.error("Communication with server failed, retry...");
-			}
-			finally {
+				log.error("Communication with server failed, will retry..." + Utils.getStringFromException(e));
+			} finally {
 				pool.recycle(session);
 			}
-		} while(true);
+		} while (torelent-- > 0);
+		throw new LYException("Communication with server failed");
 	}
 	
 	@Override

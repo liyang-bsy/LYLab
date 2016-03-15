@@ -115,6 +115,7 @@ public class CoreDef extends NonCloneableBaseObject {
 	public static final long INTERVAL_SHORT = SECOND / TWO; // half second
 	public static final long INTERVAL_LONG = FIVE * SECOND; // 5 second
 
+	public static final int RETRY_TOLERANCE = FIVE; // 5 min
 	public static final long WAITING_TOLERANCE = TWO * MINUTE; // 5 min
 	public static final int REQUEST_TTIMEOUT = (int) MINUTE; // 60 second
 

@@ -1,5 +1,6 @@
 package net.vicp.lylab.utils.client;
 
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.HeartBeat;
@@ -8,6 +9,7 @@ import net.vicp.lylab.core.interfaces.Protocol;
 import net.vicp.lylab.core.model.CacheMessage;
 import net.vicp.lylab.core.model.SimpleHeartBeat;
 import net.vicp.lylab.core.pool.AutoGeneratePool;
+import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.atomic.AtomicBoolean;
 import net.vicp.lylab.utils.creator.AutoCreator;
 import net.vicp.lylab.utils.creator.InstanceCreator;
@@ -93,6 +95,7 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 	public CacheMessage callRdmaServer(CacheMessage message) {
 		if (closed.get())
 			throw new LYException("Client closed, did you initialize() Caller?");
+		int torelent = CoreDef.RETRY_TOLERANCE;
 		do {
 			SyncSession session = pool.accessOne();
 			try {
@@ -102,12 +105,12 @@ public class RDMAClient extends NonCloneableBaseObject implements LifeCycle {
 				res = session.receive().getLeft();
 				return (CacheMessage) protocol.decode(res);
 			} catch (Exception e) {
-				log.error("Communication with server failed, retry...");
-			}
-			finally {
+				log.error("Communication with server failed, will retry..." + Utils.getStringFromException(e));
+			} finally {
 				pool.recycle(session);
 			}
-		} while(true);
+		} while (torelent-- > 0);
+		throw new LYException("Communication with server failed");
 //		SyncSession session = pool.accessOne();
 //		byte[] req, res;
 //		req = protocol.encode(message);
