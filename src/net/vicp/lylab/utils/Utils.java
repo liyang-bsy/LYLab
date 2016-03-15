@@ -33,13 +33,53 @@ import net.vicp.lylab.utils.convert.JsonConverUtil;
 import net.vicp.lylab.utils.convert.XmlConverUtil;
 
 public abstract class Utils extends NonCloneableBaseObject {
+
+	/**
+	 * Print current stack
+	 * @param only accept "debug", "info", "warn", "error", "fatal", case-insensitive
+	 */
+	public final static void printStack(String level) {
+		printStack("", level);
+	}
+	
+	/**
+	 * Print current stack with simple reasons
+	 * @param reason
+	 * @param only accept "debug", "info", "warn", "error", "fatal", case-insensitive
+	 */
+	public final static void printStack(String reason, String level) {
+		if (level == null)
+			level = "debug";
+		if (reason == null)
+			throw new NullPointerException("Parameter reason is null");
+		switch (level.toLowerCase()) {
+		case "debug":
+			log.debug(reason + CoreDef.LINE_SEPARATOR + getStringFromException(new LYException("Stack is printed below")));
+			break;
+		case "info":
+			log.info(reason + CoreDef.LINE_SEPARATOR + getStringFromException(new LYException("Stack is printed below")));
+			break;
+		case "warn":
+			log.warn(reason + CoreDef.LINE_SEPARATOR + getStringFromException(new LYException("Stack is printed below")));
+			break;
+		case "error":
+			log.error(reason + CoreDef.LINE_SEPARATOR + getStringFromException(new LYException("Stack is printed below")));
+			break;
+		case "fatal":
+			log.fatal(reason + CoreDef.LINE_SEPARATOR + getStringFromException(new LYException("Stack is printed below")));
+			break;
+		default:
+			log.debug(reason + CoreDef.LINE_SEPARATOR + getStringFromException(new LYException("Print stack with bad param:[" + level + "]")));
+			break;
+		}
+	}
+	
 	/**
 	 * Close an object, safe if item is null
 	 * @param target to be closed item, it's safe if targets were null
 	 */
 	public final static void tryClose(Object... targets) {
-		log.debug("TryClose is called on follow target(s):\n" + Arrays.deepToString(targets));
-		log.debug(getStringFromException(new LYException("Current location is below")));
+		printStack("TryClose is called on follow target(s):\n" + Arrays.deepToString(targets), "debug");
 		if (targets == null)
 			return;
 		for (Object target : targets)
