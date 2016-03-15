@@ -150,6 +150,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	 */
 	public final void callStop() {
 		if(isStopped()) return;
+		Utils.printStack("CallStop follow task:" + CoreDef.LINE_SEPARATOR + this, "debug");
 		synchronized (lock) {
 			state.compareAndSet(STOPPED, STOPPED);
 			state.compareAndSet(CANCELLED, STOPPED);
@@ -174,6 +175,7 @@ public abstract class Task extends CloneableBaseObject implements Runnable, Exec
 	@Deprecated
 	public final void forceStop() {
 		if(state.compareNotAndSet(COMPLETED, STOPPED)) {
+			Utils.printStack("ForceStop follow task:" + CoreDef.LINE_SEPARATOR + this, "debug");
 			if (getThread() != null) {
 				getThread().interrupt();
 				getThread().stop(new LYException("Task " + getTaskId() + " timeout and killed"));
