@@ -61,6 +61,7 @@ public abstract class AbstractPool<T extends BaseObject> extends CloneableBaseOb
 
 	protected T removeFromContainer(long objId) {
 		T tmp = availableContainer.remove(objId);
+		keyContainer.remove(objectId);
 		lock.notifyAll();
 		return tmp;
 	}
@@ -87,6 +88,7 @@ public abstract class AbstractPool<T extends BaseObject> extends CloneableBaseOb
 				availableContainer.put(t.getObjectId(), t);
 				savedId = t.getObjectId();
 			}
+			keyContainer.add(savedId);
 			return savedId;
 		}
 	}

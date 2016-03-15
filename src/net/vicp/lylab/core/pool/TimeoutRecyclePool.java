@@ -153,26 +153,6 @@ public class TimeoutRecyclePool<T extends BaseObject> extends SeparatePool<T> im
 					it.remove();
 				}
 			}
-//			for (Long id : startTime.keySet()) {
-//				long start = startTime.get(id);
-//				if (new Date().getTime() - start > timeout) {
-//					T tmp = busyContainer.get(id);
-//					if (tmp != null) {
-//						recycle(id, true);
-//						startTime.remove(id);
-//						try {
-//							if (tmp instanceof AutoCloseable) {
-//								((AutoCloseable) tmp).close();
-//							}
-//						} catch (Exception e) {
-//							throw new LYException("Recycle failed", e);
-//						}
-////						busyContainer.remove(id);
-////						keyContainer.remove(id);
-//					}
-//				}
-//			}
-//			if(keyContainer.size() != size())
 			safeCheck();
 		}
 	}

@@ -128,15 +128,6 @@ public class TimeoutSequenceTemporaryPool<T extends BaseObject> extends Sequence
 					it.remove();
 				}
 			}
-//			for (Long id : startTime.keySet()) {
-//				long start = startTime.get(id);
-//				if (System.currentTimeMillis() - start > timeout * rate) {
-//					availableContainer.remove(id);
-//					keyContainer.remove(id);
-//					startTime.remove(id);
-//				}
-//			}
-//			if (keyContainer.size() == size())
 			safeCheck();
 		}
 	}

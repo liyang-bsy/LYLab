@@ -34,8 +34,6 @@ public class IndexedPool<T extends BaseObject> extends AbstractPool<T> {
 		synchronized (lock) {
 			safeCheck();
 			Long id = addToContainer(t);
-			if(id != null && !keyContainer.contains(id))
-				keyContainer.add(id);
 			return id;
 		}
 	}
@@ -47,14 +45,6 @@ public class IndexedPool<T extends BaseObject> extends AbstractPool<T> {
 			if (keyContainer.isEmpty())
 				return null;
 			T tmp = removeFromContainer(objId);
-			keyContainer.remove(objId);
-//			Iterator<Long> iterator = keyContainer.iterator();
-//			while (iterator.hasNext()) {
-//				if (!iterator.next().equals(objId))
-//					continue;
-//				iterator.remove();
-//				break;
-//			}
 			return tmp;
 		}
 	}

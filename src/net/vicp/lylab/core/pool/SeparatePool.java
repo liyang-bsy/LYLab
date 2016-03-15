@@ -132,10 +132,10 @@ public class SeparatePool<T extends BaseObject> extends IndexedPool<T> {
 			T tmp = null;
 			if (isAvailable)
 				tmp = removeFromContainer(objId);
-			else
+			else {
 				tmp = busyContainer.remove(objId);
-			if(tmp != null)
 				keyContainer.remove(objId);
+			}
 			return tmp;
 		}
 	}
