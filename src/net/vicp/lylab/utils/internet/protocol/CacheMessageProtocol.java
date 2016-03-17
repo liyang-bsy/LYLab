@@ -27,7 +27,7 @@ import net.vicp.lylab.utils.Utils;
  */
 public class CacheMessageProtocol extends NonCloneableBaseObject implements Protocol {
 
-	protected final byte[] head = "Pair".getBytes();
+	protected final byte[] head = "RDMA".getBytes();
 	protected final byte[] splitSignal = new byte[] { -15 };
 
 	@Override
