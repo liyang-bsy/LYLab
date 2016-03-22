@@ -752,4 +752,8 @@ public abstract class Utils extends NonCloneableBaseObject {
 		return UUID.randomUUID().toString().replaceAll("-", "");
 	}
 
+	public final static String sqlOrderByAntiInjection(String order) {
+		return order.replaceAll("[^A-Za-z0-9_,]", "");
+	}
+
 }
