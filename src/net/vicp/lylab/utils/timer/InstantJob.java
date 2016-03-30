@@ -18,8 +18,7 @@ public abstract class InstantJob extends TimerJob {
 	/**
 	 * As an instant job, return 'now' to tell manager start right now.
 	 */
-	public Date getStartTime()
-	{
+	public Date getStartTime() {
 		return new Date();
 	}
 

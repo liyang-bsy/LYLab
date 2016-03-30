@@ -18,16 +18,14 @@ public abstract class InitializeJob extends InstantJob {
 	/**
 	 * As an instant job, return 'now' to tell manager start right now.
 	 */
-	public Date getStartTime()
-	{
+	public Date getStartTime() {
 		return new Date();
 	}
 
 	/**
 	 * As an one-time job, return '0' to tell manager it won't execute again.
 	 */
-	public Integer getInterval()
-	{
+	public Integer getInterval() {
 		return 0;
 	}
 

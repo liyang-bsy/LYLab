@@ -16,8 +16,7 @@ public abstract class OneTimeJob extends TimerJob {
 	/**
 	 * As an one-time job, return '0' to tell manager it won't execute again.
 	 */
-	public Integer getInterval()
-	{
+	public Integer getInterval() {
 		return 0;
 	}
 

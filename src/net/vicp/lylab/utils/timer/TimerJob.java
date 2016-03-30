@@ -3,11 +3,12 @@ package net.vicp.lylab.utils.timer;
 import java.util.Date;
 import java.util.TimerTask;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.Executor;
 import net.vicp.lylab.utils.Utils;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Extends TimerJob and reference to Plan(manage class).<br>
@@ -21,8 +22,9 @@ import net.vicp.lylab.utils.Utils;
  * @version 1.0.0
  * 
  */
-public abstract class TimerJob extends TimerTask implements Executor {
+public abstract class TimerJob extends NonCloneableBaseObject implements Executor {
 
+	TimerTaskProxy proxy = new TimerTaskProxy(this);
 	/**
 	 * Now every TimerJob may use this to log something
 	 */
@@ -60,6 +62,22 @@ public abstract class TimerJob extends TimerTask implements Executor {
 		} catch (Throwable t) {
 			log.error(Utils.getStringFromThrowable(t));
 		}
+	}
+
+}
+
+class TimerTaskProxy extends TimerTask {
+
+	TimerJob timerJob;
+
+	public TimerTaskProxy(TimerJob timerJob) {
+		this.timerJob = timerJob;
+	}
+
+	@Override
+	public void run() {
+		if (timerJob != null)
+			timerJob.run();
 	}
 
 }
