@@ -15,6 +15,7 @@ This document contains come error code define inside of LYLab or other server lo
 |0x00000006|Action not found|
 |0x00000007|Action execute failed|
 |0x00000008|Missing parameter/Bad parameter|
+|0x0000000A|Foreign server failed|
 
 |0x00000101|Access forbidden|
 

@@ -43,6 +43,9 @@ public class MailSender extends NonCloneableBaseObject {
 		p.put("mail.smtp.port", String.valueOf(smtpPort));
 		p.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
 		p.put("mail.smtp.auth", "true");
+		p.put("mail.smtp.starttls.enable", "true");
+		p.put("mail.smtp.starttls.required", "true");
+		p.put("mail.transport.protocol", "smtp");
 		return p;
 	}
 
