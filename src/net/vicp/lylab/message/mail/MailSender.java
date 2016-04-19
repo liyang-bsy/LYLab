@@ -24,7 +24,6 @@ import net.vicp.lylab.core.exceptions.LYException;
  * 简单邮件（不带附件的邮件）发送器
  */
 public class MailSender extends NonCloneableBaseObject {
-	
 	// 邮件发送的别名
 	private String personal = null;
 	// 邮件发送服务器的用户名
@@ -76,13 +75,13 @@ public class MailSender extends NonCloneableBaseObject {
 			// 设置邮件消息发送的时间
 			message.setSentDate(new Date());
 
-			if (mail.isPlainText()) {
+			if (!mail.isPlainText()) {
 				// MiniMultipart类是一个容器类，包含MimeBodyPart类型的对象
 				Multipart mainPart = new MimeMultipart();
 				// 创建一个包含HTML内容的MimeBodyPart
 				BodyPart html = new MimeBodyPart();
 				// 设置HTML内容
-				html.setContent(mail.getContent(), "text/html; charset=utf-8");
+				html.setContent(mail.getContent(), "text/html;charset=utf-8");
 				mainPart.addBodyPart(html);
 				// 将MiniMultipart对象设置为邮件内容
 				message.setContent(mainPart);
@@ -90,10 +89,6 @@ public class MailSender extends NonCloneableBaseObject {
 				// 设置邮件消息的主要内容
 				message.setText(mail.getContent());
 			}
-
-			// 设置邮件消息的主要内容
-			String mailContent = mail.getContent();
-			message.setText(mailContent);
 			return message;
 		} catch (Exception e) {
 			throw new LYException("Encode mail message failed", e);
