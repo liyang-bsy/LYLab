@@ -420,13 +420,23 @@ public abstract class Utils extends NonCloneableBaseObject {
 	}
 
 	/**
+	 * 根据系统类型格式化文件路径
+	 * @param filePath
+	 * @return
+	 */
+	public final static String formatFilePath(String filePath) {
+		return filePath.replaceAll("/", "\\" + File.separator).replaceAll("\\\\", "\\" + File.separator);
+	}
+
+	/**
 	 * 根据路径和文件名后缀，获取文件列表的绝对路径
 	 * @param filePath
-	 * @param fileSuffix e.g. ".txt"
+	 * @param fileSuffix e.g. ".txt", null for All files(exclude directory)
 	 * @return
 	 */
 	public final static List<String> getFileList(String filePath, String fileSuffix) {
 		List<String> ret = new ArrayList<String>();
+		filePath = formatFilePath(filePath);
 		try {
 			File file = new File(filePath);
 			if (file.isDirectory()) {
@@ -437,9 +447,9 @@ public abstract class Utils extends NonCloneableBaseObject {
 					if (filePath.endsWith("/") || filePath.endsWith("\\"))
 						filename = filePath + filelist[i];
 					else
-						filename = filePath + "\\" + filelist[i];
+						filename = filePath + File.separator + filelist[i];
 					// 如果以该后缀结尾，假如不是，否则忽略该文件
-					if (filename.endsWith(fileSuffix))
+					if (fileSuffix == null || filename.endsWith(fileSuffix))
 						ret.add(filename);
 				}
 			}
