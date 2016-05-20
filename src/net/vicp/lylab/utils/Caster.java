@@ -171,11 +171,13 @@ public abstract class Caster extends NonCloneableBaseObject {
 	public final static Object simpleCast(Object original, Class<?> targetClass) {
 		if (original == null)
 			throw new NullPointerException("Parameter originalObject is null");
+		if (targetClass == null)
+			throw new NullPointerException("Parameter targetClass is null");
+		if (targetClass.isAssignableFrom(original.getClass()))
+			return original;
 		String originalString = original instanceof Date
 				? DateFormatUtils.format((Date) original, CoreDef.DATETIME_FORMAT)
 				: original.toString();
-		if (targetClass == null)
-			throw new NullPointerException("Parameter targetClass is null");
 		if (targetClass == String.class)
 			return originalString;
 
@@ -198,8 +200,24 @@ public abstract class Caster extends NonCloneableBaseObject {
 				return Byte.valueOf(originalString);
 			else if (targetClass == Character.class)
 				return Character.valueOf((originalString).charAt(0));
-			else if (targetClass == Date.class)
-				return DateUtils.parseDate(originalString, CoreDef.DATETIME_FORMAT);
+			else if (targetClass == Date.class) {
+				Date value = null;
+				try {
+					value = DateUtils.parseDate(originalString,
+							CoreDef.DATETIME_FORMAT);
+				} catch (Exception e) { }
+				if (value != null) return value;
+				try {
+					value = DateUtils.parseDate(originalString,
+							CoreDef.DATE_FORMAT);
+				} catch (Exception e) { }
+				if (value != null) return value;
+				try {
+					value = DateUtils.parseDate(originalString,
+							CoreDef.YEARMONTH_FORMAT);
+				} catch (Exception e) { }
+				if (value != null) return value;
+			}
 			else if (targetClass.getName().equals("short"))
 				return Short.valueOf(originalString);
 			else if (targetClass.getName().equals("int"))
@@ -216,8 +234,8 @@ public abstract class Caster extends NonCloneableBaseObject {
 				return Byte.valueOf(originalString);
 			else if (targetClass.getName().equals("char"))
 				return Character.valueOf((originalString).charAt(0));
-			else
-				throw new LYException("Unsupport target basic type:" + targetClass.getName());
+			
+			throw new LYException("Unsupport target basic type:" + targetClass.getName());
 		} catch (Exception e) {
 			throw new LYException("Cast failed from String [" + originalString + "] to " + targetClass.getName(), e);
 		}
