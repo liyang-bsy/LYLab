@@ -460,14 +460,18 @@ public abstract class Utils extends NonCloneableBaseObject {
 	/**
 	 * 以行为单位读取文件，常用于读面向行的格式化文件
 	 */
-	public final static List<String> readFileByLines(String fileName)
-	{
-		return readFileByLines(fileName, true);
+	public final static List<String> readFileByLines(String fileName) {
+		return readFileByLines(fileName, true, true);
 	}
+	
 	/**
 	 * 以行为单位读取文件，常用于读面向行的格式化文件
+	 * @param fileName 文件名
+	 * @param ignoreEmptyLine true则将空行略过
+	 * @param trimResult true则将结果字符串执行trim()操作
+	 * @return
 	 */
-	public final static List<String> readFileByLines(String fileName, boolean ignoreEmptyLine) {
+	public final static List<String> readFileByLines(String fileName, boolean ignoreEmptyLine, boolean trimResult) {
 		List<String> ret = new ArrayList<String>();
 		File file = new File(fileName);
 		if (!file.exists())
@@ -487,9 +491,10 @@ public abstract class Utils extends NonCloneableBaseObject {
 				if (b.length > 3 && b[0] == -17 && b[1] == -69 && b[2] == -65)
 					tempString = tempString.substring(1);
 				// 忽略空行
-				if (ignoreEmptyLine && tempString.trim().equals(""))
+				if(trimResult) tempString = tempString.trim();
+				if (ignoreEmptyLine && tempString.equals(""))
 					continue;
-				ret.add(tempString.trim());
+				ret.add(tempString);
 			}
 			reader.close();
 		} catch (Exception e) {

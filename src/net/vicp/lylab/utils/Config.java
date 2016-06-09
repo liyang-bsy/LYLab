@@ -520,7 +520,7 @@ public final class Config extends NonCloneableBaseObject {
 //	}
 
 	private void rawLoader() {
-		List<String> rawList = Utils.readFileByLines(fileName, false);
+		List<String> rawList = Utils.readFileByLines(fileName, false, false);
 		for (int i = 0; i < rawList.size(); i++) {
 			// Trim
 			String rawPair = rawList.get(i).replaceAll("([\\s\b\\u0000-\\u0020]*)", "");
