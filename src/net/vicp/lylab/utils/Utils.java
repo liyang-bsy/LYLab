@@ -770,5 +770,40 @@ public abstract class Utils extends NonCloneableBaseObject {
 	public final static String sqlOrderByAntiInjection(String order) {
 		return order.replaceAll("[^A-Za-z0-9_,]", "");
 	}
+	
+	/** 
+	 * 验证输入的邮箱格式是否符合 
+	 * @param email 
+	 * @return 是否合法 
+	 */ 
+	public final static boolean isEmailAddress(String email) {
+		return email.matches("^([a-z0-9A-Z]+[-|//.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?//.)+[a-zA-Z]{2,}$");
+	}
+	
+	/** 
+	 * 验证输入的邮箱格式是否符合 
+	 * @param email 
+	 * @return 是否合法 
+	 */ 
+	public final static boolean isNumeric(String number) {
+		return number.matches("[0-9]*");
+	}
+	
+	public static boolean isMobileNumber(String mobile) {
+		return mobile.matches("^[1][3,4,5,8][0-9]{9}$");
+	}
+	
+	/**
+	 * 电话号码验证
+	 * @param phoneNo
+	 * @return 验证通过返回true
+	 */
+	public static boolean isPhone(String phoneNo) {
+		if (phoneNo.length() > 9) {
+			return phoneNo.matches("^[0][1-9]{2,3}-[0-9]{5,10}$"); // 验证带区号的
+		} else {
+			return phoneNo.matches("^[1-9]{1}[0-9]{5,8}$"); // 验证没有区号的
+		}
+	}
 
 }
