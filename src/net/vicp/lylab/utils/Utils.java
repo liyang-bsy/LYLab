@@ -777,7 +777,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @return 是否合法 
 	 */ 
 	public final static boolean isEmailAddress(String email) {
-		return email.matches("^([a-z0-9A-Z]+[-|//.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?//.)+[a-zA-Z]{2,}$");
+		return email.matches("\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*");
 	}
 	
 	/** 
