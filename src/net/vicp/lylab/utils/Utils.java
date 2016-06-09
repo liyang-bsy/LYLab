@@ -789,8 +789,8 @@ public abstract class Utils extends NonCloneableBaseObject {
 		return number.matches("[0-9]*");
 	}
 	
-	public static boolean isMobileNumber(String mobile) {
-		return mobile.matches("^[1][3,4,5,8][0-9]{9}$");
+	public final static boolean isMobileNo(String mobileNo) {
+		return mobileNo.matches("^[1][3,4,5,8][0-9]{9}$");
 	}
 	
 	/**
@@ -798,7 +798,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * @param phoneNo
 	 * @return 验证通过返回true
 	 */
-	public static boolean isPhone(String phoneNo) {
+	public final static boolean isPhoneNo(String phoneNo) {
 		if (phoneNo.length() > 9) {
 			return phoneNo.matches("^[0][1-9]{2,3}-[0-9]{5,10}$"); // 验证带区号的
 		} else {
