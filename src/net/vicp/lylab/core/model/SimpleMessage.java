@@ -60,7 +60,7 @@ public class SimpleMessage extends CodeConfirm {
 	}
 	
 	public void fail(int code, String msg) {
-		this.setCode(1);
+		this.setCode(code);
 		this.setMessage(msg);
 	}
 
