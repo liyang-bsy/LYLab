@@ -51,7 +51,7 @@ public class SyncServer extends LoneWolf implements LifeCycle {
 				throw new NullPointerException("Server port not defined");
 			serverSocket = new ServerSocket(port);
 		} catch (Exception e) {
-			throw new LYException("Server start failed", e);
+			throw new LYException("Server start failed, port is " + port, e);
 		}
 		this.begin("Sync Server - Main Thread");
 	}
