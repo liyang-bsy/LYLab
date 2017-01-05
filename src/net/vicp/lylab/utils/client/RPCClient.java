@@ -58,7 +58,7 @@ public class RPCClient extends NonCloneableBaseObject implements LifeCycle {
 		Message retM = callRpcServer(message);
 		List<HashMap<String, Object>> list = ((List<HashMap<String, Object>>) retM.getBody().get("CallResult"));
 		for (HashMap<String, Object> temp : list)
-			callResult.add(Caster.map2Object(Message.class, (HashMap<String, Object>) temp.get("right")));
+			callResult.add(Caster.mapCastObject(Message.class, (HashMap<String, Object>) temp.get("right")));
 		return callResult;
 	}
 
