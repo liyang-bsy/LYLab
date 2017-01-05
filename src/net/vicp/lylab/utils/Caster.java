@@ -82,6 +82,62 @@ public abstract class Caster extends NonCloneableBaseObject {
 			mapStackTrace.pop();
 		}
 	}
+	
+	/**
+	 * Convert map to Object
+	 * 
+	 * @param xml
+	 * @return
+	 */
+	public final static Map<String, Object> object2Map(Object object) {
+		return map2Object(instanceClass, map, new Stack<Map<String, ?>>());
+	}
+	
+	/**
+	 * Convert Object to map
+	 * 
+	 * @param xml
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	private final static Map<String, Object> object2Map(Object object) {
+		if (map == null)
+			throw new NullPointerException("Parameter map is null");
+		if (mapStackTrace.contains(map))
+			return null;
+		try {
+			mapStackTrace.push(map);
+			T owner = instanceClass.newInstance();
+			Set<String> names = map.keySet();
+			for (String name : names) {
+				try {
+					Object node = map.get(name);
+					if (node == null)
+						continue;
+					Method setter = Utils.getSetterForField(owner, name, node);
+					if (setter == null)
+						continue;
+					Class<?> paramClass = setter.getParameterTypes()[0];
+					if (Map.class.isAssignableFrom(paramClass))
+						Utils.setter(owner, setter, node);
+					else if (Map.class.isAssignableFrom(node.getClass())) {
+						Object param = map2Object(paramClass, (Map<String, ?>) node, mapStackTrace);
+						if (param == null)
+							param = owner;
+						Utils.setter(owner, setter, param);
+					} else
+						Utils.setter(owner, setter, node);
+				} catch (LYException e) {
+					log.debug("Bad field:" + name + Utils.getStringFromException(e));
+				}
+			}
+			return owner;
+		} catch (Exception e) {
+			throw new LYException("Convert map to Object(" + instanceClass.getName() + ") failed, reason:", e);
+		} finally {
+			mapStackTrace.pop();
+		}
+	}
 
 	public final static boolean isBasicType(Object target) {
 		if (target == null)
