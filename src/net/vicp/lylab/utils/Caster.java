@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,32 +20,33 @@ import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TransferQueue;
 
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.commons.lang3.time.DateUtils;
-
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 
 public abstract class Caster extends NonCloneableBaseObject {
+	
 	/**
 	 * Convert map to Object
 	 * 
-	 * @param xml
+	 * @param instanceClass
+	 * @param map
 	 * @return
 	 */
-	public final static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map) {
-		return map2Object(instanceClass, map, new Stack<Map<String, ?>>());
+	public final static <T> T mapCastObject(Class<T> instanceClass, Map<String, ?> map) {
+		return mapCastObject(instanceClass, map, new Stack<Map<String, ?>>());
 	}
 
 	/**
 	 * Convert map to Object, java.util.Map field is not supported
 	 * 
-	 * @param xml
+	 * @param instanceClass
+	 * @param map
+	 * @param mapStackTrace		trace path to ensure no loop reference
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	private final static <T> T map2Object(Class<T> instanceClass, Map<String, ?> map, Stack<Map<String, ?>> mapStackTrace) {
+	@SuppressWarnings({ "unchecked" })
+	private final static <T> T mapCastObject(Class<T> instanceClass, Map<String, ?> map, Stack<Map<String, ?>> mapStackTrace) {
 		if (map == null)
 			throw new NullPointerException("Parameter map is null");
 		if (mapStackTrace.contains(map))
@@ -62,16 +64,17 @@ public abstract class Caster extends NonCloneableBaseObject {
 					if (setter == null)
 						continue;
 					Class<?> paramClass = setter.getParameterTypes()[0];
-					if (Map.class.isAssignableFrom(paramClass))
+					if (Map.class.isAssignableFrom(paramClass)) {
 						Utils.setter(owner, setter, node);
+					}
 					else if (Map.class.isAssignableFrom(node.getClass())) {
-						Object param = map2Object(paramClass, (Map<String, ?>) node, mapStackTrace);
+						Object param = mapCastObject(paramClass, (Map<String, ?>) node, mapStackTrace);
 						if (param == null)
 							param = owner;
 						Utils.setter(owner, setter, param);
 					} else
 						Utils.setter(owner, setter, node);
-				} catch (LYException e) {
+				} catch (Exception e) {
 					log.debug("Bad field:" + name + Utils.getStringFromException(e));
 				}
 			}
@@ -82,60 +85,90 @@ public abstract class Caster extends NonCloneableBaseObject {
 			mapStackTrace.pop();
 		}
 	}
-	
+
 	/**
-	 * Convert map to Object
+	 * Convert Object to map, default depthLimit(at most) is 10
 	 * 
-	 * @param xml
+	 * @param object
 	 * @return
 	 */
-	public final static Map<String, Object> object2Map(Object object) {
-		return map2Object(instanceClass, map, new Stack<Map<String, ?>>());
+	public final static Map<String, Object> objectCastMap(Object object) {
+		return objectCastMap(object, CoreDef.DEFAULT_DEPTH_LIMIT);
 	}
-	
+
 	/**
 	 * Convert Object to map
 	 * 
-	 * @param xml
+	 * @param object
+	 * @param depthLimit
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	private final static Map<String, Object> object2Map(Object object) {
-		if (map == null)
-			throw new NullPointerException("Parameter map is null");
-		if (mapStackTrace.contains(map))
-			return null;
+	public final static Map<String, Object> objectCastMap(Object object, int depthLimit) {
+		return objectCastMap(object, depthLimit, 0);
+	}
+
+	private final static Map<String, Object> objectCastMap(Object object, int depthLimit, int depth) {
+		Map<String, Object> map = new HashMap<String, Object>();
 		try {
-			mapStackTrace.push(map);
-			T owner = instanceClass.newInstance();
-			Set<String> names = map.keySet();
-			for (String name : names) {
-				try {
-					Object node = map.get(name);
-					if (node == null)
-						continue;
-					Method setter = Utils.getSetterForField(owner, name, node);
-					if (setter == null)
-						continue;
-					Class<?> paramClass = setter.getParameterTypes()[0];
-					if (Map.class.isAssignableFrom(paramClass))
-						Utils.setter(owner, setter, node);
-					else if (Map.class.isAssignableFrom(node.getClass())) {
-						Object param = map2Object(paramClass, (Map<String, ?>) node, mapStackTrace);
-						if (param == null)
-							param = owner;
-						Utils.setter(owner, setter, param);
-					} else
-						Utils.setter(owner, setter, node);
-				} catch (LYException e) {
-					log.debug("Bad field:" + name + Utils.getStringFromException(e));
+			Method[] methods = object.getClass().getMethods();
+			for (Method method : methods) {
+				if (method.getParameters().length != 0)
+					continue;
+				String methodName = method.getName();
+				if(methodName.equals("getClass"))
+					continue;
+				String fieldName = null;
+				if (methodName.startsWith("get") && Character.isUpperCase(methodName.charAt(3)))
+					fieldName = methodName.substring(3, 4).toLowerCase() + methodName.substring(4);
+				if ((methodName.startsWith("is") && Character.isUpperCase(methodName.charAt(2))))
+					fieldName = methodName.substring(2, 3).toLowerCase() + methodName.substring(3);
+				if (fieldName != null) {
+					if (!method.isAccessible()) {
+						method.setAccessible(true);
+					}
+					Object temp = innerObjectCastMap(method.invoke(object), depthLimit, depth + 1);
+					if (temp != null) {
+						map.put(fieldName, temp);
+					}
 				}
 			}
-			return owner;
+			return map;
 		} catch (Exception e) {
-			throw new LYException("Convert map to Object(" + instanceClass.getName() + ") failed, reason:", e);
-		} finally {
-			mapStackTrace.pop();
+			throw new LYException("Convert Object to map(" + Utils.serialize(object) + ") failed, reason:", e);
+		}
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private final static Object innerObjectCastMap(Object object, int depthLimit, int depth) {
+		if(depth > depthLimit)
+			return null;
+		if (object == null)
+			return null;
+		if (isGenericArrayType(object)) {
+			ArrayList<Object> container = new ArrayList<Object>();
+			for (Object item : (Collection) object) {
+				Object temp = innerObjectCastMap(item, depthLimit, depth + 1);
+				if (temp == null) {
+					continue;
+				}
+				container.add(temp);
+			}
+			return container;
+		} else if (Map.class.isAssignableFrom(object.getClass())) {
+			Map<String, Object> container = new HashMap<String, Object>();
+			Set<Map.Entry> entries = ((Map) object).entrySet();
+			for (Map.Entry entry : entries) {
+				Object temp = innerObjectCastMap(entry.getValue(), depthLimit, depth + 1);
+				if (temp == null) {
+					continue;
+				}
+				container.put(String.valueOf(entry.getKey()), temp);
+			}
+			return container;
+		} else if (isBasicType(object)) {
+			return object;
+		} else {
+			return objectCastMap(object, depthLimit, depth + 1);
 		}
 	}
 
@@ -203,13 +236,28 @@ public abstract class Caster extends NonCloneableBaseObject {
 	/**
 	 * Test target type is java build-in Array type
 	 * 
-	 * @param target
+	 * @param targetClass
 	 * @return
 	 */
 	public final static boolean isGenericArrayType(Class<?> targetClass) {
 		if (targetClass == null)
 			throw new NullPointerException("Parameter targetClass is null");
-		if (targetClass.getName().matches("^\\[L[a-zA-Z0-9_.]*;$") || Collection.class.isAssignableFrom(targetClass))
+		if (isJavaArrayType(targetClass) || Collection.class.isAssignableFrom(targetClass))
+			return true;
+		else
+			return false;
+	}
+
+	/**
+	 * Test target type is java Array type
+	 * 
+	 * @param targetClass
+	 * @return
+	 */
+	public final static boolean isJavaArrayType(Class<?> targetClass) {
+		if (targetClass == null)
+			throw new NullPointerException("Parameter targetClass is null");
+		if (targetClass.getName().matches("^\\[L[a-zA-Z0-9_.]*;$"))
 			return true;
 		else
 			return false;
@@ -232,7 +280,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 		if (targetClass.isAssignableFrom(original.getClass()))
 			return original;
 		String originalString = original instanceof Date
-				? DateFormatUtils.format((Date) original, CoreDef.DATETIME_FORMAT)
+				? String.valueOf(((Date) original).getTime())
 				: original.toString();
 		if (targetClass == String.class)
 			return originalString;
@@ -256,24 +304,8 @@ public abstract class Caster extends NonCloneableBaseObject {
 				return Byte.valueOf(originalString);
 			else if (targetClass == Character.class)
 				return Character.valueOf((originalString).charAt(0));
-			else if (targetClass == Date.class) {
-				Date value = null;
-				try {
-					value = DateUtils.parseDate(originalString,
-							CoreDef.DATETIME_FORMAT);
-				} catch (Exception e) { }
-				if (value != null) return value;
-				try {
-					value = DateUtils.parseDate(originalString,
-							CoreDef.DATE_FORMAT);
-				} catch (Exception e) { }
-				if (value != null) return value;
-				try {
-					value = DateUtils.parseDate(originalString,
-							CoreDef.YEARMONTH_FORMAT);
-				} catch (Exception e) { }
-				if (value != null) return value;
-			}
+			else if (targetClass == Date.class)
+				return new Date(Long.valueOf(originalString));
 			else if (targetClass.getName().equals("short"))
 				return Short.valueOf(originalString);
 			else if (targetClass.getName().equals("int"))

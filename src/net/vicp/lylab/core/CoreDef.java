@@ -150,4 +150,6 @@ public class CoreDef extends NonCloneableBaseObject {
 
 	public static final int DEFAULT_PAGE_SIZE = TWENTY;
 
+	public static final int DEFAULT_DEPTH_LIMIT = TEN;
+
 }
