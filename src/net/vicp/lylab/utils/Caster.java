@@ -12,20 +12,34 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.Stack;
-import java.util.TreeSet;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TransferQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
-import net.vicp.lylab.core.CoreDef;
+import net.sf.cglib.beans.BeanCopier;
 import net.vicp.lylab.core.NonCloneableBaseObject;
-import net.vicp.lylab.core.exceptions.LYException;
+
+import org.apache.commons.lang3.StringUtils;
 
 public abstract class Caster extends NonCloneableBaseObject {
-	
+
+	private static Map<String, BeanCopier> beanCopiers = new ConcurrentHashMap<String, BeanCopier>();
+
+	public static void beanCopy(Object source, Object target) {
+		String beanKey = _generateKey(source.getClass(), target.getClass());
+		BeanCopier copier = null;
+		if (!beanCopiers.containsKey(beanKey)) {
+			copier = BeanCopier.create(source.getClass(), target.getClass(), false);
+			beanCopiers.put(beanKey, copier);
+		} else {
+			copier = beanCopiers.get(beanKey);
+		}
+		copier.copy(source, target, null);
+	}
+
+	private static String _generateKey(Class<?> class1, Class<?> class2) {
+		return class1.toString() + class2.toString();
+	}
+
 	/**
 	 * Convert map to Object
 	 * 
@@ -75,12 +89,12 @@ public abstract class Caster extends NonCloneableBaseObject {
 					} else
 						Utils.setter(owner, setter, node);
 				} catch (Exception e) {
-					log.debug("Bad field:" + name + Utils.getStringFromException(e));
+					log.debug("Bad field:" + name + Utils.getStringFromThrowable(e));
 				}
 			}
 			return owner;
 		} catch (Exception e) {
-			throw new LYException("Convert map to Object(" + instanceClass.getName() + ") failed, reason:", e);
+			throw new RuntimeException("Convert map to Object(" + instanceClass.getName() + ") failed, reason:", e);
 		} finally {
 			mapStackTrace.pop();
 		}
@@ -93,7 +107,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @return
 	 */
 	public final static Map<String, Object> objectCastMap(Object object) {
-		return objectCastMap(object, CoreDef.DEFAULT_DEPTH_LIMIT);
+		return objectCastMap(object, 10);
 	}
 
 	/**
@@ -134,7 +148,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 			}
 			return map;
 		} catch (Exception e) {
-			throw new LYException("Convert Object to map(" + Utils.serialize(object) + ") failed, reason:", e);
+			throw new RuntimeException("Convert Object to map(" + object + ") failed, reason:", e);
 		}
 	}
 	
@@ -269,7 +283,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @param originalObject
 	 * @param targetClass
 	 * @return Object of convert result
-	 * @throws LYException
+	 * @throws RuntimeException
 	 *             If convert failed
 	 */
 	public final static Object simpleCast(Object original, Class<?> targetClass) {
@@ -285,6 +299,9 @@ public abstract class Caster extends NonCloneableBaseObject {
 		if (targetClass == String.class)
 			return originalString;
 
+		if(StringUtils.isBlank(originalString))
+			return null;
+
 		try {
 			if (targetClass == String.class)
 				return originalString;
@@ -298,9 +315,13 @@ public abstract class Caster extends NonCloneableBaseObject {
 				return Double.valueOf(originalString);
 			else if (targetClass == Float.class)
 				return Float.valueOf(originalString);
-			else if (targetClass == Boolean.class)
-				return Boolean.valueOf(originalString);
-			else if (targetClass == Byte.class)
+			else if (targetClass == Boolean.class) {
+				if (originalString.trim().equalsIgnoreCase("false") || originalString.trim().equals("0")) {
+					return Boolean.FALSE;
+				} else {
+					return Boolean.TRUE;
+				}
+			} else if (targetClass == Byte.class)
 				return Byte.valueOf(originalString);
 			else if (targetClass == Character.class)
 				return Character.valueOf((originalString).charAt(0));
@@ -316,16 +337,20 @@ public abstract class Caster extends NonCloneableBaseObject {
 				return Double.valueOf(originalString);
 			else if (targetClass.getName().equals("float"))
 				return Float.valueOf(originalString);
-			else if (targetClass.getName().equals("boolean"))
-				return Boolean.valueOf(originalString);
-			else if (targetClass.getName().equals("byte"))
+			else if (targetClass.getName().equals("boolean")) {
+				if (originalString.trim().equalsIgnoreCase("false") || originalString.trim().equals("0")) {
+					return false;
+				} else {
+					return true;
+				}
+			} else if (targetClass.getName().equals("byte"))
 				return Byte.valueOf(originalString);
 			else if (targetClass.getName().equals("char"))
 				return Character.valueOf((originalString).charAt(0));
 			
-			throw new LYException("Unsupport target basic type:" + targetClass.getName());
+			throw new RuntimeException("Unsupport target basic type:" + targetClass.getName());
 		} catch (Exception e) {
-			throw new LYException("Cast failed from String [" + originalString + "] to " + targetClass.getName(), e);
+			throw new RuntimeException("Cast failed from String [" + originalString + "] to " + targetClass.getName(), e);
 		}
 	}
 
@@ -337,7 +362,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @param originalArray
 	 * @param targetClass
 	 * @return Object of convert result
-	 * @throws LYException
+	 * @throws RuntimeException
 	 *             If convert failed
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -359,14 +384,14 @@ public abstract class Caster extends NonCloneableBaseObject {
 					// If can't initialize, it maybe an interface
 					if (List.class.isAssignableFrom(targetClass))
 						targetArray = new ArrayList();
-					else if (SortedSet.class.isAssignableFrom(targetClass))
-						targetArray = new TreeSet();
+//					else if (SortedSet.class.isAssignableFrom(targetClass))
+//						targetArray = new TreeSet();
 					else if (Set.class.isAssignableFrom(targetClass))
 						targetArray = new HashSet();
-					else if (TransferQueue.class.isAssignableFrom(targetClass))
-						targetArray = new LinkedTransferQueue();
-					else if (BlockingQueue.class.isAssignableFrom(targetClass))
-						targetArray = new SynchronousQueue();
+//					else if (TransferQueue.class.isAssignableFrom(targetClass))
+//						targetArray = new LinkedTransferQueue();
+//					else if (BlockingQueue.class.isAssignableFrom(targetClass))
+//						targetArray = new SynchronousQueue();
 					else if (Deque.class.isAssignableFrom(targetClass))
 						targetArray = new LinkedList();
 					// If no matches
@@ -374,13 +399,13 @@ public abstract class Caster extends NonCloneableBaseObject {
 						targetArray = new ArrayList();
 				}
 				if (targetArray == null)
-					throw new LYException("Unsupport target Array type:" + targetClass.getName());
+					throw new RuntimeException("Unsupport target Array type:" + targetClass.getName());
 				((Collection) targetArray).addAll(originalArray);
 			} else
-				throw new LYException("Unsupport target type(" + targetClass.getName() + "), maybe it isn't Array?");
+				throw new RuntimeException("Unsupport target type(" + targetClass.getName() + "), maybe it isn't Array?");
 			return targetArray;
 		} catch (Exception e) {
-			throw new LYException("Cast failed from " + originalArray.getClass().getName() + " {" + originalArray + "} to " + targetClass.getName(), e);
+			throw new RuntimeException("Cast failed from " + originalArray.getClass().getName() + " {" + originalArray + "} to " + targetClass.getName(), e);
 		}
 	}
 
@@ -392,7 +417,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 * @param originalArray
 	 * @param targetClass
 	 * @return Object of convert result
-	 * @throws LYException
+	 * @throws RuntimeException
 	 *             If convert failed
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -414,14 +439,14 @@ public abstract class Caster extends NonCloneableBaseObject {
 					// If can't initialize, it maybe an interface
 					if (List.class.isAssignableFrom(targetClass))
 						targetArray = new ArrayList();
-					else if (SortedSet.class.isAssignableFrom(targetClass))
-						targetArray = new TreeSet();
+//					else if (SortedSet.class.isAssignableFrom(targetClass))
+//						targetArray = new TreeSet();
 					else if (Set.class.isAssignableFrom(targetClass))
 						targetArray = new HashSet();
-					else if (TransferQueue.class.isAssignableFrom(targetClass))
-						targetArray = new LinkedTransferQueue();
-					else if (BlockingQueue.class.isAssignableFrom(targetClass))
-						targetArray = new SynchronousQueue();
+//					else if (TransferQueue.class.isAssignableFrom(targetClass))
+//						targetArray = new LinkedTransferQueue();
+//					else if (BlockingQueue.class.isAssignableFrom(targetClass))
+//						targetArray = new SynchronousQueue();
 					else if (Deque.class.isAssignableFrom(targetClass))
 						targetArray = new LinkedList();
 					// If no matches
@@ -429,14 +454,14 @@ public abstract class Caster extends NonCloneableBaseObject {
 						targetArray = new ArrayList();
 				}
 				if (targetArray == null)
-					throw new LYException("Unsupport target Array type:" + targetClass.getName());
+					throw new RuntimeException("Unsupport target Array type:" + targetClass.getName());
 				((Collection) targetArray).addAll(Arrays.asList(originalArray));
 			} else
-				throw new LYException("Unsupport target type(" + targetClass.getName() + "), maybe it isn't Array?");
+				throw new RuntimeException("Unsupport target type(" + targetClass.getName() + "), maybe it isn't Array?");
 			return targetArray;
 		} catch (Exception e) {
-			throw new LYException("Cast failed from " + originalArray.getClass().getName() + " {" + originalArray + "} to " + targetClass.getName(), e);
+			throw new RuntimeException("Cast failed from " + originalArray.getClass().getName() + " {" + originalArray + "} to " + targetClass.getName(), e);
 		}
 	}
-
+	
 }
