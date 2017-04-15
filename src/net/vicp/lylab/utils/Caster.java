@@ -16,9 +16,12 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.cglib.beans.BeanCopier;
+import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.DateUtils;
 
 public abstract class Caster extends NonCloneableBaseObject {
 
@@ -325,8 +328,13 @@ public abstract class Caster extends NonCloneableBaseObject {
 				return Byte.valueOf(originalString);
 			else if (targetClass == Character.class)
 				return Character.valueOf((originalString).charAt(0));
-			else if (targetClass == Date.class)
-				return new Date(Long.valueOf(originalString));
+			else if (targetClass == Date.class) {
+				try {
+					return new Date(Long.valueOf(originalString));
+				} catch (java.lang.NumberFormatException e) {
+					return DateUtils.parseDate(originalString, CoreDef.DATETIME_FORMAT);
+				}
+			}
 			else if (targetClass.getName().equals("short"))
 				return Short.valueOf(originalString);
 			else if (targetClass.getName().equals("int"))
