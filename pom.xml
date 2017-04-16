@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.vicp.lylab</groupId>
 	<artifactId>LYLAB</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>LYLab</name>
 	<description>LYLab maven project</description>
 
@@ -68,7 +68,6 @@
 				<configuration>
 					<encoding>utf-8</encoding>
 					<source>1.7</source>
-					<target>1.7</target>
 				</configuration>
 			</plugin>
 		</plugins>
