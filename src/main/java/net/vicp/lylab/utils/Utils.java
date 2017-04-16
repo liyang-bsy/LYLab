@@ -66,7 +66,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 			log.error(reason + CoreDef.LINE_SEPARATOR + getStringFromException(new LYException("Stack is printed below")));
 			break;
 		case "fatal":
-			log.fatal(reason + CoreDef.LINE_SEPARATOR + getStringFromException(new LYException("Stack is printed below")));
+			log.error(reason + CoreDef.LINE_SEPARATOR + getStringFromException(new LYException("Stack is printed below")));
 			break;
 		default:
 			log.debug(reason + CoreDef.LINE_SEPARATOR + getStringFromException(new LYException("Print stack with bad param:[" + level + "]")));

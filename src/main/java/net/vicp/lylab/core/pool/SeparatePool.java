@@ -214,11 +214,11 @@ public class SeparatePool<T extends BaseObject> extends IndexedPool<T> {
 			keyContainer.clear();
 			keyContainer.addAll(availableKeySet());
 			keyContainer.addAll(busyKeySet());
-			log.fatal(new LYError("Pool maintainence failed! To continue use, please clear before next use"
+			log.error(Utils.getStringFromError(new LYError("Pool maintainence failed! To continue use, please clear before next use"
 					+ "\nkey list size is:" + keyContainer.size()
 					+ "\ncontainer size is:" + size()
 					+ "\nkey list is:" + keyContainer
-					+ "\ncontainer is:" + availableContainer));
+					+ "\ncontainer is:" + availableContainer)));
 		}
 	}
 	

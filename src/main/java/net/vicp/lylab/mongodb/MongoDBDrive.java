@@ -41,6 +41,7 @@ public class MongoDBDrive extends NonCloneableBaseObject implements Initializabl
 		}
 	}
 	
+	@SuppressWarnings("deprecation")
 	private void init()
 	{
 		if(mongoClient != null) return;

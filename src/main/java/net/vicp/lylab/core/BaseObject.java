@@ -1,7 +1,7 @@
 package net.vicp.lylab.core;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Every thing from BaseObject
@@ -27,7 +27,7 @@ public class BaseObject {
 	/**
 	 * Now every BaseObject may use this to log something
 	 */
-	protected transient static Log log = LogFactory.getLog(BaseObject.class);
+	protected transient static Logger log = LoggerFactory.getLogger(BaseObject.class);
 
 	/**
 	 * Inner lock

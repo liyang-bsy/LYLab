@@ -9,9 +9,6 @@ import net.vicp.lylab.core.interfaces.Recyclable;
 import net.vicp.lylab.utils.Utils;
 import net.vicp.lylab.utils.timer.InstantJob;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 /**
  * Manager class to recycle target in watch list.<br>
  * But managed by {@link net.vicp.lylab.utils.timer.LYPlan}.
@@ -23,7 +20,6 @@ import org.apache.commons.logging.LogFactory;
  * @version 1.0.0
  */
 public final class TimerTimeoutController extends InstantJob {
-	protected static Log log = LogFactory.getLog(TimerTimeoutController.class);
 	
 	private List<WeakReference<Recyclable>> watchList = new LinkedList<WeakReference<Recyclable>>();
 

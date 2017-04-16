@@ -8,6 +8,7 @@ import java.util.List;
 import net.vicp.lylab.core.BaseObject;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.exceptions.LYError;
+import net.vicp.lylab.utils.Utils;
 
 /**
  * 线索化数据池
@@ -95,11 +96,11 @@ public class IndexedPool<T extends BaseObject> extends AbstractPool<T> {
 				return;
 			keyContainer.clear();
 			keyContainer.addAll(availableKeySet());
-			log.fatal(new LYError("Pool maintainence failed! To continue use, please clear before next use"
+			log.error(Utils.getStringFromError(new LYError("Pool maintainence failed! To continue use, please clear before next use"
 					+ "\nkey list size is:" + keyContainer.size()
 					+ "\ncontainer size is:" + size()
 					+ "\nkey list is:" + keyContainer
-					+ "\ncontainer is:" + availableContainer));
+					+ "\ncontainer is:" + availableContainer)));
 		}
 	}
 

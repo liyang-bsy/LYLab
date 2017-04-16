@@ -7,8 +7,8 @@ import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.Executor;
 import net.vicp.lylab.utils.Utils;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Extends TimerJob and reference to Plan(manage class).<br>
@@ -28,7 +28,7 @@ public abstract class TimerJob extends NonCloneableBaseObject implements Executo
 	/**
 	 * Now every TimerJob may use this to log something
 	 */
-	protected transient static Log log = LogFactory.getLog(TimerJob.class);
+	protected transient static Logger log = LoggerFactory.getLogger(TimerJob.class);
 	
 	protected static final int ONE_TIME_TASK = 0;
 	protected static final int MILLISECOND = 1;

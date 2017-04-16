@@ -29,7 +29,7 @@ public final class SQLSessionFactory extends NonCloneableBaseObject implements I
 				log.debug("Sql session factory [" + env + "] created");
 			}
 		} catch (IOException e) {
-			log.fatal("Error creating sql session factory, reason:" + Utils.getStringFromException(e));
+			log.error("Error creating sql session factory, reason:" + Utils.getStringFromException(e));
 		}
 	}
 

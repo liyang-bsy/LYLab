@@ -21,6 +21,7 @@ import org.mongodb.morphia.query.Query;
  * @author		liyang
  * @version		0.1.2
  */
+@SuppressWarnings("deprecation")
 public class MongoDBService<T> {
 
 	public final Class<T> clazz;
