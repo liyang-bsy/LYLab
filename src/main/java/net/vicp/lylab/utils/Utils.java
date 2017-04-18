@@ -23,6 +23,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 
 import net.vicp.lylab.core.CoreDef;
@@ -768,6 +769,8 @@ public abstract class Utils extends NonCloneableBaseObject {
 	}
 
 	public final static String sqlOrderByAntiInjection(String order) {
+		if(StringUtils.isBlank(order))
+			return order;
 		return order.replaceAll("[^A-Za-z0-9_,]", "");
 	}
 	
