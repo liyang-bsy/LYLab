@@ -1,4 +1,4 @@
-package net.vicp.lylab.mongodb;
+package net.vicp.lylab.mongodb_deprecated;
 
 import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.dao.BasicDAO;

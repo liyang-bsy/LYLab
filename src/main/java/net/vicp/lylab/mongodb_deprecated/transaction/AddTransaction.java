@@ -1,4 +1,4 @@
-package net.vicp.lylab.mongodb.transaction;
+package net.vicp.lylab.mongodb_deprecated.transaction;
 
 import java.io.Serializable;
 

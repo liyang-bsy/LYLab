@@ -36,6 +36,18 @@ import net.vicp.lylab.utils.convert.XmlConverUtil;
 public abstract class Utils extends NonCloneableBaseObject {
 
 	/**
+	 * return default value if provided value is null
+	 * @param value
+	 * @param defaultValue
+	 * @return
+	 */
+	public final static <T> T requireWithDefaultValue(T value, T defaultValue) {
+		if(value == null)
+			return defaultValue;
+		return value;
+	}
+
+	/**
 	 * Print current stack
 	 * @param only accept "debug", "info", "warn", "error", "fatal", case-insensitive
 	 */

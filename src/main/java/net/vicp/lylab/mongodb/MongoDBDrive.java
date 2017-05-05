@@ -1,21 +1,22 @@
 package net.vicp.lylab.mongodb;
 
 import java.util.Arrays;
+import java.util.Map;
+
+import org.bson.Document;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
+import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Initializable;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
-import com.mongodb.WriteConcern;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 
 public class MongoDBDrive extends NonCloneableBaseObject implements Initializable {
-	
-	/**
-	 * MongoDB host name or IP:port
-	 * 127.0.0.1:27017	(Example)
-	 */
+	// 数据库连接的url，比如 127.0.0.1
 	private String url;
 	// 数据库名称
 	private String database;
@@ -23,46 +24,26 @@ public class MongoDBDrive extends NonCloneableBaseObject implements Initializabl
 	private String username;
 	// 对应的密码
 	private String password;
-	// 是否显示查询字符串
-	private Boolean showQuery;
 	// MongoDB本体
 	private MongoClient mongoClient;
-	// Keep unique
-	private static MongoDBDrive instance = null;
+	// MongoDB对外提供读写功能的数据库实体
+	private MongoDatabase mongoDatabase;
+	
+	private Map<String, MongoDBService> serviceCache;
 
 	@Override
 	public void initialize() {
-		if(instance == null)
-		{
-			System.out.println("MongoDBDrive - Initialization started");
-			
-			instance = this;
-			instance.init();
-		}
-	}
-	
-	@SuppressWarnings("deprecation")
-	private void init()
-	{
-		if(mongoClient != null) return;
-		try {
-			MongoCredential credential = MongoCredential.createCredential(
-					MongoDBDrive.getInstance().getUsername(),
-					MongoDBDrive.getInstance().getDatabase(),
-					MongoDBDrive.getInstance().getPassword().toCharArray());
-			MongoDBDrive.getInstance().mongoClient = new MongoClient(
-					new ServerAddress(MongoDBDrive.getInstance().getUrl()),
-					Arrays.asList(credential));
-			MongoDBDrive.getInstance().mongoClient.setWriteConcern(WriteConcern.NORMAL);
-		} catch (Exception e) {
+		if (mongoClient != null) {
 			return;
 		}
+		try {
+			MongoCredential credential = MongoCredential.createCredential(username, database, password.toCharArray());
+			mongoClient = new MongoClient(new ServerAddress(url), Arrays.asList(credential));
+			mongoDatabase = mongoClient.getDatabase(database);
+		} catch (Exception e) {
+			throw new LYException("无法初始化mongoDB连接", e);
+		}
 		return;
-	}
-
-	public MongoClient getMongo() {
-		if(MongoDBDrive.getInstance().mongoClient == null) MongoDBDrive.getInstance().init();
-		return MongoDBDrive.getInstance().mongoClient;
 	}
 
 	public String getUrl() {
@@ -97,28 +78,16 @@ public class MongoDBDrive extends NonCloneableBaseObject implements Initializabl
 		this.password = password;
 	}
 
-	public Boolean getShowQuery() {
-		return showQuery;
-	}
-
-	public void setShowQuery(Boolean showQuery) {
-		this.showQuery = showQuery;
-	}
-
-	public static MongoClient getMongoClient() {
-		return getInstance().mongoClient;
-	}
-
-	public static void setMongoClient(MongoClient mongoClient) {
-		MongoDBDrive.getInstance().mongoClient = mongoClient;
-	}
-	
-	public static MongoDBDrive getInstance() {
-		return instance;
-	}
-	
-	public static void setInstance(MongoDBDrive instance) {
-		MongoDBDrive.instance = instance;
+	public MongoDBService getMongoDBService(String collectionName) {
+		if (serviceCache.containsKey(collectionName)) {
+			return serviceCache.get(collectionName);
+		}
+		if(mongoDatabase == null)
+			throw new LYException("mongoDatabase为null，可能尚未初始化");
+		MongoCollection<Document> mongoCollection = mongoDatabase.getCollection(collectionName);
+		MongoDBService mongoDBService = new MongoDBService(mongoCollection);
+		serviceCache.put(collectionName, mongoDBService);
+		return mongoDBService;
 	}
 
 }
