@@ -3,11 +3,11 @@ package net.vicp.lylab.mongodb;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.bson.Document;
-
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
 import net.vicp.lylab.core.interfaces.Initializable;
+
+import org.bson.Document;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
@@ -16,8 +16,10 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
 public class MongoDBDrive extends NonCloneableBaseObject implements Initializable {
-	// 数据库连接的url，比如 127.0.0.1
+	// 数据库连接url地址，比如 127.0.0.1
 	private String url;
+	// 数据库连接端口
+	private Integer port;
 	// 数据库名称
 	private String database;
 	// 数据库访问所需的用户名
@@ -38,12 +40,24 @@ public class MongoDBDrive extends NonCloneableBaseObject implements Initializabl
 		}
 		try {
 			MongoCredential credential = MongoCredential.createCredential(username, database, password.toCharArray());
-			mongoClient = new MongoClient(new ServerAddress(url), Arrays.asList(credential));
+			mongoClient = new MongoClient(new ServerAddress(url, port), Arrays.asList(credential));
 			mongoDatabase = mongoClient.getDatabase(database);
 		} catch (Exception e) {
 			throw new LYException("无法初始化mongoDB连接", e);
 		}
 		return;
+	}
+
+	public MongoDBService getMongoDBService(String collectionName) {
+		if (serviceCache.containsKey(collectionName)) {
+			return serviceCache.get(collectionName);
+		}
+		if(mongoDatabase == null)
+			throw new LYException("mongoDatabase为null，可能尚未初始化");
+		MongoCollection<Document> mongoCollection = mongoDatabase.getCollection(collectionName);
+		MongoDBService mongoDBService = new MongoDBService(mongoCollection);
+		serviceCache.put(collectionName, mongoDBService);
+		return mongoDBService;
 	}
 
 	public String getUrl() {
@@ -52,6 +66,14 @@ public class MongoDBDrive extends NonCloneableBaseObject implements Initializabl
 
 	public void setUrl(String url) {
 		this.url = url;
+	}
+
+	public Integer getPort() {
+		return port;
+	}
+
+	public void setPort(Integer port) {
+		this.port = port;
 	}
 
 	public String getDatabase() {
@@ -78,16 +100,28 @@ public class MongoDBDrive extends NonCloneableBaseObject implements Initializabl
 		this.password = password;
 	}
 
-	public MongoDBService getMongoDBService(String collectionName) {
-		if (serviceCache.containsKey(collectionName)) {
-			return serviceCache.get(collectionName);
-		}
-		if(mongoDatabase == null)
-			throw new LYException("mongoDatabase为null，可能尚未初始化");
-		MongoCollection<Document> mongoCollection = mongoDatabase.getCollection(collectionName);
-		MongoDBService mongoDBService = new MongoDBService(mongoCollection);
-		serviceCache.put(collectionName, mongoDBService);
-		return mongoDBService;
+	public MongoClient getMongoClient() {
+		return mongoClient;
+	}
+
+	public void setMongoClient(MongoClient mongoClient) {
+		this.mongoClient = mongoClient;
+	}
+
+	public MongoDatabase getMongoDatabase() {
+		return mongoDatabase;
+	}
+
+	public void setMongoDatabase(MongoDatabase mongoDatabase) {
+		this.mongoDatabase = mongoDatabase;
+	}
+
+	public Map<String, MongoDBService> getServiceCache() {
+		return serviceCache;
+	}
+
+	public void setServiceCache(Map<String, MongoDBService> serviceCache) {
+		this.serviceCache = serviceCache;
 	}
 
 }
