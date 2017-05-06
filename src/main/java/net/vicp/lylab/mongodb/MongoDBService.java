@@ -1,15 +1,14 @@
 package net.vicp.lylab.mongodb;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import org.bson.Document;
 
 import net.vicp.lylab.core.model.OrderBy;
 import net.vicp.lylab.core.model.Page;
 
-import org.bson.Document;
-
-import com.mongodb.client.DistinctIterable;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
@@ -27,46 +26,67 @@ public class MongoDBService {
 	public MongoDBService(MongoCollection<Document> mongoCollection) {
 		this.mongoCollection = mongoCollection;
 	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private List iterable2List(Iterable iterable) {
+		List list = new ArrayList();
+		if (iterable == null) {
+			return list;
+		}
+		for (Object item : iterable) {
+			list.add(item);
+		}
+		return list;
+	}
 
 	// 查询除重
-	public <TResult> DistinctIterable<TResult> distinct(String fieldName,
-			Class<TResult> resultClass) {
-		return mongoCollection.distinct(fieldName, resultClass);
+	public List<?> distinct(String fieldName) {
+		return iterable2List(mongoCollection.distinct(fieldName, Document.class));
 	}
 
 	// 条件查询
-	public FindIterable<Document> find(Document filter) {
+	public List<?> find(Map<String, Object> filter) {
 		return find(filter, new Page(), new OrderBy("_id", "desc"));
 	}
 
 	// 条件查询
-	public FindIterable<Document> find(Document filter, Page page, OrderBy orderBy) {
+	public List<?> find(Map<String, Object> filter, Page page, OrderBy orderBy) {
+		Document tempFilter = new Document(filter);
 		// FIXME 排序暂时没写
-		return mongoCollection.find(filter).sort(new Document()).skip(page.getIndex()).limit(page.getPageSize());
+		return iterable2List(mongoCollection.find(tempFilter).sort(new Document()).skip(page.getIndex()).limit(page.getPageSize()));
 	}
 
 	// 查询统计
-	public long count(Document filter) {
-		return mongoCollection.count(filter);
+	public long count(Map<String, Object> filter) {
+		Document tempFilter = new Document(filter);
+		return mongoCollection.count(tempFilter);
 	}
 
 	// 增删改
-	public void insert(Document document) {
-		mongoCollection.insertOne(document);
+	public void insert(Map<String, Object> document) {
+		Document tempDocument = new Document(document);
+		mongoCollection.insertOne(tempDocument);
 	}
 
-	public void insertMany(List<? extends Document> documents) {
-		mongoCollection.insertMany(documents);
+	public void insertMany(List<? extends Map<String, Object>> documents) {
+		List<Document> list = new ArrayList<Document>();
+		for (Map<String, Object> item : documents) {
+			list.add(new Document(item));
+		}
+		mongoCollection.insertMany(list);
 	}
 
-	public UpdateResult update(String id, Document update) {
+	public UpdateResult update(String id, Map<String, Object> update) {
 		Document filter = new Document();
 		filter.put("_id", id);
-		return mongoCollection.updateOne(filter, update);
+		Document tempUpdate = new Document(update);
+		return mongoCollection.updateOne(filter, tempUpdate);
 	}
 
-	public UpdateResult updateMany(Document filter, Document update) {
-		return mongoCollection.updateMany(filter, update);
+	public UpdateResult updateMany(Map<String, Object> filter, Map<String, Object> update) {
+		Document tempFilter = new Document(filter);
+		Document tempUpdate = new Document(update);
+		return mongoCollection.updateMany(tempFilter, tempUpdate);
 	}
 
 	public DeleteResult delete(String id) {
@@ -75,17 +95,19 @@ public class MongoDBService {
 		return mongoCollection.deleteOne(filter);
 	}
 
-	public DeleteResult deleteMany(Document filter) {
-		return mongoCollection.deleteMany(filter);
+	public DeleteResult deleteMany(Map<String, Object> filter) {
+		Document tempFilter = new Document(filter);
+		return mongoCollection.deleteMany(tempFilter);
 	}
 
 	// 索引操作
-	public ListIndexesIterable<Document> listIndexes() {
-		return mongoCollection.listIndexes();
+	public List<?> listIndexes() {
+		return iterable2List(mongoCollection.listIndexes());
 	}
 
-	public String createIndex(Document keys) {
-		return mongoCollection.createIndex(keys);
+	public String createIndex(Map<String, Object> keys) {
+		Document tempKeys = new Document(keys);
+		return mongoCollection.createIndex(tempKeys);
 	}
 
 	public void dropIndex(String indexName) {

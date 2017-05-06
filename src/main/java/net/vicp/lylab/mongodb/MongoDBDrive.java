@@ -2,6 +2,7 @@ package net.vicp.lylab.mongodb;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.exceptions.LYException;
@@ -42,13 +43,14 @@ public class MongoDBDrive extends NonCloneableBaseObject implements Initializabl
 			MongoCredential credential = MongoCredential.createCredential(username, database, password.toCharArray());
 			mongoClient = new MongoClient(new ServerAddress(url, port), Arrays.asList(credential));
 			mongoDatabase = mongoClient.getDatabase(database);
+			serviceCache = new ConcurrentHashMap<String, MongoDBService>();
 		} catch (Exception e) {
 			throw new LYException("无法初始化mongoDB连接", e);
 		}
 		return;
 	}
 
-	public MongoDBService getMongoDBService(String collectionName) {
+	public MongoDBService getService(String collectionName) {
 		if (serviceCache.containsKey(collectionName)) {
 			return serviceCache.get(collectionName);
 		}
@@ -98,30 +100,6 @@ public class MongoDBDrive extends NonCloneableBaseObject implements Initializabl
 
 	public void setPassword(String password) {
 		this.password = password;
-	}
-
-	public MongoClient getMongoClient() {
-		return mongoClient;
-	}
-
-	public void setMongoClient(MongoClient mongoClient) {
-		this.mongoClient = mongoClient;
-	}
-
-	public MongoDatabase getMongoDatabase() {
-		return mongoDatabase;
-	}
-
-	public void setMongoDatabase(MongoDatabase mongoDatabase) {
-		this.mongoDatabase = mongoDatabase;
-	}
-
-	public Map<String, MongoDBService> getServiceCache() {
-		return serviceCache;
-	}
-
-	public void setServiceCache(Map<String, MongoDBService> serviceCache) {
-		this.serviceCache = serviceCache;
 	}
 
 }
