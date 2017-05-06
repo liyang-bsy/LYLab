@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import net.vicp.lylab.core.model.OrderBy;
 import net.vicp.lylab.core.model.Page;
@@ -27,13 +28,21 @@ public class MongoDBService {
 		this.mongoCollection = mongoCollection;
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private List iterable2List(Iterable iterable) {
-		List list = new ArrayList();
+	private List<Map<String, Object>> iterable2List(Iterable<? extends Map<String, Object>> iterable) {
+		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 		if (iterable == null) {
 			return list;
 		}
-		for (Object item : iterable) {
+		for (Map<String, Object> item : iterable) {
+			Object _id = (ObjectId) item.get("_id");
+			if (_id != null) {
+				try {
+					ObjectId objectId = (ObjectId) item.get("_id");
+					item.put("_id", objectId.toHexString());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
 			list.add(item);
 		}
 		return list;
@@ -78,7 +87,7 @@ public class MongoDBService {
 
 	public UpdateResult update(String id, Map<String, Object> update) {
 		Document filter = new Document();
-		filter.put("_id", id);
+		filter.put("_id", new ObjectId(id));
 		Document tempUpdate = new Document(update);
 		return mongoCollection.updateOne(filter, tempUpdate);
 	}
@@ -91,7 +100,7 @@ public class MongoDBService {
 
 	public DeleteResult delete(String id) {
 		Document filter = new Document();
-		filter.put("_id", id);
+		filter.put("_id", new ObjectId(id));
 		return mongoCollection.deleteOne(filter);
 	}
 
