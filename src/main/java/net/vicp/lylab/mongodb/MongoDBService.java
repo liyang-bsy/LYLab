@@ -111,14 +111,20 @@ public class MongoDBService extends NonCloneableBaseObject {
 	public UpdateResult updateById(String id, Map<String, Object> update) {
 		Document filter = new Document();
 		filter.put("_id", new ObjectId(id));
+		Document updateBson = new Document();
 		Document tempUpdate = new Document(update);
-		return mongoCollection.updateOne(filter, tempUpdate);
+		tempUpdate.remove("_id");
+		updateBson.put("$set", tempUpdate);
+		return mongoCollection.updateOne(filter, updateBson);
 	}
 
 	public UpdateResult update(Map<String, Object> filter, Map<String, Object> update) {
 		Document tempFilter = new Document(filter);
+		Document updateBson = new Document();
 		Document tempUpdate = new Document(update);
-		return mongoCollection.updateMany(tempFilter, tempUpdate);
+		tempUpdate.remove("_id");
+		updateBson.put("$set", tempUpdate);
+		return mongoCollection.updateMany(tempFilter, updateBson);
 	}
 
 	public DeleteResult deleteById(String id) {
