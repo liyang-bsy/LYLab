@@ -143,6 +143,10 @@ public class MailSender extends NonCloneableBaseObject {
 		this.userName = userName;
 	}
 
+	public String getUserName() {
+		return userName;
+	}
+
 	public void setPassword(String password) {
 		this.password = password;
 	}
