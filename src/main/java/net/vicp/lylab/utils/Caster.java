@@ -42,6 +42,38 @@ public abstract class Caster extends NonCloneableBaseObject {
 		return class1.toString() + class2.toString();
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T> T objectCast(Object source, Class<T> targetType) {
+		if (isBasicType(targetType)) {
+			return (T) simpleCast(source, targetType);
+		} else {
+			T target;
+			try {
+				target = targetType.newInstance();
+			} catch (Exception e) {
+				throw new RuntimeException("无法新建对象用于bean copy", e);
+			}
+			beanCopy(source, target);
+			return target;
+		}
+	}
+
+	public static <T> List<T> arrayCast(Collection<?> source, Class<T> targetType) {
+		List<T> list = new ArrayList<T>();
+		for (Object sourceObject : source) {
+			list.add(objectCast(sourceObject, targetType));
+		}
+		return list;
+	}
+
+	public static <T> List<T> arrayCast(T[] source, Class<T> targetType) {
+		List<T> list = new ArrayList<T>();
+		for (Object sourceObject : source) {
+			list.add(objectCast(sourceObject, targetType));
+		}
+		return list;
+	}
+
 	/**
 	 * Convert map to Object
 	 * 
@@ -373,7 +405,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 *             If convert failed
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public final static Object arrayCast(Collection originalArray, Class targetClass) {
+	public final static Object arrayTypeCast(Collection originalArray, Class targetClass) {
 		if (originalArray == null)
 			throw new NullPointerException("Parameter originalArray is null");
 		if (targetClass == null)
@@ -428,7 +460,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	 *             If convert failed
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public final static <T> Object arrayCast(T[] originalArray, Class targetClass) {
+	public final static <T> Object arrayTypeCast(T[] originalArray, Class targetClass) {
 		if (originalArray == null)
 			throw new NullPointerException("Parameter originalArray is null");
 		if (targetClass == null)

@@ -126,9 +126,9 @@ public abstract class Utils extends NonCloneableBaseObject {
 					temp = Caster.simpleCast(parameters[i].toString(), parameterClasses[i]);
 				else if (Caster.isGenericArrayType(parameterClasses[i]) || Caster.isGenericArrayType(temp)) {
 					if (temp instanceof Collection)
-						temp = Caster.arrayCast((Collection<?>) parameters[i], parameterClasses[i]);
+						temp = Caster.arrayTypeCast((Collection<?>) parameters[i], parameterClasses[i]);
 					if (temp instanceof Collection)
-						temp = Caster.arrayCast(Arrays.asList(parameters[i]), parameterClasses[i]);
+						temp = Caster.arrayTypeCast(Arrays.asList(parameters[i]), parameterClasses[i]);
 				} else
 					throw new LYException("Method[" + method.getName() + "] requires parameter "
 							+ parameterClasses[i].getName() + ", but provided parameter is "
@@ -177,7 +177,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 			if(parameterClass.isAssignableFrom(originalClass))
 				setMethod.invoke(owner, param);
 			else if (Caster.isGenericArrayType(originalClass) && Caster.isGenericArrayType(parameterClass))
-				setMethod.invoke(owner, Caster.arrayCast((List<Object>) param, parameterClass));
+				setMethod.invoke(owner, Caster.arrayTypeCast((List<Object>) param, parameterClass));
 			else if (Caster.isBasicType(originalClass) && Caster.isBasicType(parameterClass))
 				setMethod.invoke(owner, Caster.simpleCast(param, parameterClass));
 			else

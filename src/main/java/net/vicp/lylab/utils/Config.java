@@ -495,7 +495,7 @@ public final class Config extends NonCloneableBaseObject {
 //		if (setMethod != null)
 //			if (param.getClass().getName().matches("^\\[L[a-zA-Z0-9_.]*;$")
 //					|| Collection.class.isAssignableFrom(param.getClass()))
-//				setMethod.invoke(owner, Caster.arrayCast((List<Object>) param, parameterClass));
+//				setMethod.invoke(owner, Caster.arrayTypeCast((List<Object>) param, parameterClass));
 //			else if (param.getClass() == String.class)
 //				// But sometimes we may need casting parameter before invoking
 //				setMethod.invoke(owner, Caster.simpleCast((String) param, parameterClass));
@@ -677,7 +677,7 @@ public final class Config extends NonCloneableBaseObject {
 	public final <T> T[] getArray(String key, Class<T[]> arrayClass) {
 		Object value = getProperty(key);
 		try {
-			return (T[]) Caster.arrayCast((List) value, arrayClass);
+			return (T[]) Caster.arrayTypeCast((List) value, arrayClass);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed", e);
@@ -687,7 +687,7 @@ public final class Config extends NonCloneableBaseObject {
 	public final Object[] getArray(String key) {
 		Object value = getProperty(key);
 		try {
-			return (Object[]) Caster.arrayCast((List) value, Object[].class);
+			return (Object[]) Caster.arrayTypeCast((List) value, Object[].class);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed", e);
@@ -697,7 +697,7 @@ public final class Config extends NonCloneableBaseObject {
 	public final List getList(String key) {
 		Object value = getProperty(key);
 		try {
-			return (List) Caster.arrayCast((List) value, ArrayList.class);
+			return (List) Caster.arrayTypeCast((List) value, ArrayList.class);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed", e);
@@ -707,7 +707,7 @@ public final class Config extends NonCloneableBaseObject {
 	public final Set getSet(String key) {
 		Object value = getProperty(key);
 		try {
-			return (Set) Caster.arrayCast((List) value, HashSet.class);
+			return (Set) Caster.arrayTypeCast((List) value, HashSet.class);
 		} catch (Exception e) {
 			throw new LYException("Convert entry[" + key + "] value[" + value
 					+ "] failed", e);
