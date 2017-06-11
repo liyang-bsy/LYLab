@@ -43,19 +43,27 @@ public abstract class Caster extends NonCloneableBaseObject {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> T objectCast(Object source, Class<T> targetType) {
-		if (isBasicType(targetType)) {
-			return (T) simpleCast(source, targetType);
+	public static <T> T objectCast(Object source, Class<T> targetClass) {
+		T target = null;
+		if (isBasicType(source)) {
+			// basic type convert
+			target = (T) simpleCast(source, targetClass);
+		} else if (isGenericArrayType(source)) {
+			// array convert
+			target = (T) arrayTypeCast((Collection<?>) source, targetClass);
+		} else if (source instanceof Map) {
+			// map convert
+			target = mapCastObject(targetClass, (Map<String, ?>) source);
 		} else {
-			T target;
+			// object convert
 			try {
-				target = targetType.newInstance();
+				target = targetClass.newInstance();
 			} catch (Exception e) {
 				throw new RuntimeException("无法新建对象用于bean copy", e);
 			}
 			beanCopy(source, target);
-			return target;
 		}
+		return target;
 	}
 
 	public static <T> List<T> arrayCast(Collection<?> source, Class<T> targetType) {
