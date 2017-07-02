@@ -16,55 +16,88 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.cglib.beans.BeanCopier;
+import net.sf.cglib.core.Converter;
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.time.DateUtils;
 
 public abstract class Caster extends NonCloneableBaseObject {
 
-	private static Map<String, BeanCopier> beanCopiers = new ConcurrentHashMap<String, BeanCopier>();
+    private static Map<String, BeanCopier> beanCopiers = new ConcurrentHashMap<String, BeanCopier>();
 
-	public static void beanCopy(Object source, Object target) {
-		String beanKey = _generateKey(source.getClass(), target.getClass());
-		BeanCopier copier = null;
-		if (!beanCopiers.containsKey(beanKey)) {
-			copier = BeanCopier.create(source.getClass(), target.getClass(), false);
-			beanCopiers.put(beanKey, copier);
-		} else {
-			copier = beanCopiers.get(beanKey);
-		}
-		copier.copy(source, target, null);
-	}
+    /**
+     * Deep copy may cause infinite loop
+     * @param source
+     * @param target
+     * @return
+     */
+    public static final <T> T beanCopy(Object source, T target) {
+        return beanCopy(source, target, new Converter() {
+            @SuppressWarnings({ "rawtypes", "unchecked" })
+            @Override
+            public Object convert(Object value, Class target, Object context) {
+                // 不转化null的值
+                if (value == null)
+                    return null;
+                return objectCast(value, target);
+            }
+        });
+    }
 
-	private static String _generateKey(Class<?> class1, Class<?> class2) {
-		return class1.toString() + class2.toString();
-	}
+    private static final <T> T beanCopy(Object source, T target, Converter converter) {
+        if (source == null || target == null)
+            return target;
+        // always true
+        boolean useConvert = converter != null;
+        String beanKey = _generateKey(source.getClass(), target.getClass(), useConvert);
+        BeanCopier copier = null;
+        if (!beanCopiers.containsKey(beanKey)) {
+            copier = BeanCopier.create(source.getClass(), target.getClass(), useConvert);
+            beanCopiers.put(beanKey, copier);
+        } else {
+            copier = beanCopiers.get(beanKey);
+        }
+        copier.copy(source, target, converter);
+        return target;
+    }
 
-	@SuppressWarnings("unchecked")
-	public static <T> T objectCast(Object source, Class<T> targetClass) {
-		T target = null;
-		if (isBasicType(source)) {
-			// basic type convert
-			target = (T) simpleCast(source, targetClass);
-		} else if (isGenericArrayType(source)) {
-			// array convert
-			target = (T) arrayTypeCast((Collection<?>) source, targetClass);
-		} else if (source instanceof Map) {
-			// map convert
-			target = mapCastObject(targetClass, (Map<String, ?>) source);
-		} else {
-			// object convert
-			try {
-				target = targetClass.newInstance();
-			} catch (Exception e) {
-				throw new RuntimeException("无法新建对象用于bean copy", e);
-			}
-			beanCopy(source, target);
-		}
-		return target;
-	}
+    private static String _generateKey(Class<?> class1, Class<?> class2, boolean convert) {
+        return class1.toString() + "_" + String.valueOf(convert) + "_" + class2.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T objectCast(Object source, Class<T> targetClass) {
+        T target = null;
+        if (source == null) {
+            return target;
+        } else if (source.getClass().equals(targetClass)) {
+            target = (T) source;
+        } else if (isBasicType(source)) {
+            // basic type convert
+            target = (T) simpleCast(source, targetClass);
+        } else if (isGenericArrayType(source)) {
+            // array convert
+            target = (T) arrayTypeCast((Collection<?>) source, targetClass);
+        } else if (source instanceof Map) {
+            // map convert
+            target = mapCastObject(targetClass, (Map<String, ?>) source);
+        } else if (Map.class.isAssignableFrom(targetClass)) {
+            // low performance
+            target = (T) objectCastMap(source);
+        } else {
+            // object convert
+            try {
+                target = targetClass.newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("无法新建对象用于bean copy", e);
+            }
+            beanCopy(source, target);
+        }
+        return target;
+    }
 
 	public static <T> List<T> arrayCast(Collection<?> source, Class<T> targetType) {
 		List<T> list = new ArrayList<T>();
@@ -319,87 +352,100 @@ public abstract class Caster extends NonCloneableBaseObject {
 			return false;
 	}
 
-	/**
-	 * String-based simple cast, from one basic type to another basic type.
-	 * 
-	 * @param originalObject
-	 * @param targetClass
-	 * @return Object of convert result
-	 * @throws RuntimeException
-	 *             If convert failed
-	 */
-	public final static Object simpleCast(Object original, Class<?> targetClass) {
-		if (original == null)
-			throw new NullPointerException("Parameter originalObject is null");
-		if (targetClass == null)
-			throw new NullPointerException("Parameter targetClass is null");
-		if (targetClass.isAssignableFrom(original.getClass()))
-			return original;
-		String originalString = original instanceof Date
-				? String.valueOf(((Date) original).getTime())
-				: original.toString();
-		if (targetClass == String.class)
-			return originalString;
+    /**
+     * String-based simple cast, from one basic type to another basic type.
+     *
+     * @param originalObject
+     * @param targetClass
+     * @return Object of convert result
+     * @throws RuntimeException If convert failed
+     */
+    public final static Object simpleCast(Object original, Class<?> targetClass) {
+        if (original == null)
+            return null;
+        if (targetClass == null)
+            throw new NullPointerException("Parameter targetClass is null");
+        if (targetClass.isAssignableFrom(original.getClass()))
+            return original;
+        String originalString = "";
+        if (original instanceof Date) {
+            originalString = String.valueOf(((Date) original).getTime());
+        } else if (original instanceof Boolean) {
+            originalString = String.valueOf(BooleanUtils.toInteger((Boolean) original));
+        } else {
+            originalString = String.valueOf(original);
+        }
 
-		if(StringUtils.isBlank(originalString))
-			return null;
+        if (targetClass == String.class)
+            return originalString;
 
-		try {
-			if (targetClass == String.class)
-				return originalString;
-			else if (targetClass == Short.class)
-				return Short.valueOf(originalString);
-			else if (targetClass == Integer.class)
-				return Integer.valueOf(originalString);
-			else if (targetClass == Long.class)
-				return Long.valueOf(originalString);
-			else if (targetClass == Double.class)
-				return Double.valueOf(originalString);
-			else if (targetClass == Float.class)
-				return Float.valueOf(originalString);
-			else if (targetClass == Boolean.class) {
-				if (originalString.trim().equalsIgnoreCase("false") || originalString.trim().equals("0")) {
-					return Boolean.FALSE;
-				} else {
-					return Boolean.TRUE;
-				}
-			} else if (targetClass == Byte.class)
-				return Byte.valueOf(originalString);
-			else if (targetClass == Character.class)
-				return Character.valueOf((originalString).charAt(0));
-			else if (targetClass == Date.class) {
-				try {
-					return new Date(Long.valueOf(originalString));
-				} catch (java.lang.NumberFormatException e) {
-					return DateUtils.parseDate(originalString, CoreDef.DATETIME_FORMAT);
-				}
-			}
-			else if (targetClass.getName().equals("short"))
-				return Short.valueOf(originalString);
-			else if (targetClass.getName().equals("int"))
-				return Integer.valueOf(originalString);
-			else if (targetClass.getName().equals("long"))
-				return Long.valueOf(originalString);
-			else if (targetClass.getName().equals("double"))
-				return Double.valueOf(originalString);
-			else if (targetClass.getName().equals("float"))
-				return Float.valueOf(originalString);
-			else if (targetClass.getName().equals("boolean")) {
-				if (originalString.trim().equalsIgnoreCase("false") || originalString.trim().equals("0")) {
-					return false;
-				} else {
-					return true;
-				}
-			} else if (targetClass.getName().equals("byte"))
-				return Byte.valueOf(originalString);
-			else if (targetClass.getName().equals("char"))
-				return Character.valueOf((originalString).charAt(0));
-			
-			throw new RuntimeException("Unsupport target basic type:" + targetClass.getName());
-		} catch (Exception e) {
-			throw new RuntimeException("Cast failed from String [" + originalString + "] to " + targetClass.getName(), e);
-		}
-	}
+        if (StringUtils.isBlank(originalString))
+            return null;
+
+        try {
+            if (targetClass == String.class)
+                return originalString;
+            else if (targetClass == Short.class)
+                return Short.valueOf(originalString);
+            else if (targetClass == Integer.class)
+                return Integer.valueOf(originalString);
+            else if (targetClass == Long.class)
+                return Long.valueOf(originalString);
+            else if (targetClass == Double.class)
+                return Double.valueOf(originalString);
+            else if (targetClass == Float.class)
+                return Float.valueOf(originalString);
+            else if (targetClass == Boolean.class) {
+                boolean boolNumber = false;
+                if (original instanceof Number)
+                    boolNumber = boolNumber((Number) original);
+                return BooleanUtils.toBoolean(originalString) || boolNumber;
+            } else if (targetClass == Byte.class)
+                return Byte.valueOf(originalString);
+            else if (targetClass == Character.class)
+                return Character.valueOf((originalString).charAt(0));
+            else if (targetClass == Date.class)
+                return new Date(Long.valueOf(originalString));
+            else if (targetClass.getName().equals("short"))
+                return Short.valueOf(originalString);
+            else if (targetClass.getName().equals("int"))
+                return Integer.valueOf(originalString);
+            else if (targetClass.getName().equals("long"))
+                return Long.valueOf(originalString);
+            else if (targetClass.getName().equals("double"))
+                return Double.valueOf(originalString);
+            else if (targetClass.getName().equals("float"))
+                return Float.valueOf(originalString);
+            else if (targetClass.getName().equals("boolean")) {
+                boolean boolNumber = false;
+                if (original instanceof Number)
+                    boolNumber = boolNumber((Number) original);
+                return BooleanUtils.toBoolean(originalString) || boolNumber;
+            } else if (targetClass.getName().equals("byte"))
+                return Byte.valueOf(originalString);
+            else if (targetClass.getName().equals("char"))
+                return Character.valueOf((originalString).charAt(0));
+
+            throw new RuntimeException("Unsupport target basic type:" + targetClass.getName());
+        } catch (Exception e) {
+            throw new RuntimeException("Cast failed from String [" + originalString + "] to " + targetClass.getName(), e);
+        }
+    }
+
+    /**
+     * If code reaches here, the number can't be null, unless current code has been modified
+     */
+    private final static boolean boolNumber(Number number) {
+        if (number == null)
+            return false;
+        // based on R32-24
+        if (number instanceof Float && number.floatValue() < 10E-6 && number.floatValue() > -10E-6)
+            return false;
+        // based on R64-53
+        if (number.doubleValue() < 10E-15 && number.doubleValue() > -10E-15)
+            return false;
+        return true;
+    }
 
 	/**
 	 * Collection-based simple cast, from one {@link java.util.Collection} type
