@@ -1,8 +1,8 @@
 package net.vicp.lylab.utils.client;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
@@ -56,9 +56,9 @@ public class RPCClient extends NonCloneableBaseObject implements LifeCycle {
 
 		List<Message> callResult = new ArrayList<>();
 		Message retM = callRpcServer(message);
-		List<HashMap<String, Object>> list = ((List<HashMap<String, Object>>) retM.getBody().get("CallResult"));
-		for (HashMap<String, Object> temp : list)
-			callResult.add(Caster.mapCastObject(Message.class, (HashMap<String, Object>) temp.get("right")));
+		List<Map<String, Object>> list = ((List<Map<String, Object>>) retM.getBody().get("CallResult"));
+		for (Map<String, Object> temp : list)
+			callResult.add(Caster.mapCastObject(Message.class, (Map<String, Object>) temp.get("right")));
 		return callResult;
 	}
 
