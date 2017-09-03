@@ -17,12 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.cglib.beans.BeanCopier;
 import net.sf.cglib.core.Converter;
-import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public abstract class Caster extends NonCloneableBaseObject {
 

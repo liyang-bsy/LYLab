@@ -821,4 +821,26 @@ public abstract class Utils extends NonCloneableBaseObject {
 		}
 	}
 
+	/**
+	 * 填充文本模板
+	 */
+	public final static String fillTextTemplate(String template, Map<String, String> data) {
+		String temp = template;
+		for (String key : data.keySet()) {
+			temp = temp.replaceAll("{" + key + "}", data.get(key));
+		}
+		return temp;
+	}
+
+	/**
+	 * 填充文本模板
+	 */
+	public final static String fillTextTemplate(String template, Map<String, String> data, String prefix, String suffix) {
+		String temp = template;
+		for (String key : data.keySet()) {
+			temp = temp.replaceAll(prefix + key + suffix, data.get(key));
+		}
+		return temp;
+	}
+
 }
