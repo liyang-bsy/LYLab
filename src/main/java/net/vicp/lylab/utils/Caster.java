@@ -411,19 +411,19 @@ public abstract class Caster extends NonCloneableBaseObject {
 				Date date = null;
 				if (date == null) {
 					try {
-						new Date(Long.valueOf(originalString));
+						date = new Date(Long.valueOf(originalString));
 					} catch (Exception e) {
 					}
 				}
 				if (date == null) {
 					try {
-						DateUtils.parseDate(originalString, CoreDef.DATETIME_FORMAT);
+						date = DateUtils.parseDate(originalString, CoreDef.DATETIME_FORMAT);
 					} catch (Exception e) {
 					}
 				}
 				if (date == null) {
 					try {
-						DateUtils.parseDate(originalString, CoreDef.DATE_FORMAT);
+						date = DateUtils.parseDate(originalString, CoreDef.DATE_FORMAT);
 					} catch (Exception e) {
 					}
 				}
