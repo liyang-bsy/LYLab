@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.Socket;
@@ -49,7 +50,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 
 	/**
 	 * Print current stack
-	 * @param only accept "debug", "info", "warn", "error", "fatal", case-insensitive
+	 * @param level only accept "debug", "info", "warn", "error", "fatal", case-insensitive
 	 */
 	public final static void printStack(String level) {
 		printStack("", level);
@@ -58,7 +59,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	/**
 	 * Print current stack with simple reasons
 	 * @param reason
-	 * @param only accept "debug", "info", "warn", "error", "fatal", case-insensitive
+	 * @param level only accept "debug", "info", "warn", "error", "fatal", case-insensitive
 	 */
 	public final static void printStack(String reason, String level) {
 		if (level == null)
@@ -89,7 +90,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	
 	/**
 	 * Close an object, safe if item is null
-	 * @param target to be closed item, it's safe if targets were null
+	 * @param targets to be closed item, it's safe if targets were null
 	 */
 	public final static void tryClose(Object... targets) {
 		printStack("TryClose is called on follow target(s):\n" + Arrays.deepToString(targets), "debug");
@@ -158,7 +159,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	/**
 	 * Set value(param) to owner's field(based on fieldName)
 	 * @param owner
-	 * @param fieldName
+	 * @param setMethod
 	 * @param param
 	 * @return
 	 */
@@ -367,7 +368,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	/**
 	 * 格式化时间
 	 * 
-	 * @param value
+	 * @param date
 	 * @param pattern
 	 * @return
 	 */
@@ -531,6 +532,52 @@ public abstract class Utils extends NonCloneableBaseObject {
 		return true;
 	}
 
+	public final static boolean isEmpty(Map<?, ?> map) {
+		if (null == map || map.size() == 0)
+			return true;
+		return false;
+	}
+
+	public final static boolean isEmpty(Collection<?> collection) {
+		if (null == collection || collection.size() == 0)
+			return true;
+		return false;
+	}
+
+	public final static <T> boolean isEmpty(T[] array) {
+		if (null == array || array.length == 0)
+			return true;
+		return false;
+	}
+
+	public static boolean isEmpty(Object value) {
+		if (value == null) {
+			return true;
+		} else if (value instanceof String) {
+			if (StringUtils.isBlank((String) value)) {
+				return true;
+			}
+			return false;
+		} else if (value instanceof Collection) {
+			if (Utils.isEmpty((Collection<?>) value)) {
+				return true;
+			}
+			return false;
+		} else if (value instanceof Map) {
+			if (Utils.isEmpty((Map<?, ?>) value)) {
+				return false;
+			}
+			return true;
+		} else if (value.getClass().isArray()) {
+			if (Utils.isEmpty((Object[]) value)) {
+				return false;
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	/**
 	 * 获取异常的字符串内容
 	 * @param e Exception itself
@@ -597,7 +644,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	/**
 	 * Boolean to byte
 	 * 
-	 * @param num
+	 * @param b
 	 * @return
 	 */
 	public final static byte[] boolean2Bytes(boolean b) {
@@ -626,7 +673,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 	/**
 	 * Integer to byte
 	 * 
-	 * @param num
+	 * @param x
 	 * @return
 	 */
 	public final static byte[] int2Bytes(int x) {
@@ -691,7 +738,7 @@ public abstract class Utils extends NonCloneableBaseObject {
 
 	/**
 	 * Move bytes from array into List(original array will be reset)
-	 * @param container
+	 * @param bytes
 	 * @return
 	 */
 	public final static List<Byte> moveBytesToContainer(byte[] bytes) {
@@ -790,20 +837,25 @@ public abstract class Utils extends NonCloneableBaseObject {
 	 * 验证输入的邮箱格式是否符合 
 	 * @param email 
 	 * @return 是否合法 
-	 */ 
+	 */
 	public final static boolean isEmailAddress(String email) {
 		return email.matches("\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*");
 	}
 	
 	/** 
-	 * 验证输入的邮箱格式是否符合 
-	 * @param email 
+	 * 验证输入的数字格式是否符合
+	 * @param number
 	 * @return 是否合法 
-	 */ 
+	 */
 	public final static boolean isNumeric(String number) {
 		return number.matches("[0-9]*");
 	}
-	
+
+	/**
+	 * 手机号码验证
+	 * @param mobileNo
+	 * @return 验证通过返回true
+	 */
 	public final static boolean isMobileNo(String mobileNo) {
 		return mobileNo.matches("^[1][3,4,5,8][0-9]{9}$");
 	}
@@ -837,6 +889,101 @@ public abstract class Utils extends NonCloneableBaseObject {
 			temp = temp.replaceAll(prefix + key + suffix, data.get(key));
 		}
 		return temp;
+	}
+
+	/**
+	 * 获取field的值<br>
+	 *
+	 * @param owner
+	 * @param field
+	 */
+	public final static Object getFieldValue(Object owner, Field field) {
+		if (field == null) {
+			throw new IllegalArgumentException("field is null");
+		}
+		if (owner == null) {
+			throw new IllegalArgumentException("owner is null");
+		}
+		try {
+			field.setAccessible(true);
+			return field.get(owner);
+		} catch (Exception e) {
+			throw new RuntimeException("Get field [" + field.getName() + "] value failed: " + owner.getClass(), e);
+		}
+	}
+
+	/**
+	 * 获取field的值<br>
+	 *
+	 * @param owner
+	 * @param fieldName
+	 */
+	public final static Object getFieldValue(Object owner, String fieldName) {
+		if (StringUtils.isBlank(fieldName)) {
+			throw new IllegalArgumentException("fieldName is blank");
+		}
+		if (owner == null) {
+			throw new IllegalArgumentException("owner is null");
+		}
+		Field field = getFieldByName(owner.getClass(), fieldName);
+		return getFieldValue(owner, field);
+	}
+
+	/**
+	 * 获取类clazz的所有Field，包括其父类的Field，如果重名，以子类Field为准。
+	 *
+	 * @param clazz
+	 * @return Field数组
+	 */
+	public final static Field getFieldByName(Class<?> clazz, String fieldName) {
+		if (clazz == Object.class) {
+			return null;
+		}
+		// 当前对象的field优先
+		Field[] dFields = clazz.getDeclaredFields();
+		if (!Utils.isEmpty(dFields)) {
+			for (Field f : dFields) {
+				if (f.getName().equals(fieldName)) {
+					return f;
+				}
+			}
+		}
+		// 如果当前对象没有这个属性，那就去看父类的field
+		return getFieldByName(clazz.getSuperclass(), fieldName);
+	}
+
+	/**
+	 * 获取数组、Collection的内部类型<br>
+	 * 若非Array，或是无法识别，则返回null
+	 *
+	 * @param container
+	 * @return
+	 */
+	public final static Class<?> getComponentType(Object container) {
+		Class<?> componentType = null;
+		if (!Caster.isGenericArrayType(container))
+			return componentType;
+		// Collection
+		if (Collection.class.isAssignableFrom(container.getClass())) {
+			// unrecognizable type
+			if (((Collection<?>) container).size() == 0)
+				return Object.class;
+			for (Object innerItem : (Collection<?>) container) {
+				if (componentType == null) {
+					componentType = innerItem.getClass();
+				} else {
+					if (!componentType.equals(innerItem.getClass())) {
+						componentType = Object.class;
+						break;
+					}
+				}
+			}
+		}
+		// should be Java build-in array
+		else {
+			componentType = container.getClass().getComponentType();
+		}
+		return componentType;
 	}
 
 }

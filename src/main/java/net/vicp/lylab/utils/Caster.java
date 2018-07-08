@@ -21,6 +21,7 @@ import net.vicp.lylab.core.CoreDef;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 
@@ -29,39 +30,62 @@ public abstract class Caster extends NonCloneableBaseObject {
 	private static Map<String, BeanCopier> beanCopiers = new ConcurrentHashMap<String, BeanCopier>();
 
 	/**
-	 * Deep copy may cause infinite loop
-	 * 
+	 * 如果source中的某字段是null，会通过读取其target.field值的形式尝试维持target中的原始值<br>
+	 * <br>
+	 * 还有，<b>这个方法是深拷贝，有可能会导致死循环的哦！</b><br>
+	 *
 	 * @param source
 	 * @param target
 	 * @return
 	 */
-	public static final <T> T beanCopy(Object source, T target) {
-		return beanCopy(source, target, new Converter() {
+	public static final <T> T beanCopy(final T target, final Object source) {
+		return beanCopy(target, source, new Converter() {
 			@SuppressWarnings({ "rawtypes", "unchecked" })
 			@Override
-			public Object convert(Object value, Class target, Object context) {
+			public Object convert(Object value, Class targetClass, Object context) {
 				// 不转化null的值
-				if (value == null)
+				if (value == null) {
+					// 如果是setter方法名
+					String setterName = String.valueOf(context);
+					if (setterName.startsWith("set")) {
+						// 改写成field名
+						String fieldName = setterName.substring(3);
+						fieldName = fieldName.substring(0, 1).toLowerCase() + fieldName.substring(1);
+						try {
+							// 强读field
+							return Utils.getFieldValue(target, fieldName);
+						} catch (Exception e) {
+							log.info("Field[" + fieldName + "] retain failed, set to null, context is[" + setterName + "]");
+							// 如果实在无法拷贝，那就算了
+						}
+					}
 					return null;
-				return objectCast(value, target);
+				}
+				return objectCast(value, targetClass);
 			}
 		});
 	}
 
-	private static final <T> T beanCopy(Object source, T target, Converter converter) {
+	private static final <T> T beanCopy(T target, Object source, Converter converter) {
 		if (source == null || target == null)
 			return target;
 		// always true
 		boolean useConvert = converter != null;
 		String beanKey = _generateKey(source.getClass(), target.getClass(), useConvert);
 		BeanCopier copier = null;
-		if (!beanCopiers.containsKey(beanKey)) {
-			copier = BeanCopier.create(source.getClass(), target.getClass(), useConvert);
-			beanCopiers.put(beanKey, copier);
-		} else {
-			copier = beanCopiers.get(beanKey);
+		try {
+
+			if (!beanCopiers.containsKey(beanKey)) {
+				copier = BeanCopier.create(source.getClass(), target.getClass(), useConvert);
+				beanCopiers.put(beanKey, copier);
+			} else {
+				copier = beanCopiers.get(beanKey);
+			}
+			copier.copy(source, target, converter);
+
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		copier.copy(source, target, converter);
 		return target;
 	}
 
@@ -69,33 +93,70 @@ public abstract class Caster extends NonCloneableBaseObject {
 		return class1.toString() + "_" + String.valueOf(convert) + "_" + class2.toString();
 	}
 
+	/**
+	 * 任意类型的转化
+	 *
+	 * @param source
+	 * @param targetClass
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T objectCast(Object source, Class<T> targetClass) {
+		if (targetClass == null)
+			throw new NullPointerException("Parameter targetClass is null");
 		T target = null;
 		if (source == null) {
 			return target;
-		} else if (source.getClass().equals(targetClass)) {
+		} else if (targetClass.isAssignableFrom(source.getClass())) {
 			target = (T) source;
-		} else if (isBasicType(source)) {
+			// 下面这条被上面吃掉了
+//        } else if (source.getClass().equals(targetClass)) {
+//            target = (T) source;
+		} else if (source.getClass().isEnum() || targetClass.isEnum()) {
+			//            logger.info("枚举类型不支持转换");
+		} else if (isBasicType(source) && isBasicType(targetClass)) {
 			// basic type convert
 			target = (T) simpleCast(source, targetClass);
-		} else if (isGenericArrayType(source)) {
+		} else if (isGenericArrayType(source) && isGenericArrayType(targetClass)) {
 			// array convert
-			target = (T) arrayTypeCast((Collection<?>) source, targetClass);
+			List<?> innerConvert = null;
+			// array componentConvert
+			// 如果target是Java内置数组类型，此时转换过去需要考虑源数组内容的类型和目标数组的类型是否一致
+			// 如果target是容器类型，则不需要考虑这个问题
+			if (isJavaArrayType(targetClass.getClass())) {
+				if (ObjectUtils.notEqual(Utils.getComponentType(source), targetClass.getComponentType())) {
+					innerConvert = arrayCast((Collection<?>) source, targetClass.getComponentType());
+				}
+			}
+			target = (T) arrayTypeCast(innerConvert != null ? innerConvert : (Collection<?>) source, targetClass);
 		} else if (source instanceof Map) {
 			// map convert
 			target = mapCastObject(targetClass, (Map<String, ?>) source);
 		} else if (Map.class.isAssignableFrom(targetClass)) {
-			// low performance
-			target = (T) objectCastMap(source);
+			if (String.class.equals(source.getClass())) {
+				// deserialize, but can't make sure its xml or json
+			}
+			if (!isBasicType(source) && !isGenericArrayType(source)) {
+				// low performance
+				target = (T) objectCastMap(source);
+			}
+		} else if (String.class.equals(source.getClass()) && isGenericArrayType(targetClass)) {
+			target = (T) arrayTypeCast(((String) source).split(","), targetClass);
+		} else if (isGenericArrayType(source.getClass()) && String.class.equals(targetClass)) {
+			if (isJavaArrayType(source.getClass())) {
+				target = (T) StringUtils.join((Object[]) source, ",");
+			} else {
+				target = (T) StringUtils.join((Collection<?>) source, ",");
+			}
 		} else {
 			// object convert
 			try {
 				target = targetClass.newInstance();
+				beanCopy(target, source);
 			} catch (Exception e) {
-				throw new RuntimeException("无法新建对象用于bean copy", e);
+				log.info("子对象拷贝失败，将会放弃该字段。问题属性：" + targetClass.getName() + "，问题值：" + source.getClass().getName()
+						+ Utils.getStringFromThrowable(e));
 			}
-			beanCopy(source, target);
 		}
 		return target;
 	}
@@ -356,7 +417,7 @@ public abstract class Caster extends NonCloneableBaseObject {
 	/**
 	 * String-based simple cast, from one basic type to another basic type.
 	 *
-	 * @param originalObject
+	 * @param original
 	 * @param targetClass
 	 * @return Object of convert result
 	 * @throws RuntimeException
