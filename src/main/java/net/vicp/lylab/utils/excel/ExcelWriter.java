@@ -55,7 +55,7 @@ public class ExcelWriter implements AutoCloseable {
 			// 写入数据
 			workbook.write(outputStream);
 		} catch (Exception e) {
-			throw new LYException("读取失败，工作表(" + sheetNo + ")，行(" + rowNo + ")，列(" + columnNo + ")", e);
+			throw new LYException("写入失败，工作表(" + sheetNo + ")，行(" + rowNo + ")，列(" + columnNo + ")", e);
 		}
 	}
 
