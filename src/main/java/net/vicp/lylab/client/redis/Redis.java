@@ -3,6 +3,7 @@ package net.vicp.lylab.client.redis;
 import net.vicp.lylab.core.NonCloneableBaseObject;
 import net.vicp.lylab.core.interfaces.LifeCycle;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.params.SetParams;
 
 /**
  * Redis access client
@@ -58,9 +59,8 @@ public class Redis extends NonCloneableBaseObject implements LifeCycle {
 		return jedis.incrBy(key, integer);
 	}
 
-	public String set(String key, String value, String nxxx, String expx,
-			long time) {
-		return jedis.set(key, value, nxxx, expx, time);
+	public String set(String key, String value, long time) {
+		return jedis.set(key, value, new SetParams().px(time));
 	}
 
 	public String set(String key, String value) {
